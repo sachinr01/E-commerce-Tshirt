@@ -46,9 +46,9 @@ app.use('/store/admin', adminRoutes);
 app.use('/store/api', (req, res, next) => {
     const allowed = [
         process.env.FRONTEND_URL,
-        'https://test-kappa-one-90.vercel.app',
+        'http://test-kappa-one-90.vercel.app',
         'http://localhost:3001',
-        'https://www.gaffis.org',
+        'http://www.gaffis.org',
         ...(process.env.NODE_ENV !== 'production' ? ['http://localhost:3000'] : []),
     ].filter(Boolean);
     const origin = req.headers.origin;
