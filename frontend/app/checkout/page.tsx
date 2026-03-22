@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import Link from 'next/link';
@@ -30,9 +30,11 @@ export default function CheckoutPage() {
   const [showCoupon, setShowCoupon]           = useState(false);
   const [createAccount, setCreateAccount]     = useState(false);
   const [shipToDifferent, setShipToDifferent] = useState(false);
-  const [paymentMethod, setPaymentMethod]     = useState('bank');
+  const [paymentMethod, setPaymentMethod]     = useState('card');
+  const [orderOpen, setOrderOpen]             = useState(true);
   const [terms, setTerms]                     = useState(false);
   const [placing, setPlacing]                 = useState(false);
+  const [orderError, setOrderError]           = useState<string | null>(null);
   const [errors, setErrors]                   = useState<Record<string, string>>({});
 
   const [form, setForm] = useState({
@@ -45,6 +47,7 @@ export default function CheckoutPage() {
     username: '', password: '',
     accUsername: '', accPassword: '',
     coupon: '',
+    cardName: '', cardNumber: '', cardExpiry: '', cardCvv: '',
   });
 
   const set = (k: keyof typeof form) =>
@@ -66,14 +69,68 @@ export default function CheckoutPage() {
     return Object.keys(e).length === 0;
   };
 
-  const handlePlaceOrder = (e: React.FormEvent) => {
+  const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
     setPlacing(true);
-    setTimeout(() => { clearCart(); router.push('/checkout/success'); }, 1200);
+    setOrderError(null);
+    try {
+      const billing = {
+        first_name: form.firstName,
+        last_name: form.lastName,
+        email: form.email,
+        phone: form.phone,
+        address: form.address,
+        address_2: form.address2,
+        city: form.city,
+        state: form.state,
+        postcode: form.zip,
+        country: form.country,
+        company: form.company,
+      };
+
+      const shipping = shipToDifferent ? {
+        first_name: form.sFirstName,
+        last_name: form.sLastName,
+        phone: form.sPhone,
+        address: form.sAddress,
+        address_2: form.sAddress2,
+        city: form.sCity,
+        state: form.sState,
+        postcode: form.sZip,
+        country: form.sCountry,
+        company: form.sCompany,
+      } : {};
+
+      const res = await fetch('/store/api/orders/place', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          billing,
+          shipping,
+          payment_method: paymentMethod,
+          shipping_cost: 0,
+          notes: form.notes,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Order placement failed.');
+      }
+
+      await clearCart();
+      const orderId = data?.data?.orderId;
+      router.push(orderId ? `/checkout/success?order=${orderId}` : '/checkout/success');
+    } catch (err) {
+      setOrderError(err instanceof Error ? err.message : 'Order placement failed.');
+    } finally {
+      setPlacing(false);
+    }
   };
 
   const orderTotal = total;
+  const showCardDetails = paymentMethod === 'card';
 
   if (items.length === 0 && !placing) return (
     <>
@@ -173,7 +230,7 @@ export default function CheckoutPage() {
               <form onSubmit={handlePlaceOrder} noValidate className="form-small form">
                 <div className="ok-row">
 
-                  {/* ── LEFT: Billing + Shipping ── */}
+                  {/* â”€â”€ LEFT: Billing + Shipping â”€â”€ */}
                   <div className="ok-md-6 ok-xsd-12 ok-sd-12">
 
                     <h4>Billing Details</h4>
@@ -330,12 +387,24 @@ export default function CheckoutPage() {
                     </div>
 
                   </div>
-                  {/* ── RIGHT: Order Summary + Payment ── */}
+                  {/* â”€â”€ RIGHT: Order Summary + Payment â”€â”€ */}
                   <div className="ok-md-6 ok-xsd-12">
                     <div className="box order-products dima-box">
-                      <h4 className="box-titel">Your Order</h4>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                        <h4 className="box-titel">Your Order</h4>
+                        <button
+                          type="button"
+                          className="button small fill uppercase"
+                          onClick={() => setOrderOpen(v => !v)}
+                          aria-expanded={orderOpen}
+                          aria-controls="order-details"
+                        >
+                          {orderOpen ? 'Hide Cart' : 'Show Cart'}
+                        </button>
+                      </div>
 
-                      <table className="order-products-table">
+                      <div id="order-details" style={{ display: orderOpen ? 'block' : 'none' }}>
+                        <table className="order-products-table">
                         <thead>
                           <tr>
                             <th className="product-name">Product</th>
@@ -344,7 +413,7 @@ export default function CheckoutPage() {
                         </thead>
                         <tbody>
                           {items.map(item => (
-                            <tr key={`${item.id}-${item.variationId ?? 0}`} className="cart_item">
+                            <tr key={item.cartItemId} className="cart_item">
                               <td className="product-name">
                                 {item.title}
                                 {(item.color || item.size) && (
@@ -352,7 +421,7 @@ export default function CheckoutPage() {
                                     {[item.color, item.size].filter(Boolean).join(' / ')}
                                   </span>
                                 )}
-                                <strong className="product-quantity"> ×{item.quantity}</strong>
+                                <strong className="product-quantity"> x{item.quantity}</strong>
                               </td>
                               <td className="product-total">
                                 <span className="amount">${(item.price * item.quantity).toFixed(2)}</span>
@@ -374,7 +443,8 @@ export default function CheckoutPage() {
                             <td><strong><span className="amount">${orderTotal.toFixed(2)}</span></strong></td>
                           </tr>
                         </tfoot>
-                      </table>
+                        </table>
+                      </div>
 
                       <div className="clear" />
 
@@ -383,27 +453,13 @@ export default function CheckoutPage() {
                       <ul className="with-border">
                         <li>
                           <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, cursor: 'pointer' }}>
-                            <input className="radio" type="radio" name="payment" value="bank"
-                              checked={paymentMethod === 'bank'} onChange={e => setPaymentMethod(e.target.value)} />
+                            <input className="radio" type="radio" name="payment" value="card"
+                              checked={paymentMethod === 'card'} onChange={e => setPaymentMethod(e.target.value)} />
                             <span>
-                              <strong>Direct Bank Transfer</strong>
-                              {paymentMethod === 'bank' && (
+                              <strong>Card Payment</strong>
+                              {paymentMethod === 'card' && (
                                 <p style={{ fontSize: 13, color: '#666', marginTop: 4 }}>
-                                  Make your payment directly into our bank account. Please use your Order ID as the payment reference. Your order won't be shipped until the funds have cleared in our account.
-                                </p>
-                              )}
-                            </span>
-                          </label>
-                        </li>
-                        <li>
-                          <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, cursor: 'pointer' }}>
-                            <input className="radio" type="radio" name="payment" value="cheque"
-                              checked={paymentMethod === 'cheque'} onChange={e => setPaymentMethod(e.target.value)} />
-                            <span>
-                              <strong>Cheque Payment</strong>
-                              {paymentMethod === 'cheque' && (
-                                <p style={{ fontSize: 13, color: '#666', marginTop: 4 }}>
-                                  Please send your cheque to Store Name, Store Street, Store Town, Store State / County, Store Postcode.
+                                  Pay securely using your debit or credit card.
                                 </p>
                               )}
                             </span>
@@ -411,13 +467,13 @@ export default function CheckoutPage() {
                         </li>
                         <li className="field last">
                           <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, cursor: 'pointer' }}>
-                            <input className="radio" type="radio" name="payment" value="paypal"
-                              checked={paymentMethod === 'paypal'} onChange={e => setPaymentMethod(e.target.value)} />
+                            <input className="radio" type="radio" name="payment" value="cod"
+                              checked={paymentMethod === 'cod'} onChange={e => setPaymentMethod(e.target.value)} />
                             <span>
-                              <strong>PayPal</strong>
-                              {paymentMethod === 'paypal' && (
+                              <strong>Cash on Delivery (COD)</strong>
+                              {paymentMethod === 'cod' && (
                                 <p style={{ fontSize: 13, color: '#666', marginTop: 4 }}>
-                                  Pay via PayPal; you can pay with your credit card if you don't have a PayPal account.
+                                  Pay with cash when your order is delivered.
                                 </p>
                               )}
                             </span>
@@ -427,11 +483,71 @@ export default function CheckoutPage() {
 
                       <div className="clear" />
 
+                      {showCardDetails && (
+                        <div className="box" style={{ marginTop: 12 }}>
+                          <h5 style={{ marginBottom: 10 }}>Card Details</h5>
+                          <div className="field">
+                            <label className="required">Name on Card</label>
+                            <input
+                              type="text"
+                              placeholder="Full name"
+                              value={form.cardName}
+                              onChange={set('cardName')}
+                              autoComplete="cc-name"
+                            />
+                          </div>
+                          <div className="field">
+                            <label className="required">Card Number</label>
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              placeholder="0000 0000 0000 0000"
+                              value={form.cardNumber}
+                              onChange={set('cardNumber')}
+                              autoComplete="cc-number"
+                            />
+                          </div>
+                          <div className="ok-row">
+                            <div className="ok-md-6 ok-xsd-12">
+                              <div className="field">
+                                <label className="required">Expiry Date</label>
+                                <input
+                                  type="text"
+                                  inputMode="numeric"
+                                  placeholder="MM/YY"
+                                  value={form.cardExpiry}
+                                  onChange={set('cardExpiry')}
+                                  autoComplete="cc-exp"
+                                />
+                              </div>
+                            </div>
+                            <div className="ok-md-6 ok-xsd-12">
+                              <div className="field">
+                                <label className="required">CVV</label>
+                                <input
+                                  type="password"
+                                  inputMode="numeric"
+                                  placeholder="123"
+                                  value={form.cardCvv}
+                                  onChange={set('cardCvv')}
+                                  autoComplete="cc-csc"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                       <button type="submit" className="button fill uppercase"
                         disabled={placing}
                         style={{ width: '100%', cursor: placing ? 'wait' : 'pointer', marginBottom: 12 }}>
                         {placing ? 'Placing Order...' : 'PLACE ORDER'}
                       </button>
+                      {orderError && (
+                        <div style={{ color: '#c62828', fontSize: 13, marginBottom: 10 }}>
+                          {orderError}
+                        </div>
+                      )}
 
                       <div className="field" style={{ marginTop: 8 }}>
                         <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13 }}>
@@ -458,3 +574,4 @@ export default function CheckoutPage() {
 }
 
 const errStyle: React.CSSProperties = { color: '#c62828', fontSize: 12, marginTop: 2 };
+

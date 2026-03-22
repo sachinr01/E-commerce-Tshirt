@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
 import Header from '../components/Header';
@@ -12,7 +12,7 @@ export default function CartPage() {
   const toSlug = (text: string) =>
     text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 
-  const shipping = 0; // free shipping
+  const shipping = 0;
   const orderTotal = total + shipping;
 
   return (
@@ -48,10 +48,8 @@ export default function CartPage() {
               ) : (
                 <div className="ok-row">
 
-                  {/* ── Left: Cart Table ── */}
+                  {/* Left: Cart Table */}
                   <div className="ok-md-8 ok-xsd-12">
-
-                    {/* Cart table */}
                     <table className="order-products-table" style={{ width: '100%', marginBottom: 30 }}>
                       <thead>
                         <tr>
@@ -65,16 +63,19 @@ export default function CartPage() {
                       </thead>
                       <tbody>
                         {items.map(item => (
-                          <tr key={`${item.id}-${item.variationId ?? 0}`}>
+                          <tr key={item.cartItemId}>
                             {/* Thumbnail */}
                             <td style={td}>
-                              <img src={item.image || PLACEHOLDER} alt={item.title}
-                                style={{ width: 60, height: 60, objectFit: 'cover', display: 'block' }} />
+                              <img
+                                src={item.image || PLACEHOLDER}
+                                alt={item.title}
+                                style={{ width: 60, height: 60, objectFit: 'cover', display: 'block' }}
+                              />
                             </td>
 
                             {/* Name + meta */}
                             <td style={td}>
-                              <Link href={`/product/${toSlug(item.title)}-${item.id}`} style={{ fontWeight: 600 }}>
+                              <Link href={`/shop/product/${toSlug(item.title)}`} style={{ fontWeight: 600 }}>
                                 {item.title}
                               </Link>
                               {(item.color || item.size) && (
@@ -92,17 +93,25 @@ export default function CartPage() {
                             {/* Qty stepper */}
                             <td style={td}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                <button className="qty-btn"
-                                  onClick={() => updateQty(item.id, item.variationId, item.quantity - 1)}
-                                  style={qtyBtn}>−</button>
+                                <button
+                                  onClick={() => updateQty(item.cartItemId, item.quantity - 1)}
+                                  style={qtyBtn}
+                                >
+                                  &minus;
+                                </button>
                                 <input
-                                  type="number" value={item.quantity} min={1}
-                                  onChange={e => updateQty(item.id, item.variationId, parseInt(e.target.value) || 1)}
+                                  type="number"
+                                  value={item.quantity}
+                                  min={1}
+                                  onChange={e => updateQty(item.cartItemId, parseInt(e.target.value) || 1)}
                                   style={{ width: 48, textAlign: 'center', border: '1px solid #ddd', padding: '4px 0' }}
                                 />
-                                <button className="qty-btn"
-                                  onClick={() => updateQty(item.id, item.variationId, item.quantity + 1)}
-                                  style={qtyBtn}>+</button>
+                                <button
+                                  onClick={() => updateQty(item.cartItemId, item.quantity + 1)}
+                                  style={qtyBtn}
+                                >
+                                  +
+                                </button>
                               </div>
                             </td>
 
@@ -112,23 +121,24 @@ export default function CartPage() {
                             {/* Remove */}
                             <td style={td}>
                               <button
-                                onClick={() => removeItem(item.id, item.variationId)}
+                                onClick={() => removeItem(item.cartItemId)}
                                 title="Remove"
                                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#999', fontSize: 18, lineHeight: 1 }}
-                              >×</button>
+                              >
+                                &times;
+                              </button>
                             </td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
 
-                    {/* Continue shopping */}
                     <Link href="/shop" className="button fill uppercase" style={{ marginRight: 12 }}>
-                      ← Continue Shopping
+                      &larr; Continue Shopping
                     </Link>
                   </div>
 
-                  {/* ── Right: Order Summary ── */}
+                  {/* Right: Order Summary */}
                   <div className="ok-md-4 ok-xsd-12">
                     <div className="box dima-box" style={{ padding: 24 }}>
                       <h4 className="undertitle" style={{ marginBottom: 20 }}>Your Order</h4>
@@ -137,8 +147,11 @@ export default function CartPage() {
                       <div style={{ marginBottom: 20 }}>
                         <p style={{ fontSize: 13, marginBottom: 8 }}>Have a coupon?</p>
                         <div style={{ display: 'flex', gap: 8 }}>
-                          <input type="text" placeholder="Coupon code"
-                            style={{ flex: 1, border: '1px solid #ddd', padding: '6px 10px', fontSize: 13 }} />
+                          <input
+                            type="text"
+                            placeholder="Coupon code"
+                            style={{ flex: 1, border: '1px solid #ddd', padding: '6px 10px', fontSize: 13 }}
+                          />
                           <button className="button fill uppercase" style={{ fontSize: 12, padding: '6px 14px' }}>
                             Apply
                           </button>
@@ -146,19 +159,14 @@ export default function CartPage() {
                       </div>
 
                       <div style={{ borderTop: '1px solid #eee', paddingTop: 16 }}>
-                        {/* Subtotal */}
                         <div style={summaryRow}>
                           <span>Cart Subtotal</span>
                           <span>${total.toFixed(2)}</span>
                         </div>
-
-                        {/* Shipping */}
                         <div style={summaryRow}>
                           <span>Shipping &amp; Handling</span>
                           <span style={{ color: '#2e7d32' }}>Free Shipping</span>
                         </div>
-
-                        {/* Order total */}
                         <div style={{ ...summaryRow, fontWeight: 700, fontSize: 16, borderTop: '1px solid #eee', paddingTop: 12, marginTop: 8 }}>
                           <span>Order Total</span>
                           <span>${orderTotal.toFixed(2)}</span>
@@ -185,7 +193,6 @@ export default function CartPage() {
   );
 }
 
-// ── Inline styles ──────────────────────────────────────────────────────────────
 const th: React.CSSProperties = { padding: '10px 12px', textAlign: 'left', borderBottom: '2px solid #eee', fontWeight: 600, fontSize: 13 };
 const td: React.CSSProperties = { padding: '14px 12px', borderBottom: '1px solid #f0f0f0', verticalAlign: 'middle' };
 const qtyBtn: React.CSSProperties = { width: 28, height: 28, border: '1px solid #ddd', background: '#f5f5f5', cursor: 'pointer', fontSize: 16, lineHeight: 1 };

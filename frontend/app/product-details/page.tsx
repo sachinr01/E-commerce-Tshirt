@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import { getProductById, type ProductDetail } from '../lib/api';
+import { getProductById, getProductBySlug, type ProductDetail } from '../lib/api';
 import { useCart } from '../lib/cartContext';
 import { useWishlist } from '../lib/wishlistContext';
 
@@ -68,9 +68,10 @@ function StarRating({ rating, size = 16 }: { rating: number; size?: number }) {
   );
 }
 
-export function ProductDetailsClient({ productId }: { productId?: string } = {}) {
+export function ProductDetailsClient({ productId, productSlug }: { productId?: string; productSlug?: string } = {}) {
   const searchParams   = useSearchParams();
   const id             = productId ?? searchParams.get('id');
+  const slug           = productSlug ?? null;
   const { addItem }    = useCart();
   const { hasItem: inWishlist, addItem: addToWishlist, removeItem: removeFromWishlist } = useWishlist();
 
@@ -86,11 +87,19 @@ export function ProductDetailsClient({ productId }: { productId?: string } = {})
   const [activeTab,     setActiveTab]     = useState('description');
 
   useEffect(() => {
-    if (!id) { setError('No product ID provided.'); setLoading(false); return; }
-    getProductById(id)
-      .then(p => { setProduct(p); setLoading(false); })
-      .catch(err => { setError(err.message); setLoading(false); });
-  }, [id]);
+    if (slug) {
+      getProductBySlug(slug)
+        .then(p => { setProduct(p); setLoading(false); })
+        .catch(err => { setError(err.message); setLoading(false); });
+    } else if (id) {
+      getProductById(id)
+        .then(p => { setProduct(p); setLoading(false); })
+        .catch(err => { setError(err.message); setLoading(false); });
+    } else {
+      setError('Product not found.');
+      setLoading(false);
+    }
+  }, [id, slug]);
 
   useEffect(() => {
     const onScroll = () => setPinned(window.scrollY > 400);
@@ -183,20 +192,26 @@ export function ProductDetailsClient({ productId }: { productId?: string } = {})
     ? (bestMatch ? isVariationInStock(bestMatch) : false)
     : anyInStock;
 
-  const handleAddToCart = () => {
-    if (!isAddToCartEnabled) return;
-    addItem({
-      id: product.ID,
-      variationId: bestMatch?.ID,
-      title: product.title,
-      price: displaySalePrice ?? displayPrice ?? priceMin,
-      color: selectedColor || undefined,
-      size: selectedSize || undefined,
-      quantity,
-      image: PLACEHOLDER,
-    });
-    setAddedFlash(true);
-    setTimeout(() => setAddedFlash(false), 2000);
+  const canAddToCart = isAddToCartEnabled && inStock;
+
+  const handleAddToCart = async () => {
+    if (!canAddToCart) return;
+    try {
+      await addItem({
+        productId: product.ID,
+        variationId: bestMatch?.ID,
+        title: product.title,
+        price: displaySalePrice ?? displayPrice ?? priceMin,
+        color: selectedColor || undefined,
+        size: selectedSize || undefined,
+        quantity,
+        image: PLACEHOLDER,
+      });
+      setAddedFlash(true);
+      setTimeout(() => setAddedFlash(false), 2000);
+    } catch (err) {
+      console.error('Add to cart failed:', err);
+    }
   };
 
   const toggleWishlist = () => {
@@ -423,13 +438,15 @@ export function ProductDetailsClient({ productId }: { productId?: string } = {})
 
             {/* Add to Cart */}
             <button
-              disabled={!isAddToCartEnabled}
+              type="button"
+              disabled={!canAddToCart}
               onClick={handleAddToCart}
-              className={`cpd-atc-btn${isAddToCartEnabled ? ' ready' : ''}${addedFlash ? ' flash' : ''}`}>
+              className={`cpd-atc-btn${canAddToCart ? ' ready' : ''}${addedFlash ? ' flash' : ''}`}>
               {addedFlash ? '✓ Added to Cart!' :
-                !hasColors || selectedColor
-                  ? (!hasSizes || selectedSize ? 'Add to Cart' : 'Select Size')
-                  : 'Select Colour'}
+                !inStock ? 'Out of Stock' :
+                  (!hasColors || selectedColor
+                    ? (!hasSizes || selectedSize ? 'Add to Cart' : 'Select Size')
+                    : 'Select Colour')}
             </button>
 
             {/* Wishlist */}
@@ -509,10 +526,11 @@ export function ProductDetailsClient({ productId }: { productId?: string } = {})
             {displaySalePrice ? `$${displaySalePrice.toFixed(2)}` : displayPrice ? `$${Number(displayPrice).toFixed(2)}` : priceRangeStr}
           </span>
           <button
-            disabled={!isAddToCartEnabled}
+            type="button"
+            disabled={!canAddToCart}
             onClick={handleAddToCart}
-            className={`cpd-sticky-atc${isAddToCartEnabled ? ' ready' : ''}`}>
-            Add to Cart
+            className={`cpd-sticky-atc${canAddToCart ? ' ready' : ''}`}>
+            {!inStock ? 'Out of Stock' : 'Add to Cart'}
           </button>
         </div>
       )}
@@ -582,8 +600,6 @@ const S = {
 };
 
 const baseCss = `
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
-
 :root {
   --cpd-brand:       #1a8a6e;
   --cpd-brand-mid:   #12705a;
@@ -1042,6 +1058,9 @@ export default function ProductDetailsPage() {
     </Suspense>
   );
 }
+
+
+
 
 
 

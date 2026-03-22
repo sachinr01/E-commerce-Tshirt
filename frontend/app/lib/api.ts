@@ -1,7 +1,9 @@
-// Use absolute URL on server (SSR/SSG), relative on client (browser fetch)
-const API_BASE = typeof window === 'undefined'
-  ? (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/store/api')
-  : '/store/api';
+﻿// Server-side (SSR/SSG): call admin directly
+// Client-side (browser): go through Next.js rewrite proxy to avoid CORS
+const API_BASE =
+  typeof window === 'undefined'
+    ? (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/store/api')
+    : '/store/api';
 
 export interface Product {
   ID: number;
@@ -18,6 +20,12 @@ export interface Product {
   stock_status: string | null;
   total_sales: number | null;
   date_added: string;
+  color_slugs: string | null;
+  material_slugs: string | null;
+  style_slugs: string | null;
+  occasion_slugs: string | null;
+  feature_slugs: string | null;
+  size_slugs: string | null;
 }
 
 export interface Variation {
@@ -64,9 +72,10 @@ export interface AuthUser {
   displayName: string;
 }
 
-async function apiFetch<T>(path: string): Promise<T> {
+async function apiFetch<T>(path: string, withCredentials = false): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     cache: 'no-store',
+    ...(withCredentials ? { credentials: 'include' } : {}),
     headers: { 'Accept': 'application/json' },
   });
   if (!res.ok) {
@@ -82,19 +91,44 @@ async function apiPost<T>(path: string, body: object): Promise<{ success: boolea
   const res = await fetch(`${API_BASE}${path}`, {
     method: 'POST',
     cache: 'no-store',
+    credentials: 'include',
     headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
   return res.json();
 }
 
-export const getProducts    = ()        => apiFetch<Product[]>('/products');
+export interface AttributeOption {
+  attr_id: number;
+  attr_name: string;
+  attr_slug: string;
+}
+
+export interface AttributeGroup {
+  taxonomy: string;   // e.g. "pa_color"
+  label: string;      // e.g. "Color"
+  options: AttributeOption[];
+}
+
+export type ColorAttribute = AttributeOption;
+
+export const getProducts    = (searchParams?: URLSearchParams) => {
+  const qs = searchParams ? `?${searchParams.toString()}` : '';
+  return apiFetch<Product[]>(`/products${qs}`);
+};
 export const getFeatured    = (n = 4)   => apiFetch<Product[]>(`/products/featured?limit=${n}`);
 export const getOnSale      = (n?: number) => apiFetch<Product[]>(`/products/on-sale${n ? `?limit=${n}` : ''}`);
-export const getProductById = (id: number | string) => apiFetch<ProductDetail>(`/products/${id}`);
+export const getProductById  = (id: number | string) => apiFetch<ProductDetail>(`/products/${id}`);
+export const getProductBySlug = (slug: string) => apiFetch<ProductDetail>(`/products/slug/${slug}`);
+export const getColors      = ()        => apiFetch<ColorAttribute[]>('/attributes/colors');
+export const getAllAttributeGroups = () => apiFetch<AttributeGroup[]>('/attributes/all');
+export const getAttributeOptions = (taxonomy: string) =>
+  apiFetch<AttributeOption[]>(`/attributes/${taxonomy}`);
 
 export const authLogin    = (username: string, password: string) =>
   apiPost<AuthUser>('/auth/login', { username, password });
 
 export const authRegister = (username: string, email: string, password: string) =>
   apiPost<{ userId: number }>('/auth/register', { username, email, password });
+
+
