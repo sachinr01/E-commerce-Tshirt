@@ -1,15 +1,12 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState, useRef, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useCart } from "../lib/cartContext";
 import { useAuth } from "../lib/authContext";
 
 const PLACEHOLDER = "/store/images/dummy.png";
-
-const toSlug = (t: string) =>
-  t.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 
 export default function Header() {
   const { items, count, total, removeItem } = useCart();
@@ -18,464 +15,664 @@ export default function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const cartRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
 
-  /* close cart on outside click */
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (cartRef.current && !cartRef.current.contains(e.target as Node)) {
+    const handlePointerDown = (event: MouseEvent) => {
+      if (cartRef.current && !cartRef.current.contains(event.target as Node)) {
         setCartOpen(false);
       }
     };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+
+    const handleResize = () => {
+      if (window.innerWidth >= 992) {
+        setMobileMenuOpen(false);
+      }
+    };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setCartOpen(false);
+        setSearchOpen(false);
+        setMobileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    window.addEventListener("resize", handleResize);
+    window.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("keydown", handleEscape);
+    };
   }, []);
 
-  const searchRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
-    const onResize = () => { if (window.innerWidth >= 768) setMobileMenuOpen(false); };
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
+    document.body.style.overflow = mobileMenuOpen || searchOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileMenuOpen, searchOpen]);
 
-  /* lock body scroll when mobile menu open */
   useEffect(() => {
-    document.body.style.overflow = mobileMenuOpen ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
-  }, [mobileMenuOpen]);
-
-  /* focus search input when opened */
-  useEffect(() => {
-    if (searchOpen) searchRef.current?.focus();
+    if (searchOpen) {
+      searchRef.current?.focus();
+    }
   }, [searchOpen]);
 
   const navLinks = [
-    { label: "Shop",        href: "/shop" },
+    { label: "Home", href: "/" },
+    { label: "Shop", href: "/shop" },
     { label: "Collections", href: "/shop" },
-    { label: "Gifting",     href: "/shop" },
+    { label: "Gifting", href: "/shop" },
   ];
+
+  const closeOverlays = () => {
+    setCartOpen(false);
+    setSearchOpen(false);
+    setMobileMenuOpen(false);
+  };
 
   return (
     <>
       <style>{`
-        /* ── HEADER BASE ── */
         .nh-header {
           position: sticky;
           top: 0;
           z-index: 1000;
           background: #fff;
-          border-bottom: 1px solid #eee;
-          font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+          border-bottom: 1px solid #ececec;
         }
 
-        /* ── INNER LAYOUT ── */
         .nh-inner {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 0 40px;
-          height: 72px;
-          max-width: 1400px;
+          max-width: 1360px;
           margin: 0 auto;
-          position: relative;
+          height: 74px;
+          padding: 0 24px;
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+          align-items: center;
+          gap: 16px;
         }
 
-        /* ── LEFT NAV ── */
-        .nh-nav {
-          display: flex;
-          gap: 28px;
-          list-style: none;
-          margin: 0;
-          padding: 0;
-          flex: 1;
-        }
-        .nh-nav a {
-          text-decoration: none;
-          color: #1a1a1a;
-          font-weight: 600;
-          font-size: 13px;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-          transition: color 0.2s;
-        }
-        .nh-nav a:hover { color: #555; }
-
-        /* ── CENTER LOGO ── */
-        .nh-logo {
-          position: absolute;
-          left: 50%;
-          transform: translateX(-50%);
+        .nh-left,
+        .nh-right {
           display: flex;
           align-items: center;
+          min-width: 0;
+          gap: 12px;
         }
-        .nh-logo img { height: 44px; width: auto; }
 
-        /* ── RIGHT ICONS ── */
-        .nh-icons {
-          display: flex;
-          align-items: center;
-          gap: 18px;
-          flex: 1;
+        .nh-left {
+          justify-content: flex-start;
+        }
+
+        .nh-right {
           justify-content: flex-end;
         }
 
-        /* Search pill */
+        .nh-logo-link {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          line-height: 0;
+        }
+
+        .nh-logo-image {
+          width: auto;
+          height: 44px;
+          max-width: 220px;
+          object-fit: contain;
+        }
+
+        .nh-nav {
+          display: flex;
+          align-items: center;
+          gap: 24px;
+          list-style: none;
+          margin: 0;
+          padding: 0;
+          min-width: 0;
+        }
+
+        .nh-nav a,
+        .nh-login,
+        .nh-account-link {
+          color: #1b1b1b;
+          text-decoration: none;
+          font-size: 13px;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          white-space: nowrap;
+        }
+
+        .nh-nav a:hover,
+        .nh-login:hover,
+        .nh-account-link:hover {
+          color: #555;
+        }
+
         .nh-search-pill {
           display: flex;
           align-items: center;
-          border: 1px solid #ddd;
-          border-radius: 20px;
-          padding: 5px 14px;
           gap: 8px;
+          min-width: 0;
+          padding: 7px 12px;
+          border: 1px solid #dddddd;
+          border-radius: 999px;
           background: #fff;
-          transition: border-color 0.2s;
         }
-        .nh-search-pill:focus-within { border-color: #999; }
+
         .nh-search-pill input {
+          width: 120px;
+          min-width: 0;
           border: none;
           outline: none;
-          font-size: 13px;
-          color: #333;
           background: transparent;
-          width: 130px;
-          font-family: inherit;
-        }
-        .nh-search-pill svg { flex-shrink: 0; color: #888; }
-
-        /* Login link */
-        .nh-login {
+          color: #333;
           font-size: 13px;
-          font-weight: 600;
-          color: #1a1a1a;
-          text-decoration: none;
-          letter-spacing: 0.04em;
-          white-space: nowrap;
-          transition: color 0.2s;
         }
-        .nh-login:hover { color: #555; }
 
-        /* Cart button */
-        .nh-cart-wrap { position: relative; }
-        .nh-cart-btn {
-          display: flex;
+        .nh-icon-btn {
+          display: inline-flex;
           align-items: center;
-          gap: 6px;
-          background: none;
+          justify-content: center;
+          width: 38px;
+          height: 38px;
           border: none;
+          border-radius: 999px;
+          background: transparent;
+          color: #1b1b1b;
           cursor: pointer;
+          flex-shrink: 0;
+        }
+
+        .nh-icon-btn:hover {
+          background: #f5f5f5;
+        }
+
+        .nh-mobile-search,
+        .nh-hamburger {
+          display: none;
+        }
+
+        .nh-hamburger-lines {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+
+        .nh-hamburger-lines span {
+          display: block;
+          width: 20px;
+          height: 2px;
+          border-radius: 999px;
+          background: currentColor;
+        }
+
+        .nh-account-link {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          min-width: 0;
+        }
+
+        .nh-account-avatar {
+          width: 30px;
+          height: 30px;
+          border-radius: 50%;
+          background: #8fb8a8;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          color: #fff;
+        }
+
+        .nh-account-text {
+          max-width: 120px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .nh-cart-wrap {
+          position: relative;
+          flex-shrink: 0;
+        }
+
+        .nh-cart-link {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 6px 8px;
+          border: none;
+          background: transparent;
+          color: #1b1b1b;
+          cursor: pointer;
+          text-decoration: none;
           font-size: 13px;
           font-weight: 600;
-          color: #1a1a1a;
-          font-family: inherit;
-          padding: 0;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+        }
+
+        .nh-cart-label {
           white-space: nowrap;
         }
+
         .nh-cart-badge {
-          background: #1a1a1a;
-          color: #fff;
-          border-radius: 50%;
+          position: absolute;
+          top: -2px;
+          right: -2px;
           width: 18px;
           height: 18px;
+          border-radius: 50%;
+          background: #111;
+          color: #fff;
           font-size: 10px;
+          font-weight: 700;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-weight: 700;
+          line-height: 1;
         }
 
-        /* Cart dropdown */
         .nh-cart-dropdown {
           position: absolute;
           top: calc(100% + 12px);
           right: 0;
-          width: 300px;
-          background: #fff;
-          border: 1px solid #eee;
-          box-shadow: 0 8px 24px rgba(0,0,0,0.10);
-          z-index: 200;
+          width: 320px;
+          max-width: calc(100vw - 24px);
           padding: 16px;
+          border: 1px solid #ececec;
+          background: #fff;
+          box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12);
           opacity: 0;
           pointer-events: none;
-          transform: translateY(-6px);
-          transition: opacity 0.35s ease, transform 0.35s ease;
+          transform: translateY(-8px);
+          transition: opacity 0.25s ease, transform 0.25s ease;
         }
+
         .nh-cart-dropdown.open {
           opacity: 1;
           pointer-events: auto;
           transform: translateY(0);
         }
-        .nh-cart-item {
-          display: flex;
-          gap: 10px;
-          padding: 10px 0;
-          border-bottom: 1px solid #f0f0f0;
-          align-items: flex-start;
-        }
-        .nh-cart-item img { width: 56px; height: 60px; object-fit: cover; border-radius: 3px; flex-shrink: 0; }
-        .nh-cart-item-info { flex: 1; font-size: 12px; color: #333; }
-        .nh-cart-item-title { font-weight: 600; margin-bottom: 3px; }
-        .nh-cart-item-price { color: #666; }
-        .nh-cart-remove {
-          background: none; border: none; cursor: pointer;
-          color: #aaa; font-size: 16px; padding: 0; line-height: 1;
-          flex-shrink: 0;
-        }
-        .nh-cart-remove:hover { color: #e00; }
-        .nh-cart-subtotal {
-          display: flex; justify-content: space-between;
-          padding: 12px 0 14px;
-          font-size: 13px; font-weight: 700; color: #1a1a1a;
-        }
-        .nh-cart-actions { display: flex; flex-direction: column; gap: 8px; }
-        .nh-cart-actions a {
-          display: block; text-align: center;
-          padding: 11px; font-size: 12px; font-weight: 700;
-          letter-spacing: 0.08em; text-transform: uppercase;
-          text-decoration: none; transition: background 0.2s, color 0.2s;
-        }
-        .nh-btn-view { background: #f0f0f0; color: #1a1a1a; }
-        .nh-btn-view:hover { background: #e0e0e0; }
-        .nh-btn-checkout { background: #1a1a1a; color: #fff; }
-        .nh-btn-checkout:hover { background: #333; }
-        .nh-cart-empty { font-size: 13px; color: #888; padding: 8px 0 16px; text-align: center; }
 
-        /* ── SEARCH OVERLAY ── */
-        .nh-search-overlay {
+        .nh-cart-item {
+          display: grid;
+          grid-template-columns: 56px minmax(0, 1fr) auto;
+          gap: 10px;
+          align-items: start;
+          padding: 10px 0;
+          border-bottom: 1px solid #f1f1f1;
+        }
+
+        .nh-cart-thumb {
+          width: 56px;
+          height: 60px;
+          object-fit: cover;
+          border-radius: 4px;
+        }
+
+        .nh-cart-item-title {
+          margin: 0 0 4px;
+          font-size: 13px;
+          font-weight: 600;
+          color: #111;
+        }
+
+        .nh-cart-item-meta {
+          font-size: 12px;
+          color: #666;
+        }
+
+        .nh-cart-remove {
+          border: none;
+          background: transparent;
+          color: #9b9b9b;
+          cursor: pointer;
+          font-size: 18px;
+          line-height: 1;
+        }
+
+        .nh-cart-empty {
+          margin: 8px 0 16px;
+          font-size: 13px;
+          color: #777;
+          text-align: center;
+        }
+
+        .nh-cart-subtotal {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 14px 0;
+          font-size: 14px;
+          font-weight: 700;
+        }
+
+        .nh-cart-actions {
+          display: grid;
+          gap: 8px;
+        }
+
+        .nh-cart-action {
+          display: block;
+          padding: 12px;
+          text-align: center;
+          text-decoration: none;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          font-size: 12px;
+          font-weight: 700;
+        }
+
+        .nh-cart-action.view {
+          background: #f1f1f1;
+          color: #111;
+        }
+
+        .nh-cart-action.checkout {
+          background: #111;
+          color: #fff;
+        }
+
+        .nh-search-overlay,
+        .nh-drawer-overlay {
           position: fixed;
           inset: 0;
-          background: rgba(0,0,0,0.5);
+          background: rgba(0, 0, 0, 0.45);
           z-index: 1100;
+        }
+
+        .nh-search-overlay {
           display: flex;
           align-items: flex-start;
           justify-content: center;
-          padding-top: 80px;
+          padding: 88px 16px 16px;
         }
+
         .nh-search-box {
-          background: #fff;
-          width: 100%;
-          max-width: 600px;
-          padding: 20px 24px;
+          width: min(640px, 100%);
           display: flex;
           align-items: center;
           gap: 12px;
-          box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+          padding: 18px 20px;
+          background: #fff;
+          box-shadow: 0 14px 34px rgba(0, 0, 0, 0.16);
         }
+
         .nh-search-box input {
           flex: 1;
+          min-width: 0;
           border: none;
           outline: none;
           font-size: 16px;
-          font-family: inherit;
-          color: #1a1a1a;
         }
+
         .nh-search-close {
-          background: none; border: none; cursor: pointer;
-          font-size: 22px; color: #888; padding: 0; line-height: 1;
-        }
-
-        /* ── MOBILE HAMBURGER (hidden on desktop) ── */
-        .nh-hamburger {
-          display: none;
-          background: none;
           border: none;
+          background: transparent;
           cursor: pointer;
-          padding: 4px;
-          flex-direction: column;
-          gap: 5px;
-          align-items: center;
-          justify-content: center;
-        }
-        .nh-hamburger span {
-          display: block;
-          width: 22px;
-          height: 2px;
-          background: #1a1a1a;
-          border-radius: 2px;
-          transition: all 0.3s;
+          color: #777;
+          font-size: 24px;
+          line-height: 1;
         }
 
-        /* ── MOBILE DRAWER ── */
-        .nh-drawer-overlay {
-          display: none;
-          position: fixed;
-          inset: 0;
-          background: rgba(0,0,0,0.4);
-          z-index: 1200;
-        }
         .nh-drawer {
           position: fixed;
           top: 0;
           left: 0;
           bottom: 0;
-          width: 280px;
+          width: min(320px, calc(100vw - 32px));
           background: #fff;
-          z-index: 1300;
+          z-index: 1200;
           transform: translateX(-100%);
-          transition: transform 0.3s ease;
+          transition: transform 0.25s ease;
           display: flex;
           flex-direction: column;
-          overflow-y: auto;
         }
-        .nh-drawer.open { transform: translateX(0); }
-        .nh-drawer-overlay.open { display: block; }
+
+        .nh-drawer.open {
+          transform: translateX(0);
+        }
+
         .nh-drawer-head {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 0 20px;
-          height: 64px;
-          border-bottom: 1px solid #eee;
-          flex-shrink: 0;
+          padding: 16px 18px;
+          border-bottom: 1px solid #ececec;
         }
-        .nh-drawer-close {
-          background: none; border: none; cursor: pointer;
-          font-size: 24px; color: #555; padding: 0; line-height: 1;
+
+        .nh-drawer-nav {
+          list-style: none;
+          margin: 0;
+          padding: 8px 0;
         }
-        .nh-drawer-nav { list-style: none; margin: 0; padding: 0; }
-        .nh-drawer-nav li a {
+
+        .nh-drawer-nav a {
           display: block;
-          padding: 15px 20px;
+          padding: 14px 20px;
+          color: #111;
+          text-decoration: none;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
           font-size: 13px;
           font-weight: 700;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-          color: #1a1a1a;
-          text-decoration: none;
-          border-bottom: 1px solid #f0f0f0;
-          transition: background 0.15s;
+          border-bottom: 1px solid #f3f3f3;
         }
-        .nh-drawer-nav li a:hover { background: #fafafa; }
+
         .nh-drawer-footer {
-          padding: 20px;
-          border-top: 1px solid #eee;
           margin-top: auto;
-          display: flex;
-          flex-direction: column;
+          padding: 16px 20px 24px;
+          border-top: 1px solid #ececec;
+          display: grid;
           gap: 10px;
         }
+
         .nh-drawer-footer a {
-          font-size: 13px;
-          color: #555;
+          color: #444;
           text-decoration: none;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-        .nh-drawer-footer a:hover { color: #1a1a1a; }
-
-        /* ── RESPONSIVE ── */
-        @media (max-width: 1024px) {
-          .nh-inner { padding: 0 24px; }
-          .nh-search-pill input { width: 100px; }
+          font-size: 13px;
+          font-weight: 600;
         }
 
-        @media (max-width: 767px) {
-          .nh-nav { display: none; }
-          .nh-search-pill { display: none; }
-          .nh-login { display: none; }
-          .nh-hamburger { display: flex; }
-          .nh-inner { padding: 0 16px; height: 60px; }
-          .nh-logo img { height: 36px; }
+        @media (max-width: 1199px) {
+          .nh-inner {
+            padding: 0 18px;
+            gap: 12px;
+          }
+
+          .nh-nav {
+            gap: 18px;
+          }
+
+          .nh-search-pill input {
+            width: 88px;
+          }
+
+          .nh-account-text {
+            max-width: 84px;
+          }
+        }
+
+        @media (max-width: 991px) {
+          .nh-inner {
+            grid-template-columns: auto minmax(0, 1fr) auto;
+            height: 64px;
+            padding: 0 12px;
+            gap: 10px;
+          }
+
+          .nh-left {
+            flex: 0 0 auto;
+          }
+
+          .nh-nav,
+          .nh-search-pill,
+          .nh-login-label {
+            display: none;
+          }
+
+          .nh-hamburger,
+          .nh-mobile-search {
+            display: inline-flex;
+          }
+
+          .nh-right {
+            gap: 2px;
+          }
+
+          .nh-logo-link {
+            justify-self: center;
+            min-width: 0;
+          }
+
+          .nh-logo-image {
+            height: 36px;
+            max-width: min(190px, 100%);
+          }
+
+          .nh-account-link,
+          .nh-cart-link {
+            padding: 6px;
+          }
+
+          .nh-account-text,
+          .nh-cart-label {
+            display: none;
+          }
+        }
+
+        @media (max-width: 575px) {
+          .nh-inner {
+            height: 58px;
+            padding: 0 10px;
+            gap: 8px;
+          }
+
+          .nh-logo-image {
+            height: 30px;
+            max-width: 150px;
+          }
+
+          .nh-cart-dropdown {
+            right: -6px;
+            width: min(300px, calc(100vw - 20px));
+            padding: 14px;
+          }
+
+          .nh-search-overlay {
+            padding-top: 72px;
+          }
+
+          .nh-search-box {
+            padding: 16px;
+          }
         }
       `}</style>
 
-      {/* ── MAIN HEADER ── */}
       <header className="nh-header">
         <div className="nh-inner">
-
-          {/* LEFT — nav links (desktop) + hamburger (mobile) */}
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", flex: 1 }}>
+          <div className="nh-left">
             <button
-              className="nh-hamburger"
+              type="button"
+              className="nh-icon-btn nh-hamburger"
               onClick={() => setMobileMenuOpen(true)}
               aria-label="Open menu"
             >
-              <span /><span /><span />
+              <span className="nh-hamburger-lines">
+                <span />
+                <span />
+                <span />
+              </span>
             </button>
+
             <ul className="nh-nav">
-              {navLinks.map((l) => (
-                <li key={l.label}><Link href={l.href}>{l.label}</Link></li>
+              {navLinks.map((link) => (
+                <li key={link.label}>
+                  <Link href={link.href}>{link.label}</Link>
+                </li>
               ))}
             </ul>
           </div>
 
-          {/* CENTER — logo */}
-          <div className="nh-logo">
-            <Link href="/">
-              <Image
-                src="/store/images/okab_ecommerce_logo.png"
-                alt="Logo"
-                width={160}
-                height={44}
-                style={{ height: "44px", width: "auto" }}
-                priority
-              />
-            </Link>
-          </div>
+          <Link href="/" className="nh-logo-link" onClick={closeOverlays}>
+            <Image
+              src="/store/images/okab_ecommerce_logo.png"
+              alt="Okab Online Store"
+              width={220}
+              height={44}
+              priority
+              className="nh-logo-image"
+            />
+          </Link>
 
-          {/* RIGHT — search + login + cart */}
-          <div className="nh-icons">
-            {/* Search pill */}
-            <form className="nh-search-pill" onSubmit={(e) => e.preventDefault()}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+          <div className="nh-right">
+            <form className="nh-search-pill" onSubmit={(event) => event.preventDefault()}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.35-4.35" />
               </svg>
-              <input type="text" placeholder="Search..." aria-label="Search" />
+              <input type="text" placeholder="Search..." aria-label="Search products" />
             </form>
 
-            {/* Mobile search icon */}
             <button
+              type="button"
+              className="nh-icon-btn nh-mobile-search"
               onClick={() => setSearchOpen(true)}
-              style={{ display: "none", background: "none", border: "none", cursor: "pointer", padding: "4px" }}
-              aria-label="Search"
-              className="nh-mobile-search"
+              aria-label="Open search"
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-                stroke="#1a1a1a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.35-4.35" />
               </svg>
             </button>
 
-            {/* Login / Account */}
             {isLoggedIn && user ? (
-              <Link href="/my-account" className="nh-login" style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                <span style={{
-                  width: 28, height: 28, borderRadius: "50%", background: "#8fb8a8",
-                  display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                }}>
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
-                    stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <Link href="/my-account" className="nh-account-link" onClick={() => setCartOpen(false)}>
+                <span className="nh-account-avatar">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                     <circle cx="12" cy="7" r="4" />
                   </svg>
                 </span>
-                {user.displayName}
+                <span className="nh-account-text">{user.displayName}</span>
               </Link>
             ) : (
-              <Link href="/my-account" className="nh-login" style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                  <circle cx="12" cy="7" r="4" />
-                </svg>
-                Login
+              <Link href="/my-account" className="nh-account-link nh-login" onClick={() => setCartOpen(false)}>
+                <span className="nh-account-avatar">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
+                </span>
+                <span className="nh-login-label">Login</span>
               </Link>
             )}
 
-            {/* Cart */}
             <div className="nh-cart-wrap" ref={cartRef}>
-              <button className="nh-cart-btn" aria-label="Cart" onClick={() => setCartOpen(o => !o)}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <button
+                type="button"
+                className="nh-cart-link"
+                onClick={() => setCartOpen((prev) => !prev)}
+                aria-label="Open cart preview"
+                aria-expanded={cartOpen}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                   <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
                   <line x1="3" y1="6" x2="21" y2="6" />
                   <path d="M16 10a4 4 0 0 1-8 0" />
                 </svg>
-                <Link href="/cart" className="nh-login">Cart</Link>
+                <span className="nh-cart-label">Cart</span>
                 {count > 0 && <span className="nh-cart-badge">{count}</span>}
               </button>
 
-              {/* Cart dropdown */}
               <div className={`nh-cart-dropdown${cartOpen ? " open" : ""}`}>
                 {items.length === 0 ? (
                   <p className="nh-cart-empty">Your cart is empty.</p>
@@ -483,29 +680,42 @@ export default function Header() {
                   <>
                     {items.map((item) => (
                       <div key={item.cartItemId} className="nh-cart-item">
-                        <img src={item.image || PLACEHOLDER} alt={item.title} />
-                        <div className="nh-cart-item-info">
-                          <div className="nh-cart-item-title">{item.title}</div>
-                          <div className="nh-cart-item-price">
-                            {item.quantity} × ${item.price.toFixed(2)}
+                        <img
+                          src={item.image || PLACEHOLDER}
+                          alt={item.title}
+                          className="nh-cart-thumb"
+                        />
+                        <div>
+                          <p className="nh-cart-item-title">{item.title}</p>
+                          <div className="nh-cart-item-meta">
+                            {item.quantity} x ${item.price.toFixed(2)}
                           </div>
                         </div>
                         <button
+                          type="button"
                           className="nh-cart-remove"
                           onClick={() => removeItem(item.cartItemId)}
-                          aria-label="Remove item"
-                        >×</button>
+                          aria-label={`Remove ${item.title}`}
+                        >
+                          ×
+                        </button>
                       </div>
                     ))}
+
                     <div className="nh-cart-subtotal">
                       <span>Subtotal</span>
                       <span>${total.toFixed(2)}</span>
                     </div>
                   </>
                 )}
+
                 <div className="nh-cart-actions">
-                  <Link href="/cart" className="nh-btn-view">View Cart</Link>
-                  <Link href="/checkout" className="nh-btn-checkout">Checkout</Link>
+                  <Link href="/cart" className="nh-cart-action view" onClick={closeOverlays}>
+                    View Cart
+                  </Link>
+                  <Link href="/checkout" className="nh-cart-action checkout" onClick={closeOverlays}>
+                    Checkout
+                  </Link>
                 </div>
               </div>
             </div>
@@ -513,70 +723,56 @@ export default function Header() {
         </div>
       </header>
 
-      {/* ── SEARCH OVERLAY (mobile) ── */}
       {searchOpen && (
         <div className="nh-search-overlay" onClick={() => setSearchOpen(false)}>
-          <div className="nh-search-box" onClick={(e) => e.stopPropagation()}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-              stroke="#888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+          <div className="nh-search-box" onClick={(event) => event.stopPropagation()}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2">
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.35-4.35" />
             </svg>
             <input ref={searchRef} type="text" placeholder="Search products..." />
-            <button className="nh-search-close" onClick={() => setSearchOpen(false)}>×</button>
+            <button type="button" className="nh-search-close" onClick={() => setSearchOpen(false)} aria-label="Close search">
+              ×
+            </button>
           </div>
         </div>
       )}
 
-      {/* ── MOBILE DRAWER ── */}
-      <div
-        className={`nh-drawer-overlay${mobileMenuOpen ? " open" : ""}`}
-        onClick={() => setMobileMenuOpen(false)}
-      />
-      <div className={`nh-drawer${mobileMenuOpen ? " open" : ""}`}>
+      {mobileMenuOpen && <div className="nh-drawer-overlay" onClick={() => setMobileMenuOpen(false)} />}
+
+      <aside className={`nh-drawer${mobileMenuOpen ? " open" : ""}`} aria-hidden={!mobileMenuOpen}>
         <div className="nh-drawer-head">
-          <Link href="/" onClick={() => setMobileMenuOpen(false)}>
-            <Image
-              src="/store/images/okab_ecommerce_logo.png"
-              alt="Logo"
-              width={120}
-              height={34}
-              style={{ height: "34px", width: "auto" }}
-            />
-          </Link>
-          <button className="nh-drawer-close" onClick={() => setMobileMenuOpen(false)} aria-label="Close menu">×</button>
+          <Image
+            src="/store/images/okab_ecommerce_logo.png"
+            alt="Okab Online Store"
+            width={160}
+            height={34}
+            style={{ width: "auto", height: "34px" }}
+          />
+          <button type="button" className="nh-search-close" onClick={() => setMobileMenuOpen(false)} aria-label="Close menu">
+            ×
+          </button>
         </div>
 
         <ul className="nh-drawer-nav">
-          {[
-            { label: "Home",        href: "/" },
-            { label: "Shop",        href: "/shop" },
-            { label: "Collections", href: "/shop" },
-            { label: "Gifting",     href: "/shop" },
-            { label: "My Account",  href: "/my-account" },
-            { label: "Cart",        href: "/cart" },
-            { label: "Checkout",    href: "/checkout" },
-          ].map((l) => (
-            <li key={l.label}>
-              <Link href={l.href} onClick={() => setMobileMenuOpen(false)}>{l.label}</Link>
+          {navLinks.concat([
+            { label: "My Account", href: "/my-account" },
+            { label: "Cart", href: "/cart" },
+            { label: "Checkout", href: "/checkout" },
+          ]).map((link) => (
+            <li key={link.label}>
+              <Link href={link.href} onClick={closeOverlays}>
+                {link.label}
+              </Link>
             </li>
           ))}
         </ul>
 
         <div className="nh-drawer-footer">
-          <Link href="/my-account" onClick={() => setMobileMenuOpen(false)}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
-            </svg>
-            {isLoggedIn && user ? user.displayName : "Login / Register"}
-          </Link>
-          <Link href="/wishlist" onClick={() => setMobileMenuOpen(false)}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-            </svg>
-            Wishlist
-          </Link>
+          <Link href="/wishlist" onClick={closeOverlays}>Wishlist</Link>
+          <Link href="/orders" onClick={closeOverlays}>Track Orders</Link>
         </div>
-      </div>
+      </aside>
     </>
   );
 }
