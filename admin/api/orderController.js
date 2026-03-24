@@ -232,8 +232,10 @@ const getMyOrders = async (req, res) => {
   }
   try {
     const [orders] = await db.query(
-      `SELECT o.order_id, o.order_status, o.order_date,
-              om_total.meta_value AS total,
+      `SELECT o.order_id,
+              MAX(o.order_status) AS order_status,
+              MAX(o.order_date) AS order_date,
+              MAX(om_total.meta_value) AS total,
               GROUP_CONCAT(oi.order_item_name SEPARATOR ', ') AS items
        FROM tbl_orders o
        LEFT JOIN tbl_ordermeta om_total
@@ -242,7 +244,7 @@ const getMyOrders = async (req, res) => {
          ON o.order_id = oi.order_id AND oi.order_item_type = 'line_item'
        WHERE o.user_id = ? AND o.order_type = 'shop_order'
        GROUP BY o.order_id
-       ORDER BY o.order_date DESC`,
+       ORDER BY MAX(o.order_date) DESC`,
       [user.id]
     );
     res.json({ success: true, data: orders });
@@ -255,9 +257,11 @@ const getMyOrders = async (req, res) => {
 const getAllOrders = async (_req, res) => {
   try {
     const [orders] = await db.query(
-      `SELECT o.order_id, o.order_status, o.order_date,
-              om_total.meta_value AS total,
-              om_email.meta_value AS billing_email,
+      `SELECT o.order_id,
+              MAX(o.order_status) AS order_status,
+              MAX(o.order_date) AS order_date,
+              MAX(om_total.meta_value) AS total,
+              MAX(om_email.meta_value) AS billing_email,
               GROUP_CONCAT(oi.order_item_name SEPARATOR ', ') AS items
        FROM tbl_orders o
        LEFT JOIN tbl_ordermeta om_total
@@ -268,12 +272,133 @@ const getAllOrders = async (_req, res) => {
          ON o.order_id = oi.order_id AND oi.order_item_type = 'line_item'
        WHERE o.order_type = 'shop_order'
        GROUP BY o.order_id
-       ORDER BY o.order_date DESC`
+       ORDER BY MAX(o.order_date) DESC`
     );
     res.json({ success: true, data: orders });
   } catch (err) {
     console.error('getAllOrders error:', err);
     res.status(500).json({ success: false, message: 'Failed to load orders.' });
+  }
+};
+
+const getMyOrderById = async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user) {
+    return res.status(401).json({ success: false, message: 'Login required.' });
+  }
+  const orderId = Number.parseInt(req.params.orderId, 10);
+  if (!orderId) {
+    return res.status(400).json({ success: false, message: 'Invalid order id.' });
+  }
+
+  try {
+    const [orderRows] = await db.query(
+      `SELECT o.order_id,
+              MAX(o.order_status) AS order_status,
+              MAX(o.order_date) AS order_date,
+              MAX(om_total.meta_value) AS total,
+              MAX(om_sub.meta_value) AS subtotal,
+              MAX(om_ship.meta_value) AS shipping,
+              MAX(om_pay.meta_value) AS payment_method,
+              MAX(om_bemail.meta_value) AS billing_email,
+              MAX(om_bfn.meta_value) AS billing_first_name,
+              MAX(om_bln.meta_value) AS billing_last_name,
+              MAX(om_bph.meta_value) AS billing_phone,
+              MAX(om_ba1.meta_value) AS billing_address_1,
+              MAX(om_ba2.meta_value) AS billing_address_2,
+              MAX(om_bcity.meta_value) AS billing_city,
+              MAX(om_bstate.meta_value) AS billing_state,
+              MAX(om_bpc.meta_value) AS billing_postcode,
+              MAX(om_bcountry.meta_value) AS billing_country,
+              MAX(om_sfn.meta_value) AS ship_first_name,
+              MAX(om_sln.meta_value) AS ship_last_name,
+              MAX(om_sph.meta_value) AS ship_phone,
+              MAX(om_sa1.meta_value) AS ship_address_1,
+              MAX(om_sa2.meta_value) AS ship_address_2,
+              MAX(om_scity.meta_value) AS ship_city,
+              MAX(om_sstate.meta_value) AS ship_state,
+              MAX(om_spc.meta_value) AS ship_postcode,
+              MAX(om_scountry.meta_value) AS ship_country,
+              MAX(u.display_name) AS user_display_name,
+              MAX(u.user_email) AS user_email
+       FROM tbl_orders o
+       LEFT JOIN tbl_users u ON u.ID = o.user_id
+       LEFT JOIN tbl_ordermeta om_total
+         ON o.order_id = om_total.order_id AND om_total.meta_key = '_order_total'
+       LEFT JOIN tbl_ordermeta om_sub
+         ON o.order_id = om_sub.order_id AND om_sub.meta_key = '_order_subtotal'
+       LEFT JOIN tbl_ordermeta om_ship
+         ON o.order_id = om_ship.order_id AND om_ship.meta_key = '_order_shipping'
+       LEFT JOIN tbl_ordermeta om_pay
+         ON o.order_id = om_pay.order_id AND om_pay.meta_key = '_payment_method'
+       LEFT JOIN tbl_ordermeta om_bemail
+         ON o.order_id = om_bemail.order_id AND om_bemail.meta_key = '_billing_email'
+       LEFT JOIN tbl_ordermeta om_bfn
+         ON o.order_id = om_bfn.order_id AND om_bfn.meta_key = '_billing_first_name'
+       LEFT JOIN tbl_ordermeta om_bln
+         ON o.order_id = om_bln.order_id AND om_bln.meta_key = '_billing_last_name'
+       LEFT JOIN tbl_ordermeta om_bph
+         ON o.order_id = om_bph.order_id AND om_bph.meta_key = '_billing_phone'
+       LEFT JOIN tbl_ordermeta om_ba1
+         ON o.order_id = om_ba1.order_id AND om_ba1.meta_key = '_billing_address_1'
+       LEFT JOIN tbl_ordermeta om_ba2
+         ON o.order_id = om_ba2.order_id AND om_ba2.meta_key = '_billing_address_2'
+       LEFT JOIN tbl_ordermeta om_bcity
+         ON o.order_id = om_bcity.order_id AND om_bcity.meta_key = '_billing_city'
+       LEFT JOIN tbl_ordermeta om_bstate
+         ON o.order_id = om_bstate.order_id AND om_bstate.meta_key = '_billing_state'
+       LEFT JOIN tbl_ordermeta om_bpc
+         ON o.order_id = om_bpc.order_id AND om_bpc.meta_key = '_billing_postcode'
+       LEFT JOIN tbl_ordermeta om_bcountry
+         ON o.order_id = om_bcountry.order_id AND om_bcountry.meta_key = '_billing_country'
+       LEFT JOIN tbl_ordermeta om_sfn
+         ON o.order_id = om_sfn.order_id AND om_sfn.meta_key = '_shipping_first_name'
+       LEFT JOIN tbl_ordermeta om_sln
+         ON o.order_id = om_sln.order_id AND om_sln.meta_key = '_shipping_last_name'
+       LEFT JOIN tbl_ordermeta om_sph
+         ON o.order_id = om_sph.order_id AND om_sph.meta_key = '_shipping_phone'
+       LEFT JOIN tbl_ordermeta om_sa1
+         ON o.order_id = om_sa1.order_id AND om_sa1.meta_key = '_shipping_address_1'
+       LEFT JOIN tbl_ordermeta om_sa2
+         ON o.order_id = om_sa2.order_id AND om_sa2.meta_key = '_shipping_address_2'
+       LEFT JOIN tbl_ordermeta om_scity
+         ON o.order_id = om_scity.order_id AND om_scity.meta_key = '_shipping_city'
+       LEFT JOIN tbl_ordermeta om_sstate
+         ON o.order_id = om_sstate.order_id AND om_sstate.meta_key = '_shipping_state'
+       LEFT JOIN tbl_ordermeta om_spc
+         ON o.order_id = om_spc.order_id AND om_spc.meta_key = '_shipping_postcode'
+       LEFT JOIN tbl_ordermeta om_scountry
+         ON o.order_id = om_scountry.order_id AND om_scountry.meta_key = '_shipping_country'
+       WHERE o.order_id = ? AND o.user_id = ? AND o.order_type = 'shop_order'
+       GROUP BY o.order_id`,
+      [orderId, user.id]
+    );
+
+    if (!orderRows.length) {
+      return res.status(404).json({ success: false, message: 'Order not found.' });
+    }
+
+    const order = orderRows[0];
+
+    const [items] = await db.query(
+      `SELECT oi.order_item_id,
+              oi.order_item_name,
+              oi.product_id,
+              MAX(CASE WHEN oim.meta_key = '_qty' THEN oim.meta_value END) AS qty,
+              MAX(CASE WHEN oim.meta_key = '_line_total' THEN oim.meta_value END) AS line_total,
+              MAX(CASE WHEN oim.meta_key = 'pa_color' THEN oim.meta_value END) AS color,
+              MAX(CASE WHEN oim.meta_key = 'pa_size' THEN oim.meta_value END) AS size
+       FROM tbl_order_items oi
+       LEFT JOIN tbl_order_itemmeta oim ON oim.order_item_id = oi.order_item_id
+       WHERE oi.order_id = ? AND oi.order_item_type = 'line_item'
+       GROUP BY oi.order_item_id, oi.order_item_name, oi.product_id`,
+      [orderId]
+    );
+
+    res.json({ success: true, data: { order, items } });
+  } catch (err) {
+    console.error('getMyOrderById error:', err);
+    res.status(500).json({ success: false, message: 'Failed to load order.' });
   }
 };
 
@@ -295,6 +420,7 @@ const updateOrderStatus = async (req, res) => {
 module.exports = {
   placeOrder,
   getMyOrders,
+  getMyOrderById,
   getAllOrders,
   updateOrderStatus,
 };

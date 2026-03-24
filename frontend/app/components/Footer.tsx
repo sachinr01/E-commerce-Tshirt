@@ -9,7 +9,7 @@ export default function Footer() {
             <h4>NEED HELP</h4>
             <ul className="footer-nav-list" role="list">
               <li><a href="#." className="link-faded">FAQs</a></li>
-              <li><a href="/store/footer/about?tab=track-order" className="link-faded">Track Order</a></li>
+              <li><Link href="/orders" className="link-faded">Track Order</Link></li>
               <li><a href="#." className="link-faded">Store Locator</a></li>
               <li><a href="#." className="link-faded">Return &amp; Exchange</a></li>
               <li><a href="#." className="link-faded">Site Map</a></li>

@@ -133,4 +133,59 @@ export const authLogin    = (username: string, password: string) =>
 export const authRegister = (username: string, email: string, password: string) =>
   apiPost<{ userId: number }>('/auth/register', { username, email, password });
 
+export interface OrderSummary {
+  order_id: number;
+  order_status: string;
+  order_date: string;
+  total: string | number | null;
+  items: string | null;
+}
 
+export const getMyOrders = () => apiFetch<OrderSummary[]>('/orders/my', true);
+
+export interface OrderItemDetail {
+  order_item_id: number;
+  order_item_name: string;
+  product_id: number;
+  qty: string | number | null;
+  line_total: string | number | null;
+  color: string | null;
+  size: string | null;
+}
+
+export interface OrderDetailResponse {
+  order: {
+    order_id: number;
+    order_status: string;
+    order_date: string;
+    total: string | number | null;
+    subtotal: string | number | null;
+    shipping: string | number | null;
+    payment_method: string | null;
+    billing_email?: string | null;
+    billing_first_name?: string | null;
+    billing_last_name?: string | null;
+    billing_phone?: string | null;
+    billing_address_1?: string | null;
+    billing_address_2?: string | null;
+    billing_city?: string | null;
+    billing_state?: string | null;
+    billing_postcode?: string | null;
+    billing_country?: string | null;
+    ship_first_name?: string | null;
+    ship_last_name?: string | null;
+    ship_phone?: string | null;
+    ship_address_1?: string | null;
+    ship_address_2?: string | null;
+    ship_city?: string | null;
+    ship_state?: string | null;
+    ship_postcode?: string | null;
+    ship_country?: string | null;
+    user_display_name?: string | null;
+    user_email?: string | null;
+  };
+  items: OrderItemDetail[];
+}
+
+export const getMyOrderById = (orderId: number | string) =>
+  apiFetch<OrderDetailResponse>(`/orders/${orderId}`, true);

@@ -42,6 +42,7 @@ router.delete('/cart/clear',       cart.clearCart);
 // Order endpoints
 router.post('/orders/place',       orders.placeOrder);
 router.get('/orders/my',           requireLogin, orders.getMyOrders);
+router.get('/orders/:orderId',     requireLogin, orders.getMyOrderById);
 
 // Admin/Agent endpoints
 router.get('/admin/orders',        requireAdmin, orders.getAllOrders);
