@@ -35,7 +35,13 @@ export default function MyAccountPage() {
     try {
       const res = await authLogin(login.username, login.password);
       if (res.success && res.data) {
-        setUser(res.data);
+        // Ensure we read the fresh session user from backend before rendering
+        const me = await fetch('/store/api/auth/me', { credentials: 'include' }).then(r => r.json());
+        if (me.success && me.data?.isLoggedIn && me.data.user) {
+          setUser(me.data.user);
+        } else {
+          setUser(res.data);
+        }
         await refresh();
       } else {
         setLoginErr(res.message || 'Login failed.');
