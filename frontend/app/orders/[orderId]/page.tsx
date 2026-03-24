@@ -162,7 +162,7 @@ export default function OrderDetailPage() {
                 <div className="order-detail-card">
                   <h3 className="order-detail-subtitle">Items</h3>
                   <div className="order-items-list">
-                    {data.items.map(item => (
+                    {data!.items.map(item => (
                       <div key={item.order_item_id} className="order-item">
                         <div className="order-item-thumb" aria-hidden="true">
                           <span>{(item.order_item_name || 'Item').slice(0, 1).toUpperCase()}</span>
