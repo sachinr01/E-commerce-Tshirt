@@ -1,4 +1,4 @@
-const db     = require("../config/db");
+const db = require("../config/db");
 const bcrypt = require("bcrypt");
 
 // ── Helper: upsert a single usermeta row ──────────────────────────────────────
@@ -7,7 +7,7 @@ const upsertMeta = async (userId, key, value) => {
     `INSERT INTO tbl_usermeta (user_id, meta_key, meta_value)
      VALUES (?, ?, ?)
      ON DUPLICATE KEY UPDATE meta_value = VALUES(meta_value)`,
-    [userId, key, value || ""]
+    [userId, key, value || ""],
   );
 };
 
@@ -54,14 +54,14 @@ const showUsers = async (req, res) => {
       `SELECT u.*, ut.user_type AS type_name
        FROM tbl_users u
        LEFT JOIN tbl_user_types ut ON ut.user_type_id = u.user_type
-       ORDER BY u.ID DESC`
+       ORDER BY u.ID DESC`,
     );
 
     res.render("users/index", {
-      title:   "Users",
+      title: "Users",
       users,
       success: req.query.success || null,
-      error:   req.query.error   || null,
+      error: req.query.error || null,
     });
   } catch (err) {
     console.error("showUsers error:", err.message);
@@ -73,15 +73,15 @@ const showUsers = async (req, res) => {
 const showAddUser = async (req, res) => {
   try {
     const [userTypes] = await db.query(
-      "SELECT * FROM tbl_user_types ORDER BY user_type_id ASC"
+      "SELECT * FROM tbl_user_types ORDER BY user_type_id ASC",
     );
 
     res.render("users/add", {
-      title:     "Add User",
+      title: "Add User",
       userTypes,
-      user:      null,
-      isEdit:    false,
-      errors:    req.query.error || null,
+      user: null,
+      isEdit: false,
+      errors: req.query.error || null,
     });
   } catch (err) {
     console.error("showAddUser error:", err.message);
@@ -97,12 +97,12 @@ const storeUser = async (req, res) => {
     // Check duplicate login
     const [[existing]] = await db.query(
       "SELECT ID FROM tbl_users WHERE user_login = ?",
-      [body.user_login]
+      [body.user_login],
     );
     if (existing) {
       return res.redirect(
         "/store/admin/users/add?error=" +
-          encodeURIComponent("Username already exists")
+          encodeURIComponent("Username already exists"),
       );
     }
 
@@ -116,15 +116,15 @@ const storeUser = async (req, res) => {
           user_url, user_registered, user_status, display_name)
        VALUES (?, ?, ?, ?, ?, ?, NOW(), ?, ?)`,
       [
-        body.user_type    || 1,
-        body.user_login,
+        body.user_type || 1,
+        body.user_login || body.user_email,
         hashedPass,
-        body.user_nicename || body.user_login,
+        body.user_nicename || body.user_login || body.user_email,
         body.user_email,
-        body.user_url      || "",
-        body.user_status   !== undefined ? body.user_status : 0,
-        body.display_name  || body.user_login,
-      ]
+        body.user_url || "",
+        body.user_status !== undefined ? body.user_status : 0,
+        body.display_name || body.user_login,
+      ],  
     );
     const userId = result.insertId;
 
@@ -135,7 +135,7 @@ const storeUser = async (req, res) => {
   } catch (err) {
     console.error("storeUser error:", err.message);
     res.redirect(
-      "/store/admin/users/add?error=" + encodeURIComponent(err.message)
+      "/store/admin/users/add?error=" + encodeURIComponent(err.message),
     );
   }
 };
@@ -145,34 +145,33 @@ const showEditUser = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const [[user]] = await db.query(
-      "SELECT * FROM tbl_users WHERE ID = ?",
-      [id]
-    );
+    const [[user]] = await db.query("SELECT * FROM tbl_users WHERE ID = ?", [
+      id,
+    ]);
     if (!user) {
       return res.redirect("/store/admin/users?error=User not found");
     }
 
     const [userTypes] = await db.query(
-      "SELECT * FROM tbl_user_types ORDER BY user_type_id ASC"
+      "SELECT * FROM tbl_user_types ORDER BY user_type_id ASC",
     );
 
     // Load all usermeta into user.meta object
     const [metaRows] = await db.query(
       "SELECT meta_key, meta_value FROM tbl_usermeta WHERE user_id = ?",
-      [id]
+      [id],
     );
     user.meta = {};
-    metaRows.forEach(function(row) {
+    metaRows.forEach(function (row) {
       user.meta[row.meta_key] = row.meta_value;
     });
 
     res.render("users/add", {
-      title:     "Edit User",
+      title: "Edit User",
       userTypes,
       user,
-      isEdit:    true,
-      errors:    req.query.error || null,
+      isEdit: true,
+      errors: req.query.error || null,
     });
   } catch (err) {
     console.error("showEditUser error:", err.message);
@@ -184,7 +183,7 @@ const showEditUser = async (req, res) => {
 const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const body   = req.body;
+    const body = req.body;
 
     if (body.user_pass && body.user_pass.trim() !== "") {
       // Update with new password
@@ -203,12 +202,12 @@ const updateUser = async (req, res) => {
           hashedPass,
           body.user_email,
           body.display_name,
-          body.user_nicename,
-          body.user_url    || "",
-          body.user_type   || 1,
+          body.user_nicename || body.user_login || body.user_email || "",
+          body.user_url || "",
+          body.user_type || 1,
           body.user_status !== undefined ? body.user_status : 0,
           id,
-        ]
+        ],
       );
     } else {
       // Update without touching password
@@ -224,12 +223,12 @@ const updateUser = async (req, res) => {
         [
           body.user_email,
           body.display_name,
-          body.user_nicename,
-          body.user_url    || "",
-          body.user_type   || 1,
+          body.user_nicename || body.user_login || body.user_email || "",
+          body.user_url || "",
+          body.user_type || 1,
           body.user_status !== undefined ? body.user_status : 0,
           id,
-        ]
+        ],
       );
     }
 
@@ -241,7 +240,7 @@ const updateUser = async (req, res) => {
     console.error("updateUser error:", err.message);
     res.redirect(
       `/store/admin/users/edit/${req.params.id}?error=` +
-        encodeURIComponent(err.message)
+        encodeURIComponent(err.message),
     );
   }
 };
@@ -253,19 +252,17 @@ const deleteUser = async (req, res) => {
 
     if (String(id) === String(req.session.admin.id)) {
       return res.redirect(
-        "/store/admin/users?error=You cannot delete your own account"
+        "/store/admin/users?error=You cannot delete your own account",
       );
     }
 
     await db.query("DELETE FROM tbl_usermeta WHERE user_id = ?", [id]);
-    await db.query("DELETE FROM tbl_users WHERE ID = ?",          [id]);
+    await db.query("DELETE FROM tbl_users WHERE ID = ?", [id]);
 
     res.redirect("/store/admin/users?success=User deleted successfully");
   } catch (err) {
     console.error("deleteUser error:", err.message);
-    res.redirect(
-      "/store/admin/users?error=" + encodeURIComponent(err.message)
-    );
+    res.redirect("/store/admin/users?error=" + encodeURIComponent(err.message));
   }
 };
 
