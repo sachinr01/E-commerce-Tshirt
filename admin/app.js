@@ -17,6 +17,8 @@ app.use('/store/admin/js', express.static(path.join(__dirname, 'public/js')));
 app.use('/store/admin/images', express.static(path.join(__dirname, 'public/images')));
 app.use('/store/admin/fonts', express.static(path.join(__dirname, 'public/fonts')));
 app.use('/store/admin/libs', express.static(path.join(__dirname, 'public/libs')));
+// Serve uploaded files
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
 // ✅ Local paths working too
 app.use('/css', express.static(path.join(__dirname, 'public/css')));
@@ -25,12 +27,20 @@ app.use('/images', express.static(path.join(__dirname, 'public/images')));
 app.use('/fonts', express.static(path.join(__dirname, 'public/fonts')));
 app.use('/libs', express.static(path.join(__dirname, 'public/libs')));
 
-app.use('/store/admin', session({
-    secret: process.env.SESSION_SECRET,
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'secret123',
     resave: false,
     saveUninitialized: false,
     cookie: { maxAge: 1000 * 60 * 60 * 24 }
 }));
+
+// ✅ Auto pass admin session to all views
+app.use((req, res, next) => {
+    res.locals.admin = req.session.admin || null;
+    res.locals.basePath = process.env.BASE_PATH || '';
+    res.locals.currentRoute = req.path; // ✅ add this
+    next();
+});
 
 app.use((req, res, next) => {
   res.locals.currentRoute = req.originalUrl;
@@ -43,6 +53,13 @@ app.locals.basePath = process.env.BASE_PATH || '';
 const authRoutes  = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
 const apiRoutes   = require('./api/routes');
+const productRoutes = require('./routes/productRoutes');
+const orderRoutes   = require('./routes/orderRoutes');
+const userRoutes    = require('./routes/userRoutes');
+
+app.use('/store/admin', productRoutes);
+app.use('/store/admin', orderRoutes);
+app.use('/store/admin', userRoutes);
 
 app.use('/store/admin', authRoutes);
 app.use('/store/admin', adminRoutes);
