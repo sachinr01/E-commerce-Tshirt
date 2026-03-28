@@ -442,7 +442,7 @@ export default function CheckoutPage() {
                                     <strong className="product-quantity"> x{item.quantity}</strong>
                                   </td>
                                   <td className="product-total">
-                                    <span className="amount">${(item.price * item.quantity).toFixed(2)}</span>
+                                    <span className="amount">₹{(item.price * item.quantity).toFixed(2)}</span>
                                   </td>
                                 </tr>
                               ))}
@@ -450,7 +450,7 @@ export default function CheckoutPage() {
                             <tfoot>
                               <tr className="cart-subtotal">
                                 <th>Cart Subtotal</th>
-                                <td><span className="amount">${total.toFixed(2)}</span></td>
+                                <td><span className="amount">₹{total.toFixed(2)}</span></td>
                               </tr>
                               <tr className="shipping">
                                 <th>Shipping &amp; Handling</th>
@@ -458,7 +458,7 @@ export default function CheckoutPage() {
                               </tr>
                               <tr className="order-total">
                                 <th>Order Total</th>
-                                <td><strong><span className="amount">${orderTotal.toFixed(2)}</span></strong></td>
+                                <td><strong><span className="amount">₹{orderTotal.toFixed(2)}</span></strong></td>
                               </tr>
                             </tfoot>
                           </table>

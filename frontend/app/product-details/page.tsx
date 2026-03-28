@@ -206,8 +206,8 @@ export function ProductDetailsClient({ productId, productSlug }: { productId?: s
   const displaySalePrice = currentSalePrice ?? simpleSalePrice ?? null;
   const showRange = !hasFullSelection && priceMax > priceMin;
   const priceRangeStr = priceMax > priceMin
-    ? `$${priceMin.toFixed(2)} - $${priceMax.toFixed(2)}`
-    : `$${priceMin.toFixed(2)}`;
+    ? `₹${priceMin.toFixed(2)} - ₹${priceMax.toFixed(2)}`
+    : `₹${priceMin.toFixed(2)}`;
 
   const isAddToCartEnabled = !product.variations.length || hasFullSelection;
 
@@ -377,14 +377,14 @@ export function ProductDetailsClient({ productId, productSlug }: { productId?: s
               <span className="cpd-price">{priceRangeStr}</span>
             ) : displaySalePrice ? (
               <>
-                <span className="cpd-price sale">${displaySalePrice.toFixed(2)}</span>
-                <span className="cpd-old-price">${Number(displayPrice).toFixed(2)}</span>
+                <span className="cpd-price sale">₹{displaySalePrice.toFixed(2)}</span>
+                <span className="cpd-old-price">₹{Number(displayPrice).toFixed(2)}</span>
                 <span className="cpd-save-badge">
-                  Save ${(Number(displayPrice) - displaySalePrice).toFixed(2)}
+                  Save ₹{(Number(displayPrice) - displaySalePrice).toFixed(2)}
                 </span>
               </>
             ) : displayPrice ? (
-              <span className="cpd-price">${Number(displayPrice).toFixed(2)}</span>
+              <span className="cpd-price">₹{Number(displayPrice).toFixed(2)}</span>
             ) : (
               <span className="cpd-price">{priceRangeStr}</span>
             )}
@@ -554,7 +554,7 @@ export function ProductDetailsClient({ productId, productSlug }: { productId?: s
           {/* ── Trust badges ── */}
           <div className="cpd-trust-row">
             {[
-              { icon: '🚚', label: 'Free Shipping', sub: 'Orders over $75' },
+              { icon: '🚚', label: 'Free Shipping', sub: 'Orders over ₹75' },
               { icon: '↩',  label: 'Easy Returns',  sub: '30-day policy' },
               { icon: '🔒', label: 'Secure Payment', sub: 'SSL encrypted' },
             ].map(b => (
@@ -577,7 +577,7 @@ export function ProductDetailsClient({ productId, productSlug }: { productId?: s
           <img src={PLACEHOLDER} alt="" className="cpd-sticky-thumb" />
           <span className="cpd-sticky-name">{product.title}</span>
           <span className="cpd-sticky-price">
-            {displaySalePrice ? `$${displaySalePrice.toFixed(2)}` : displayPrice ? `$${Number(displayPrice).toFixed(2)}` : priceRangeStr}
+            {displaySalePrice ? `₹${displaySalePrice.toFixed(2)}` : displayPrice ? `₹${Number(displayPrice).toFixed(2)}` : priceRangeStr}
           </span>
           <button
             type="button"
