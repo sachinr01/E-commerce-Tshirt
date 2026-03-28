@@ -51,8 +51,8 @@ function ShopProductCard({ product, idx }: { product: Product; idx: number }) {
   const priceMin = Number(product.price_min ?? 0);
   const priceMax = Number(product.price_max ?? 0);
   const priceStr = priceMin !== priceMax
-    ? `$${priceMin.toFixed(2)} - $${priceMax.toFixed(2)}`
-    : `$${priceMin.toFixed(2)}`;
+    ? `₹${priceMin.toFixed(2)} - ₹${priceMax.toFixed(2)}`
+    : `₹${priceMin.toFixed(2)}`;
 
   return (
     <div
@@ -115,7 +115,7 @@ function ShopProductCard({ product, idx }: { product: Product; idx: number }) {
         <div className="csp-price-row">
           {isOnSale && product.price_max && (
             <span className="csp-old-price" aria-label="Original price">
-              ${Number(product.price_max).toFixed(2)}
+              ₹{Number(product.price_max).toFixed(2)}
             </span>
           )}
           <span className={`csp-price${isOnSale ? ' sale' : ''}`}>{priceStr}</span>
@@ -141,9 +141,9 @@ function DualRangeSlider({
   return (
     <div className="drs-outer">
       <div className="drs-values-row">
-        <span className="drs-val-bubble">${valueMin.toLocaleString()}</span>
+        <span className="drs-val-bubble">₹{valueMin.toLocaleString()}</span>
         <span className="drs-val-sep">-</span>
-        <span className="drs-val-bubble">${valueMax.toLocaleString()}</span>
+        <span className="drs-val-bubble">₹{valueMax.toLocaleString()}</span>
       </div>
       <div className="drs-track-row">
         <div className="drs-track">
@@ -568,7 +568,7 @@ function ShopInner({ heading, subheading }: { heading: string; subheading: strin
               <button className="csp-chips-clear" onClick={allClear}>Clear all</button>
               {isPriceActive && (
                 <span className="csp-chip">
-                  ${sliderMin}-${sliderMax}
+                  ₹{sliderMin}-₹{sliderMax}
                   <button
                     className="csp-chip-x"
                     onClick={() => { setSliderMin(absoluteMin); setSliderMax(absoluteMax); }}
