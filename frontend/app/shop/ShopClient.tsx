@@ -664,5 +664,9 @@ function ShopInner({ heading, subheading }: { heading: string; subheading: strin
 }
 
 export default function ShopPage({ heading, subheading }: { heading: string; subheading: string }) {
-  return <ShopInner heading={heading} subheading={subheading} />;
+  return (
+    <Suspense fallback={null}>
+      <ShopInner heading={heading} subheading={subheading} />
+    </Suspense>
+  );
 }
