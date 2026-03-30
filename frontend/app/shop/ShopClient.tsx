@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback, type ReactNode, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { getProducts, getAllAttributeGroups, type Product, type AttributeGroup } from '../lib/api';
@@ -240,6 +241,12 @@ function ShopInner({ heading, subheading }: { heading: string; subheading: strin
   const [absoluteMax, setAbsoluteMax] = useState(200);
   const [sliderMin, setSliderMin] = useState(0);
   const [sliderMax, setSliderMax] = useState(200);
+  const absoluteMin = 0;
+
+  const searchParams = useSearchParams();
+  const queryMaxRaw = searchParams.get('max');
+  const queryMax = queryMaxRaw ? Number.parseFloat(queryMaxRaw) : Number.NaN;
+  const appliedQueryRef = useRef<number | null>(null);
 
   // Load all attribute groups dynamically in one call
   useEffect(() => {
@@ -270,6 +277,18 @@ function ShopInner({ heading, subheading }: { heading: string; subheading: strin
   }, []);
 
   useEffect(() => {
+    if (loading) return;
+    if (!Number.isFinite(queryMax)) return;
+    if (appliedQueryRef.current === queryMax) return;
+    if (absoluteMax <= 0) return;
+    const cappedMax = Math.max(absoluteMin, Math.min(queryMax, absoluteMax));
+    setSliderMin(absoluteMin);
+    setSliderMax(cappedMax);
+    setOpenFilters(prev => ({ ...prev, price: true }));
+    appliedQueryRef.current = queryMax;
+  }, [queryMax, absoluteMax, absoluteMin, loading]);
+
+  useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && sidebarOpen) setSidebarOpen(false);
     };
@@ -281,8 +300,6 @@ function ShopInner({ heading, subheading }: { heading: string; subheading: strin
     document.body.style.overflow = sidebarOpen ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
   }, [sidebarOpen]);
-
-  const absoluteMin = 0;
 
   const priceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const handlePriceChange = useCallback((gte: number, lte: number) => {
