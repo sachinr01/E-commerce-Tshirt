@@ -44,10 +44,6 @@
         </li>
 
         <!-- User Profile-->
-        <li class="nav-small-cap">
-          <i class="mdi mdi-dots-horizontal"></i>
-          <span class="hide-menu">Personal</span>
-        </li>
         <li class="sidebar-item">
           <a class="sidebar-link waves-effect waves-dark sidebar-link <%= locals.currentRoute === '/store/admin/dashboard' ? 'active bg-body' : '' %>"
             href="/store/admin/dashboard" aria-expanded="false">
@@ -58,20 +54,60 @@
 
         <!-- Users -->
         <li class="sidebar-item">
-          <a class="sidebar-link waves-effect waves-dark sidebar-link <%= locals.currentRoute.startsWith('/store/admin/users') ? 'active bg-body' : '' %>"
-            href="/store/admin/users" aria-expanded="false">
-            <i data-feather="users" class="feather-icon"></i>
-            <span class="hide-menu">Users</span>
-          </a>
+          <a class="sidebar-link has-arrow waves-effect waves-dark" href="#" aria-expanded="false"><i
+              data-feather="users" class="feather-icon"></i><span class="hide-menu">Users</span></a>
+          <ul aria-expanded="false" class="collapse first-level">
+            <li class="sidebar-item">
+              <a href="/store/admin/users"
+                class="sidebar-link <%= locals.currentRoute === '/store/admin/users' ? 'active bg-body' : '' %>"><i
+                  class="mdi mdi-adjust"></i><span class="hide-menu">All Users </span></a>
+            </li>
+            <li class="sidebar-item">
+              <a href="/store/admin/users/add"
+                class="sidebar-link <%= locals.currentRoute === '/store/admin/users/add' ? 'active bg-body' : '' %>"><i
+                  class="mdi mdi-adjust"></i><span class="hide-menu">Add New User </span></a>
+            </li>
+            <li class="sidebar-item">
+              <a href="/store/admin/users/profile"
+                class="sidebar-link <%= locals.currentRoute === '/store/admin/users/profile' ? 'active bg-body' : '' %>"><i
+                  class="mdi mdi-adjust"></i><span class="hide-menu">Profile </span></a>
+            </li>
+          </ul>
         </li>
 
         <!-- Products -->
         <li class="sidebar-item">
-          <a class="sidebar-link waves-effect waves-dark sidebar-link <%= locals.currentRoute.startsWith('/store/admin/products') ? 'active bg-body' : '' %>"
-            href="/store/admin/products" aria-expanded="false">
-            <i data-feather="shopping-bag" class="feather-icon"></i>
+          <a class="sidebar-link has-arrow waves-effect waves-dark sidebar-link" href="#" aria-expanded="false">
+            <i data-feather="package" class="feather-icon"></i>
             <span class="hide-menu">Products</span>
           </a>
+          <ul aria-expanded="false" class="collapse first-level">
+            <li class="sidebar-item">
+              <a href="/store/admin/products"
+                class="sidebar-link <%= locals.currentRoute === '/store/admin/products' ? 'active bg-body' : '' %>"><i
+                  class="mdi mdi-adjust"></i><span class="hide-menu">Products </span></a>
+            </li>
+            <li class="sidebar-item">
+              <a href="/store/admin/products/add"
+                class="sidebar-link <%= locals.currentRoute === '/store/admin/products/add' ? 'active bg-body' : '' %>"><i
+                  class="mdi mdi-adjust"></i><span class="hide-menu">Add New Product </span></a>
+            </li>
+            <li class="sidebar-item">
+              <a href="/store/admin/products/categories"
+                class="sidebar-link <%= locals.currentRoute === '/store/admin/products/categories' ? 'active bg-body' : '' %>"><i
+                  class="mdi mdi-adjust"></i><span class="hide-menu">Categories </span></a>
+            </li>
+            <li class="sidebar-item">
+              <a href="/store/admin/products/attributes"
+                class="sidebar-link <%= locals.currentRoute === '/store/admin/products/attributes' ? 'active bg-body' : '' %>"><i
+                  class="mdi mdi-adjust"></i><span class="hide-menu">Attributes </span></a>
+            </li>
+            <li class="sidebar-item">
+              <a href="/store/admin/products/reviews"
+                class="sidebar-link <%= locals.currentRoute === '/store/admin/products/reviews' ? 'active bg-body' : '' %>"><i
+                  class="mdi mdi-adjust"></i><span class="hide-menu">Reviews </span></a>
+            </li>
+          </ul>
         </li>
 
         <!-- Orders -->
@@ -83,18 +119,55 @@
           </a>
         </li>
 
-        <!-- Categories -->
+        <!-- stores -->
         <li class="sidebar-item">
-          <a class="sidebar-link waves-effect waves-dark sidebar-link <%= locals.currentRoute.startsWith('/store/admin/categories') ? 'active bg-body' : '' %>"
-            href="/store/admin/categories" aria-expanded="false">
-            <i data-feather="grid" class="feather-icon"></i>
-            <span class="hide-menu">Categories</span>
+          <a class="sidebar-link has-arrow waves-effect waves-dark sidebar-link" href="#" aria-expanded="false">
+            <i data-feather="shopping-bag" class="feather-icon"></i>
+            <span class="hide-menu">Stores</span>
+          </a>
+          <ul aria-expanded="false" class="collapse first-level">
+            <li class="sidebar-item">
+              <a href="/store/admin/stores/coupons"
+                class="sidebar-link <%= locals.currentRoute === '/store/admin/stores/coupons' ? 'active bg-body' : '' %>"><i
+                  class="mdi mdi-adjust"></i><span class="hide-menu">Coupons  </span></a>
+            </li>
+            <li class="sidebar-item">
+              <a href="/store/admin/stores/settings"
+                class="sidebar-link <%= locals.currentRoute === '/store/admin/stores/settings' ? 'active bg-body' : '' %>"><i
+                  class="mdi mdi-adjust"></i><span class="hide-menu">Store Settings </span></a>
+            </li>
+          </ul>
+        </li>
+
+        <!-- Content  -->
+        <li class="sidebar-item">
+          <a class="sidebar-link has-arrow waves-effect waves-dark sidebar-link" href="#" aria-expanded="false">
+            <i data-feather="file-text" class="feather-icon"></i>
+            <span class="hide-menu">Content </span>
+          </a>
+          <ul aria-expanded="false" class="collapse first-level">
+            <li class="sidebar-item">
+              <a href="/store/admin/content"
+                class="sidebar-link <%= locals.currentRoute === '/store/admin/content' ? 'active bg-body' : '' %>"><i
+                  class="mdi mdi-adjust"></i><span class="hide-menu">Pages   </span></a>
+            </li>
+            <li class="sidebar-item">
+              <a href="/store/admin/blogs"
+                class="sidebar-link <%= locals.currentRoute === '/store/admin/blogs' ? 'active bg-body' : '' %>"><i
+                  class="mdi mdi-adjust"></i><span class="hide-menu">Blogs  </span></a>
+            </li>
+          </ul>
+        </li>
+
+        <!-- Site Settings -->
+        <li class="sidebar-item">
+          <a class="sidebar-link waves-effect waves-dark sidebar-link <%= locals.currentRoute.startsWith('/store/admin/site-settings') ? 'active bg-body' : '' %>"
+            href="/store/admin/site-settings" aria-expanded="false">
+            <i data-feather="settings" class="feather-icon"></i>
+            <span class="hide-menu">Site Settings</span>
           </a>
         </li>
-        <li class="nav-small-cap">
-          <i class="mdi mdi-dots-horizontal"></i>
-          <span class="hide-menu">Apps</span>
-        </li>
+
         <li class="sidebar-item">
           <a class="sidebar-link waves-effect waves-dark sidebar-link" href="/store/admin/logout"
             aria-expanded="false"><i data-feather="log-out" class="feather-icon"></i><span class="hide-menu">Log
