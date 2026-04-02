@@ -5,7 +5,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { useCart } from '../lib/cartContext';
 
-const PLACEHOLDER = '/store/images/dummy.png';
+const PLACEHOLDER = '/store/images/dummy.jpg';
 
 export default function CartPage() {
   const { items, removeItem, updateQty, total } = useCart();

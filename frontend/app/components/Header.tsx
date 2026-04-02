@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { useCart } from "../lib/cartContext";
 import { useAuth } from "../lib/authContext";
 
-const PLACEHOLDER = "/store/images/dummy.png";
+const PLACEHOLDER = "/store/images/dummy.jpg";
 
 export default function Header() {
   const { items, count, total, removeItem } = useCart();

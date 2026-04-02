@@ -156,6 +156,127 @@ function validateBilling(billing) {
   return errors;
 }
 
+const PROFILE_META_KEYS = [
+  'first_name',
+  'last_name',
+  'billing_first_name',
+  'billing_last_name',
+  'billing_address_1',
+  'billing_address_2',
+  'billing_city',
+  'billing_state',
+  'billing_postcode',
+  'billing_country',
+  'billing_company',
+  'billing_phone',
+  'shipping_first_name',
+  'shipping_last_name',
+  'shipping_address_1',
+  'shipping_address_2',
+  'shipping_city',
+  'shipping_state',
+  'shipping_postcode',
+  'shipping_country',
+  'shipping_company',
+  'shipping_phone',
+];
+
+async function getUserMetaMap(userId) {
+  const [rows] = await db.query(
+    `SELECT meta_key, meta_value
+     FROM tbl_usermeta
+     WHERE user_id = ? AND meta_key IN (?)`,
+    [userId, PROFILE_META_KEYS]
+  );
+
+  return rows.reduce((acc, row) => {
+    acc[row.meta_key] = toStr(row.meta_value);
+    return acc;
+  }, {});
+}
+
+async function upsertUserMeta(conn, userId, metaKey, metaValue) {
+  await conn.query(
+    `INSERT INTO tbl_usermeta (user_id, meta_key, meta_value)
+     VALUES (?, ?, ?)
+     ON DUPLICATE KEY UPDATE meta_value = VALUES(meta_value)`,
+    [userId, metaKey, toStr(metaValue)]
+  );
+}
+
+function normalizeProfileAddressInput(payload, kind) {
+  const prefix = kind === 'billing' ? 'billing' : 'shipping';
+
+  return {
+    firstName: toStr(payload.firstName),
+    lastName: toStr(payload.lastName),
+    email: toStr(payload.email),
+    phone: toStr(payload.phone),
+    company: toStr(payload.company),
+    address1: toStr(payload.address1),
+    address2: toStr(payload.address2),
+    city: toStr(payload.city),
+    state: toStr(payload.state),
+    postcode: toStr(payload.postcode),
+    country: toStr(payload.country),
+    meta: {
+      [`${prefix}_first_name`]: toStr(payload.firstName),
+      [`${prefix}_last_name`]: toStr(payload.lastName),
+      [`${prefix}_address_1`]: toStr(payload.address1),
+      [`${prefix}_address_2`]: toStr(payload.address2),
+      [`${prefix}_city`]: toStr(payload.city),
+      [`${prefix}_state`]: toStr(payload.state),
+      [`${prefix}_postcode`]: toStr(payload.postcode),
+      [`${prefix}_country`]: toStr(payload.country),
+      [`${prefix}_company`]: toStr(payload.company),
+      [`${prefix}_phone`]: toStr(payload.phone),
+    },
+  };
+}
+
+function validateProfileAddress(address) {
+  const errors = {};
+  if (!address.firstName) errors.firstName = 'First name required';
+  if (!address.lastName) errors.lastName = 'Last name required';
+  if (!address.address1) errors.address1 = 'Address required';
+  if (!address.city) errors.city = 'City required';
+  if (!address.state) errors.state = 'State required';
+  if (!address.postcode) errors.postcode = 'Postcode required';
+  if (!address.country) errors.country = 'Country required';
+  return errors;
+}
+
+function buildProfileAddressResponse(userRow, meta) {
+  return {
+    billing: {
+      firstName: toStr(meta.billing_first_name || meta.first_name || userRow.display_name),
+      lastName: toStr(meta.billing_last_name || meta.last_name),
+      email: toStr(userRow.user_email),
+      phone: toStr(meta.billing_phone),
+      company: toStr(meta.billing_company),
+      address1: toStr(meta.billing_address_1),
+      address2: toStr(meta.billing_address_2),
+      city: toStr(meta.billing_city),
+      state: toStr(meta.billing_state),
+      postcode: toStr(meta.billing_postcode),
+      country: toStr(meta.billing_country),
+    },
+    shipping: {
+      firstName: toStr(meta.shipping_first_name || meta.first_name || userRow.display_name),
+      lastName: toStr(meta.shipping_last_name || meta.last_name),
+      email: toStr(userRow.user_email),
+      phone: toStr(meta.shipping_phone),
+      company: toStr(meta.shipping_company),
+      address1: toStr(meta.shipping_address_1),
+      address2: toStr(meta.shipping_address_2),
+      city: toStr(meta.shipping_city),
+      state: toStr(meta.shipping_state),
+      postcode: toStr(meta.shipping_postcode),
+      country: toStr(meta.shipping_country),
+    },
+  };
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // insertAddress helper
 //
@@ -656,6 +777,107 @@ const getSavedAddresses = async (req, res) => {
   }
 };
 
+const getProfileAddresses = async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user) {
+    return res.status(401).json({ success: false, message: 'Login required.' });
+  }
+
+  try {
+    const [[userRow]] = await db.query(
+      `SELECT ID, display_name, user_email
+       FROM tbl_users
+       WHERE ID = ?
+       LIMIT 1`,
+      [user.id]
+    );
+
+    if (!userRow) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    const meta = await getUserMetaMap(user.id);
+    res.json({ success: true, data: buildProfileAddressResponse(userRow, meta) });
+  } catch (err) {
+    console.error('getProfileAddresses error:', err);
+    res.status(500).json({ success: false, message: 'Failed to load profile addresses.' });
+  }
+};
+
+const updateProfileAddress = async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user) {
+    return res.status(401).json({ success: false, message: 'Login required.' });
+  }
+
+  const kind = req.params.kind === 'billing' ? 'billing' : req.params.kind === 'shipping' ? 'shipping' : '';
+  if (!kind) {
+    return res.status(400).json({ success: false, message: 'Invalid address type.' });
+  }
+
+  const address = normalizeProfileAddressInput(req.body || {}, kind);
+  const errors = validateProfileAddress(address);
+  if (Object.keys(errors).length > 0) {
+    return res.status(400).json({
+      success: false,
+      message: 'Please fill all required address fields.',
+      errors,
+    });
+  }
+
+  const conn = await db.getConnection();
+  try {
+    await conn.beginTransaction();
+
+    await conn.query(
+      `UPDATE tbl_users
+       SET user_email = CASE WHEN ? <> '' THEN ? ELSE user_email END,
+           display_name = CASE
+             WHEN ? <> '' AND ? = 'billing' THEN TRIM(CONCAT(?, CASE WHEN ? <> '' THEN ' ' ELSE '' END, ?))
+             ELSE display_name
+           END
+       WHERE ID = ?`,
+      [
+        address.email,
+        address.email,
+        address.firstName,
+        kind,
+        address.firstName,
+        address.lastName,
+        address.lastName,
+        user.id,
+      ]
+    );
+
+    for (const [metaKey, metaValue] of Object.entries(address.meta)) {
+      await upsertUserMeta(conn, user.id, metaKey, metaValue);
+    }
+
+    await conn.commit();
+
+    const [[userRow]] = await db.query(
+      `SELECT ID, display_name, user_email
+       FROM tbl_users
+       WHERE ID = ?
+       LIMIT 1`,
+      [user.id]
+    );
+    const meta = await getUserMetaMap(user.id);
+
+    res.json({
+      success: true,
+      message: `${kind === 'billing' ? 'Billing' : 'Shipping'} address updated successfully.`,
+      data: buildProfileAddressResponse(userRow, meta),
+    });
+  } catch (err) {
+    await conn.rollback();
+    console.error('updateProfileAddress error:', err);
+    res.status(500).json({ success: false, message: 'Failed to update profile address.' });
+  } finally {
+    conn.release();
+  }
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
 // getMyOrders
 // Frontend: GET /store/api/orders/my
@@ -856,4 +1078,6 @@ module.exports = {
   getDefaultAddress,
   setDefaultAddress,
   getSavedAddresses,
+  getProfileAddresses,
+  updateProfileAddress,
 };

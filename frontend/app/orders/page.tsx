@@ -421,21 +421,6 @@ export default function OrdersPage() {
 
       <Header />
       <div className="dima-main orders-account-page">
-        <section className="title_container start-style">
-          <div className="page-section-content overflow-hidden">
-            <div className="container page-section">
-              <h2 className="uppercase undertitle text-start">MY ORDERS</h2>
-              <div className="dima-breadcrumbs breadcrumbs-end text-end">
-                <span><Link href="/" className="trail-begin">Home</Link></span>
-                <span className="sep">\</span>
-                <span><Link href="/my-account" className="trail-begin">My Account</Link></span>
-                <span className="sep">\</span>
-                <span className="trail-end">My Orders</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
         <section className="section">
           <div className="page-section-content overflow-hidden">
             <div className="container">

@@ -55,6 +55,8 @@ router.get('/orders/:orderId',    requireLogin, orders.getMyOrderById);
 router.get('/address/default',              requireLogin, orders.getDefaultAddress);
 router.put('/address/default/:addressId',   requireLogin, orders.setDefaultAddress);
 router.get('/address/saved',               requireLogin, orders.getSavedAddresses);
+router.get('/address/profile',             requireLogin, orders.getProfileAddresses);
+router.put('/address/profile/:kind',       requireLogin, orders.updateProfileAddress);
 
 // ── Admin ─────────────────────────────────────────────────────────────────────
 router.get('/admin/orders',                     requireAdmin,        orders.getAllOrders);

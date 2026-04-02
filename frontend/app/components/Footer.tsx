@@ -124,7 +124,7 @@ export default function Footer() {
       <style>{`
         .okab-footer {
           width: 100%;
-          font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+          font-family: var(--font-body);
           color: #111;
           margin: 0;
           padding: 0;

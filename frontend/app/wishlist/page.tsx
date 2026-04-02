@@ -9,7 +9,7 @@ import { useCart } from '../lib/cartContext';
 import { getProductById } from '../lib/api';
 import type { ProductDetail } from '../lib/api';
 
-const PLACEHOLDER = '/store/images/dummy.png';
+const PLACEHOLDER = '/store/images/dummy.jpg';
 
 export default function WishlistPage() {
   const { items, removeItem } = useWishlist();

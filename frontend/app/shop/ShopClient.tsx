@@ -8,7 +8,7 @@ import Footer from '../components/Footer';
 import { getProducts, getAllAttributeGroups, type Product, type AttributeGroup } from '../lib/api';
 import { useWishlist } from '../lib/wishlistContext';
 
-const PLACEHOLDER = '/store/images/dummy.png';
+const PLACEHOLDER = '/store/images/dummy.jpg';
 
 const toSlug = (value: string): string =>
   value
@@ -16,8 +16,6 @@ const toSlug = (value: string): string =>
     .trim()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
-
-type SortOption = 'best-selling' | 'price-ascending' | 'price-descending' | 'title-ascending';
 
 const DEFAULT_OPEN_FILTERS: Record<string, boolean> = {};
 
@@ -237,7 +235,6 @@ function ShopInner({ heading, subheading }: { heading: string; subheading: strin
 
   // Dynamic selected values: { taxonomy -> string[] }
   const [selectedAttrs, setSelectedAttrs] = useState<Record<string, string[]>>({});
-  const [sortBy, setSortBy] = useState<SortOption>('best-selling');
   const [absoluteMax, setAbsoluteMax] = useState(200);
   const [sliderMin, setSliderMin] = useState(0);
   const [sliderMax, setSliderMax] = useState(200);
@@ -342,7 +339,6 @@ function ShopInner({ heading, subheading }: { heading: string; subheading: strin
       return hi >= sliderMin && lo <= sliderMax;
     })
     .filter(p => {
-      // Check every active taxonomy filter
       return Object.entries(selectedAttrs).every(([taxonomy, selected]) => {
         if (selected.length === 0) return true;
         const field = taxonomyToField[taxonomy];
@@ -351,12 +347,7 @@ function ShopInner({ heading, subheading }: { heading: string; subheading: strin
         return selected.some(v => productSlugs.includes(v));
       });
     })
-    .sort((a, b) => {
-      if (sortBy === 'price-ascending') return (a.price_min ?? 0) - (b.price_min ?? 0);
-      if (sortBy === 'price-descending') return (b.price_min ?? 0) - (a.price_min ?? 0);
-      if (sortBy === 'title-ascending') return a.title.localeCompare(b.title);
-      return a.menu_order - b.menu_order;
-    });
+    .sort((a, b) => a.menu_order - b.menu_order);
 
   const toSlugLocal = (s: string) =>
     s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
@@ -536,20 +527,6 @@ function ShopInner({ heading, subheading }: { heading: string; subheading: strin
               {!loading && <span className="csp-count">{sorted.length} product{sorted.length !== 1 ? 's' : ''}</span>}
             </div>
             <div className="csp-toolbar-right">
-              <div className="csp-sort-wrap">
-                <label className="csp-sort-label" htmlFor="csp-sort-select">Sort:</label>
-                <select
-                  id="csp-sort-select"
-                  className="csp-sort-select"
-                  value={sortBy}
-                  onChange={e => setSortBy(e.target.value as SortOption)}
-                >
-                  <option value="best-selling">Best Selling</option>
-                  <option value="title-ascending">Name A-Z</option>
-                  <option value="price-ascending">Price: Low to High</option>
-                  <option value="price-descending">Price: High to Low</option>
-                </select>
-              </div>
               <div className="csp-view-toggle" role="group" aria-label="View mode">
                 <button
                   className={`csp-view-btn${viewMode === 'grid' ? ' active' : ''}`}

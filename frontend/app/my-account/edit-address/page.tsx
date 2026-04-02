@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
-import { getMyOrderById, getMyOrders, type OrderDetailResponse } from '../../lib/api';
+import { getProfileAddresses, type ProfileAddressForm } from '../../lib/api';
 import { useAuth } from '../../lib/authContext';
 
 type AddressBlock = {
@@ -13,29 +13,18 @@ type AddressBlock = {
   lines: string[];
 };
 
-function formatAddressBlock(order: OrderDetailResponse['order'], kind: 'billing' | 'shipping'): AddressBlock | null {
-  const isBilling = kind === 'billing';
-  const first = isBilling ? order.billing_first_name : order.ship_first_name;
-  const last = isBilling ? order.billing_last_name : order.ship_last_name;
-  const address1 = isBilling ? order.billing_address_1 : order.ship_address_1;
-  const address2 = isBilling ? order.billing_address_2 : order.ship_address_2;
-  const city = isBilling ? order.billing_city : order.ship_city;
-  const state = isBilling ? order.billing_state : order.ship_state;
-  const postcode = isBilling ? order.billing_postcode : order.ship_postcode;
-  const country = isBilling ? order.billing_country : order.ship_country;
-
-  const name = [first, last].filter(Boolean).join(' ').trim();
-  const company = '';
-  const location = [city, state, postcode].filter(Boolean).join(', ').trim();
-  const lines = [address1, address2, location, country].filter(Boolean) as string[];
+function formatAddressBlock(address: ProfileAddressForm): AddressBlock | null {
+  const name = [address.firstName, address.lastName].filter(Boolean).join(' ').trim();
+  const location = [address.city, address.state, address.postcode].filter(Boolean).join(', ').trim();
+  const lines = [address.address1, address.address2, location, address.country].filter(Boolean);
 
   if (!name && lines.length === 0) {
     return null;
   }
 
   return {
-    name: name || (isBilling ? order.user_display_name || '' : order.user_display_name || ''),
-    company,
+    name,
+    company: address.company,
     lines,
   };
 }
@@ -58,25 +47,14 @@ export default function EditAddressPage() {
       setAddressError('');
 
       try {
-        const orders = await getMyOrders();
+        const profileAddresses = await getProfileAddresses();
         if (!active) return;
 
-        const latestOrderId = orders?.[0]?.order_id;
-        if (!latestOrderId) {
-          setBillingAddress(null);
-          setShippingAddress(null);
-          setAddressError('No saved address details were found yet. Complete a checkout to populate this section.');
-          return;
-        }
-
-        const detail = await getMyOrderById(latestOrderId);
-        if (!active) return;
-
-        setBillingAddress(formatAddressBlock(detail.order, 'billing'));
-        setShippingAddress(formatAddressBlock(detail.order, 'shipping'));
+        setBillingAddress(formatAddressBlock(profileAddresses.billing));
+        setShippingAddress(formatAddressBlock(profileAddresses.shipping));
       } catch {
         if (!active) return;
-        setAddressError('No saved address details were found yet. Complete a checkout to populate this section.');
+        setAddressError('No saved address details were found yet. Add your billing and shipping information here to use it later during checkout.');
       } finally {
         if (!active) return;
         setLoadingAddress(false);
@@ -298,21 +276,6 @@ export default function EditAddressPage() {
 
       <Header />
       <div className="dima-main account-address-page">
-        <section className="title_container start-style">
-          <div className="page-section-content overflow-hidden">
-            <div className="container page-section">
-              <h2 className="uppercase undertitle text-start">MY ADDRESSES</h2>
-              <div className="dima-breadcrumbs breadcrumbs-end text-end">
-                <span><Link href="/" className="trail-begin">Home</Link></span>
-                <span className="sep">\</span>
-                <span><Link href="/my-account" className="trail-begin">My Account</Link></span>
-                <span className="sep">\</span>
-                <span className="trail-end">My Addresses</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
         <section className="section">
           <div className="page-section-content overflow-hidden">
             <div className="container">
@@ -366,7 +329,7 @@ export default function EditAddressPage() {
                       <div className="account-address-grid">
                         <section className="account-address-card">
                           <h3 className="account-address-title">Billing Address</h3>
-                          <Link href="/checkout" className="account-address-edit-link">
+                          <Link href="/my-account/edit-address/billing" className="account-address-edit-link">
                             <span className="account-address-edit-icon">{'->'}</span>
                             <span>Edit Billing address</span>
                           </Link>
@@ -379,14 +342,14 @@ export default function EditAddressPage() {
                             </div>
                           ) : (
                             <p className="account-address-empty">
-                              You have not set up a billing address yet. Complete checkout once to populate this section.
+                              You have not set up a billing address yet.
                             </p>
                           )}
                         </section>
 
                         <section className="account-address-card">
                           <h3 className="account-address-title">Shipping Address</h3>
-                          <Link href="/checkout" className="account-address-edit-link">
+                          <Link href="/my-account/edit-address/shipping" className="account-address-edit-link">
                             <span className="account-address-edit-icon">{'->'}</span>
                             <span>Edit Shipping address</span>
                           </Link>
@@ -399,7 +362,7 @@ export default function EditAddressPage() {
                             </div>
                           ) : (
                             <p className="account-address-empty">
-                              You have not set up a shipping address yet. Complete checkout once to populate this section.
+                              You have not set up a shipping address yet.
                             </p>
                           )}
                         </section>

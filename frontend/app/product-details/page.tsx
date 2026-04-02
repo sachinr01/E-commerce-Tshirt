@@ -9,7 +9,7 @@ import { getProductById, getProductBySlug, type ProductDetail } from '../lib/api
 import { useCart } from '../lib/cartContext';
 import { useWishlist } from '../lib/wishlistContext';
 
-const PLACEHOLDER = '/store/images/dummy.png';
+const PLACEHOLDER = '/store/images/dummy.jpg';
 
 type SwatchStyle = { style: { background?: string }; isLight: boolean };
 
@@ -235,8 +235,16 @@ export function ProductDetailsClient({ productId, productSlug }: { productId?: s
     });
   };
 
-  const shortDesc = product.short_description?.replace(/<[^>]+>/g, '') || '';
-  const fullDesc  = product.description?.replace(/<[^>]+>/g, '')       || shortDesc;
+  const decodeEntities = (str: string) =>
+    str.replace(/&amp;/g, '&')
+       .replace(/&quot;/g, '"')
+       .replace(/&#039;/g, "'")
+       .replace(/&lt;/g, '<')
+       .replace(/&gt;/g, '>')
+       .replace(/&nbsp;/g, ' ');
+
+  const shortDesc = decodeEntities(product.short_description?.replace(/<[^>]+>/g, '') || '');
+  const fullDesc  = decodeEntities(product.description?.replace(/<[^>]+>/g, '')       || shortDesc);
 
   const anyInStock = product.variations.length
     ? product.variations.some(isVariationInStock)
@@ -665,8 +673,8 @@ const baseCss = `
   --cpd-bg:          #fafafa;
   --cpd-white:       #ffffff;
   --cpd-sale:        #e74c3c;
-  --font-head: 'Playfair Display', Georgia, serif;
-  --font-body: 'DM Sans', system-ui, sans-serif;
+  --font-head: 'Lato', Helvetica, Arial, sans-serif;
+  --font-body: 'Lato', Helvetica, Arial, sans-serif;
   --radius: 12px;
   --shadow: 0 4px 20px rgba(0,0,0,.09);
 }
