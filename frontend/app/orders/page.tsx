@@ -6,6 +6,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { getMyOrders, type OrderSummary } from '../lib/api';
 import { useAuth } from '../lib/authContext';
+import { formatPrice } from '../lib/price';
 
 type OrderCard = {
   id: number;
@@ -84,7 +85,7 @@ export default function OrdersPage() {
         status,
         statusLabel: toTitleCase(status),
         dateLabel: formatDate(o.order_date || ''),
-        totalLabel: o.total ? `Rs. ${Number(o.total).toFixed(2)}` : 'Rs. 0.00',
+        totalLabel: o.total ? formatPrice(Number(o.total)) : formatPrice(0),
         items: (o.items || '')
           .split(',')
           .map((s) => s.trim())

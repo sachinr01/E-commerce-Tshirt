@@ -15,6 +15,7 @@ export interface Product {
   price_max: number | null;
   sale_price_min: number | null;
   thumbnail_id: string | null;
+  thumbnail_url: string | null;
   gallery_ids: string | null;
   sku: string | null;
   stock_status: string | null;
@@ -39,7 +40,24 @@ export interface Variation {
   stock_status: string;
   stock_qty: string | null;
   thumbnail_id: string | null;
+  thumbnail_url: string | null;
+  image_urls: string[];
   sku: string | null;
+}
+
+// thumbnail_url from DB is a relative path e.g. "products/abc.jpg"
+// In the browser it goes through the Next.js /uploads proxy → Express static
+// On the server (SSR) it hits Express directly
+const UPLOADS_ORIGIN =
+  typeof window === 'undefined'
+    ? (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/store/api').replace('/store/api', '')
+    : '';
+
+export function getImageUrl(filePath: string | null | undefined): string {
+  if (!filePath) return '/store/images/dummy.jpg';
+  // Already a full URL or absolute path — use as-is
+  if (filePath.startsWith('http') || filePath.startsWith('/')) return filePath;
+  return `${UPLOADS_ORIGIN}/uploads/${filePath}`;
 }
 
 export interface Attribute {
@@ -47,6 +65,11 @@ export interface Attribute {
   attr_name: string;
   attr_slug: string;
   in_stock: number;
+}
+
+export interface GalleryImage {
+  file_path: string;
+  is_thumbnail: boolean;
 }
 
 export interface ProductDetail extends Product {
@@ -58,6 +81,7 @@ export interface ProductDetail extends Product {
   seo_description: string | null;
   avg_rating: number | null;
   review_count: number | null;
+  gallery_urls: GalleryImage[];
   variations: Variation[];
   attributes: {
     colors: Attribute[];
@@ -158,10 +182,12 @@ export interface OrderItemDetail {
   order_item_id: number;
   order_item_name: string;
   product_id: number;
+  variation_id: string | null;
   qty: string | number | null;
   line_total: string | number | null;
   color: string | null;
   size: string | null;
+  thumbnail_url: string | null;
 }
 
 export interface OrderDetailResponse {

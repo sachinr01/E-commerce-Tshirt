@@ -487,6 +487,8 @@ const placeOrder = async (req, res) => {
 
       if (item.color) itemMeta.push(['pa_color', item.color]);
       if (item.size)  itemMeta.push(['pa_size',  item.size]);
+      // Save image at order time — Amazon/Flipkart pattern
+      if (item.image && !item.image.includes('dummy')) itemMeta.push(['_item_image', item.image]);
 
       for (const [metaKey, metaValue] of itemMeta) {
         await conn.query(
@@ -1029,10 +1031,32 @@ const getMyOrderById = async (req, res) => {
       `SELECT oi.order_item_id,
               oi.order_item_name,
               oi.product_id,
+              MAX(CASE WHEN oim.meta_key = '_variation_id' THEN oim.meta_value END) AS variation_id,
               MAX(CASE WHEN oim.meta_key = '_qty'        THEN oim.meta_value END) AS qty,
               MAX(CASE WHEN oim.meta_key = '_line_total' THEN oim.meta_value END) AS line_total,
               MAX(CASE WHEN oim.meta_key = 'pa_color'    THEN oim.meta_value END) AS color,
-              MAX(CASE WHEN oim.meta_key = 'pa_size'     THEN oim.meta_value END) AS size
+              MAX(CASE WHEN oim.meta_key = 'pa_size'     THEN oim.meta_value END) AS size,
+              (
+                SELECT COALESCE(
+                  -- 1. Image saved at order time (Amazon/Flipkart pattern)
+                  NULLIF((SELECT oim3.meta_value FROM tbl_order_itemmeta oim3
+                          WHERE oim3.order_item_id = oi.order_item_id
+                            AND oim3.meta_key = '_item_image' LIMIT 1), ''),
+                  -- 2. Variation image (parent_id = variation_id)
+                  (SELECT mm1.meta_value FROM tbl_media m1
+                   JOIN tbl_mediameta mm1 ON mm1.media_id = m1.media_id AND mm1.meta_key = '_wp_attached_file'
+                   WHERE m1.parent_id = CAST(NULLIF(
+                     (SELECT oim2.meta_value FROM tbl_order_itemmeta oim2
+                      WHERE oim2.order_item_id = oi.order_item_id AND oim2.meta_key = '_variation_id' LIMIT 1
+                     ), '0') AS UNSIGNED)
+                   ORDER BY m1.media_id ASC LIMIT 1),
+                  -- 3. Product image (parent_id = product_id)
+                  (SELECT mm2.meta_value FROM tbl_media m2
+                   JOIN tbl_mediameta mm2 ON mm2.media_id = m2.media_id AND mm2.meta_key = '_wp_attached_file'
+                   WHERE m2.parent_id = oi.product_id
+                   ORDER BY m2.media_id ASC LIMIT 1)
+                )
+              ) AS thumbnail_url
        FROM tbl_order_items oi
        LEFT JOIN tbl_order_itemmeta oim ON oim.order_item_id = oi.order_item_id
        WHERE oi.order_id = ? AND oi.order_item_type = 'line_item'

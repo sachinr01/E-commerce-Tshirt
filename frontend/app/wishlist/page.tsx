@@ -8,6 +8,8 @@ import { useWishlist } from '../lib/wishlistContext';
 import { useCart } from '../lib/cartContext';
 import { getProductById } from '../lib/api';
 import type { ProductDetail } from '../lib/api';
+import { formatPrice } from '../lib/price';
+import '../shop/shop.css';
 
 const PLACEHOLDER = '/store/images/dummy.jpg';
 
@@ -67,19 +69,13 @@ export default function WishlistPage() {
       `}</style>
       <Header />
       <div className="dima-main">
+        <nav className="csp-breadcrumb" aria-label="Breadcrumb">
+          <Link href="/">Home</Link>
+          <span className="csp-bsep" aria-hidden="true">&gt;</span>
+          <span aria-current="page">Wishlist</span>
+        </nav>
 
-        <section className="title_container start-style">
-          <div className="page-section-content">
-            <div className="container page-section">
-              <h2 className="uppercase undertitle text-start">Wishlist</h2>
-              <div className="dima-breadcrumbs breadcrumbs-end text-end">
-                <span><Link href="/store" className="trail-begin">Home</Link></span>
-                <span className="sep">\</span>
-                <span className="trail-end">Wishlist</span>
-              </div>
-            </div>
-          </div>
-        </section>
+
 
         <section className="section">
           <div className="page-section-content overflow-hidden">
@@ -124,7 +120,7 @@ export default function WishlistPage() {
                                    <h6><Link href={`/shop/product/${toSlug(title)}`}>{title}</Link></h6>
                                  </div>
                               </td>
-                              <td>₹{Number(price).toFixed(2)}</td>
+                              <td>{formatPrice(price)}</td>
                               <td>
                                 <span style={{ color: inStock ? '#2bbfaa' : '#c62828' }}>
                                   {inStock ? 'In Stock' : 'Out of Stock'}

@@ -2,10 +2,11 @@
 
 import { useEffect, useState, useRef, useCallback, type ReactNode, Suspense } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import { getProducts, getAllAttributeGroups, type Product, type AttributeGroup } from '../lib/api';
+import { getProducts, getAllAttributeGroups, getImageUrl, type Product, type AttributeGroup } from '../lib/api';
+import { formatPrice, formatPriceRange, CURRENCY } from '../lib/price';
 import { useWishlist } from '../lib/wishlistContext';
 
 const PLACEHOLDER = '/store/images/dummy.jpg';
@@ -50,8 +51,8 @@ function ShopProductCard({ product, idx }: { product: Product; idx: number }) {
   const priceMin = Number(product.price_min ?? 0);
   const priceMax = Number(product.price_max ?? 0);
   const priceStr = priceMin !== priceMax
-    ? `₹${priceMin.toFixed(2)} - ₹${priceMax.toFixed(2)}`
-    : `₹${priceMin.toFixed(2)}`;
+    ? formatPriceRange(priceMin, priceMax)
+    : formatPrice(priceMin);
 
   return (
     <div
@@ -65,7 +66,7 @@ function ShopProductCard({ product, idx }: { product: Product; idx: number }) {
       <div className="csp-img-wrap">
         <Link href={productHref} tabIndex={-1} aria-hidden="true">
           <img
-            src={PLACEHOLDER}
+            src={getImageUrl(product.thumbnail_url)}
             alt={product.title}
             className={`csp-img${hovered ? ' zoomed' : ''}`}
             loading={idx < 8 ? 'eager' : 'lazy'}
@@ -89,7 +90,7 @@ function ShopProductCard({ product, idx }: { product: Product; idx: number }) {
                 id: product.ID,
                 title: product.title,
                 price: Number(product.sale_price_min ?? product.price_min ?? 0),
-                image: PLACEHOLDER,
+                image: getImageUrl(product.thumbnail_url),
                 inStock: product.stock_status === 'instock',
               });
             }
@@ -114,7 +115,7 @@ function ShopProductCard({ product, idx }: { product: Product; idx: number }) {
         <div className="csp-price-row">
           {isOnSale && product.price_max && (
             <span className="csp-old-price" aria-label="Original price">
-              ₹{Number(product.price_max).toFixed(2)}
+              {formatPrice(product.price_max)}
             </span>
           )}
           <span className={`csp-price${isOnSale ? ' sale' : ''}`}>{priceStr}</span>
@@ -140,9 +141,9 @@ function DualRangeSlider({
   return (
     <div className="drs-outer">
       <div className="drs-values-row">
-        <span className="drs-val-bubble">₹{valueMin.toLocaleString()}</span>
+        <span className="drs-val-bubble">{CURRENCY}{valueMin.toLocaleString()}</span>
         <span className="drs-val-sep">-</span>
-        <span className="drs-val-bubble">₹{valueMax.toLocaleString()}</span>
+        <span className="drs-val-bubble">{CURRENCY}{valueMax.toLocaleString()}</span>
       </div>
       <div className="drs-track-row">
         <div className="drs-track">
@@ -240,9 +241,11 @@ function ShopInner({ heading, subheading }: { heading: string; subheading: strin
   const [sliderMax, setSliderMax] = useState(200);
   const absoluteMin = 0;
 
+  const router = useRouter();
   const searchParams = useSearchParams();
   const queryMaxRaw = searchParams.get('max');
   const queryMax = queryMaxRaw ? Number.parseFloat(queryMaxRaw) : Number.NaN;
+  const searchTerm = (searchParams.get('search') ?? '').trim().toLowerCase();
   const appliedQueryRef = useRef<number | null>(null);
 
   // Load all attribute groups dynamically in one call
@@ -322,6 +325,26 @@ function ShopInner({ heading, subheading }: { heading: string; subheading: strin
   const normalizeList = (value?: string | null) =>
     (value ?? '').split(',').map(v => v.trim()).filter(Boolean);
 
+  const matchesSearch = (product: Product, term: string) => {
+    if (!term) return true;
+    const haystack = [
+      product.title,
+      product.slug,
+      product.short_description,
+      product.sku,
+      product.color_slugs,
+      product.material_slugs,
+      product.style_slugs,
+      product.occasion_slugs,
+      product.feature_slugs,
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+
+    return haystack.includes(term);
+  };
+
   // Map taxonomy → product field key
   const taxonomyToField: Record<string, keyof Product> = {
     pa_color:    'color_slugs',
@@ -333,6 +356,7 @@ function ShopInner({ heading, subheading }: { heading: string; subheading: strin
   };
 
   const sorted = [...products]
+    .filter(p => matchesSearch(p, searchTerm))
     .filter(p => {
       const lo = Number(p.price_min ?? 0);
       const hi = Number(p.price_max ?? p.price_min ?? 0);
@@ -557,12 +581,22 @@ function ShopInner({ heading, subheading }: { heading: string; subheading: strin
             </div>
           </div>
 
-          {hasActive && (
+          {(hasActive || searchTerm) && (
             <div className="csp-chips-bar" role="group" aria-label="Active filters">
-              <button className="csp-chips-clear" onClick={allClear}>Clear all</button>
+              <button className="csp-chips-clear" onClick={() => { allClear(); if (searchTerm) router.push('/shop'); }}>Clear all</button>
+              {searchTerm && (
+                <span className="csp-chip">
+                  Search: &ldquo;{searchTerm}&rdquo;
+                  <button
+                    className="csp-chip-x"
+                    onClick={() => router.push('/shop')}
+                    aria-label="Remove search filter"
+                  >x</button>
+                </span>
+              )}
               {isPriceActive && (
                 <span className="csp-chip">
-                  ₹{sliderMin}-₹{sliderMax}
+                  {CURRENCY}{sliderMin}-{CURRENCY}{sliderMax}
                   <button
                     className="csp-chip-x"
                     onClick={() => { setSliderMin(absoluteMin); setSliderMax(absoluteMax); }}

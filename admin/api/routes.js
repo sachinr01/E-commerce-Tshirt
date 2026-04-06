@@ -4,6 +4,7 @@ const ctrl = require('./controller');
 const auth = require('./authController');
 const cart = require('./cartController');
 const orders = require('./orderController');
+const media = require('./mediaController');
 const { sessionMiddleware } = require('./session');
 const { guestCookieMiddleware } = require('./guestCookie');
 const { requireAdmin, requireAgentOrAdmin, requireLogin } = require('./authMiddleware');
@@ -20,6 +21,13 @@ router.get('/products/on-sale',    ctrl.getOnSaleProducts);
 router.get('/products',            ctrl.getProducts);
 router.get('/products/slug/:slug', ctrl.getProductBySlug);
 router.get('/products/:id',        ctrl.getProduct);
+
+// ── Media ─────────────────────────────────────────────────────────────────────
+// NOTE: static routes before dynamic :id
+router.get('/media/resolve',              media.resolveMediaIds);
+router.get('/media/products',             media.getProductsWithImages);
+router.get('/media/product/:productId',   media.getProductMedia);
+router.get('/media/:id',                  media.getMediaById);
 
 // ── Attributes ────────────────────────────────────────────────────────────────
 router.get('/attributes/colors',     ctrl.getColors);

@@ -81,7 +81,17 @@ async function queryProductList(extraWhere = '', orderBy = 'p.menu_order ASC', l
                   )
                   AND pm.meta_value != ''
             ) AS sale_price_min,
-            (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_thumbnail_id'  LIMIT 1) AS thumbnail_id,
+            (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_thumbnail_id' ORDER BY meta_id DESC LIMIT 1) AS thumbnail_id,
+            (
+                SELECT mm.meta_value
+                FROM tbl_productmeta pm
+                JOIN tbl_media m2 ON m2.media_id = CAST(pm.meta_value AS UNSIGNED)
+                JOIN tbl_mediameta mm ON mm.media_id = m2.media_id
+                                     AND mm.meta_key = '_wp_attached_file'
+                WHERE pm.product_id = p.ID AND pm.meta_key = '_thumbnail_id'
+                ORDER BY pm.meta_id DESC
+                LIMIT 1
+            ) AS thumbnail_url,
             (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_product_image_gallery' LIMIT 1) AS gallery_ids,
             (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_sku'           LIMIT 1) AS sku,
             (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_stock_status'  LIMIT 1) AS stock_status,
@@ -308,43 +318,29 @@ const getProduct = async (req, res) => {
                 p.product_content     AS description,
                 p.product_short_desc  AS short_description,
                 p.product_date_added  AS date_added,
-                thumb.meta_value      AS thumbnail_id,
-                gallery.meta_value    AS gallery_ids,
-                sku.meta_value        AS sku,
-                stock.meta_value      AS stock_status,
-                CAST(sales.meta_value AS UNSIGNED) AS total_sales,
-                price_direct.meta_value       AS price,
-                reg_price_direct.meta_value   AS regular_price,
-                sale_price_direct.meta_value  AS sale_price,
-                seo_title.meta_value  AS seo_title,
-                seo_desc.meta_value   AS seo_description,
-                CAST(avg_rating.meta_value AS DECIMAL(3,2)) AS avg_rating,
-                CAST(review_count.meta_value AS UNSIGNED)   AS review_count
+                (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_thumbnail_id' ORDER BY meta_id DESC LIMIT 1) AS thumbnail_id,
+                (
+                    SELECT mm.meta_value
+                    FROM tbl_productmeta pm
+                    JOIN tbl_media m2 ON m2.media_id = CAST(pm.meta_value AS UNSIGNED)
+                    JOIN tbl_mediameta mm ON mm.media_id = m2.media_id
+                                         AND mm.meta_key = '_wp_attached_file'
+                    WHERE pm.product_id = p.ID AND pm.meta_key = '_thumbnail_id'
+                    ORDER BY pm.meta_id DESC
+                    LIMIT 1
+                )                     AS thumbnail_url,
+                (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_product_image_gallery' LIMIT 1) AS gallery_ids,
+                (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_sku' LIMIT 1) AS sku,
+                (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_stock_status' LIMIT 1) AS stock_status,
+                (SELECT CAST(meta_value AS UNSIGNED) FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = 'total_sales' LIMIT 1) AS total_sales,
+                (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_price' LIMIT 1) AS price,
+                (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_regular_price' LIMIT 1) AS regular_price,
+                (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_sale_price' LIMIT 1) AS sale_price,
+                (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_yoast_wpseo_title' LIMIT 1) AS seo_title,
+                (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_yoast_wpseo_metadesc' LIMIT 1) AS seo_description,
+                (SELECT CAST(meta_value AS DECIMAL(3,2)) FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_wc_average_rating' LIMIT 1) AS avg_rating,
+                (SELECT CAST(meta_value AS UNSIGNED) FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_wc_review_count' LIMIT 1) AS review_count
             FROM tbl_products p
-            LEFT JOIN tbl_productmeta thumb
-                ON thumb.product_id = p.ID AND thumb.meta_key = '_thumbnail_id'
-            LEFT JOIN tbl_productmeta gallery
-                ON gallery.product_id = p.ID AND gallery.meta_key = '_product_image_gallery'
-            LEFT JOIN tbl_productmeta sku
-                ON sku.product_id = p.ID AND sku.meta_key = '_sku'
-            LEFT JOIN tbl_productmeta stock
-                ON stock.product_id = p.ID AND stock.meta_key = '_stock_status'
-            LEFT JOIN tbl_productmeta sales
-                ON sales.product_id = p.ID AND sales.meta_key = 'total_sales'
-            LEFT JOIN tbl_productmeta price_direct
-                ON price_direct.product_id = p.ID AND price_direct.meta_key = '_price'
-            LEFT JOIN tbl_productmeta reg_price_direct
-                ON reg_price_direct.product_id = p.ID AND reg_price_direct.meta_key = '_regular_price'
-            LEFT JOIN tbl_productmeta sale_price_direct
-                ON sale_price_direct.product_id = p.ID AND sale_price_direct.meta_key = '_sale_price'
-            LEFT JOIN tbl_productmeta seo_title
-                ON seo_title.product_id = p.ID AND seo_title.meta_key = '_yoast_wpseo_title'
-            LEFT JOIN tbl_productmeta seo_desc
-                ON seo_desc.product_id = p.ID AND seo_desc.meta_key = '_yoast_wpseo_metadesc'
-            LEFT JOIN tbl_productmeta avg_rating
-                ON avg_rating.product_id = p.ID AND avg_rating.meta_key = '_wc_average_rating'
-            LEFT JOIN tbl_productmeta review_count
-                ON review_count.product_id = p.ID AND review_count.meta_key = '_wc_review_count'
             WHERE p.ID = ?
               AND p.product_type   = 'product'
               AND p.product_status = 'publish'
@@ -360,37 +356,51 @@ const getProduct = async (req, res) => {
                 v.ID,
                 v.product_title       AS title,
                 v.menu_order,
-                pm_price.meta_value   AS price,
-                pm_reg.meta_value     AS regular_price,
-                pm_sale.meta_value    AS sale_price,
-                pm_color.meta_value   AS color,
-                pm_size.meta_value    AS size,
-                pm_stock.meta_value   AS stock_status,
-                pm_qty.meta_value     AS stock_qty,
-                pm_thumb.meta_value   AS thumbnail_id,
-                pm_sku.meta_value     AS sku
+                (SELECT meta_value FROM tbl_productmeta WHERE product_id = v.ID AND meta_key = '_price'            LIMIT 1) AS price,
+                (SELECT meta_value FROM tbl_productmeta WHERE product_id = v.ID AND meta_key = '_regular_price'    LIMIT 1) AS regular_price,
+                (SELECT meta_value FROM tbl_productmeta WHERE product_id = v.ID AND meta_key = '_sale_price'       LIMIT 1) AS sale_price,
+                (SELECT meta_value FROM tbl_productmeta WHERE product_id = v.ID AND meta_key = 'attribute_pa_color' LIMIT 1) AS color,
+                (SELECT meta_value FROM tbl_productmeta WHERE product_id = v.ID AND meta_key = 'attribute_pa_size'  LIMIT 1) AS size,
+                (SELECT meta_value FROM tbl_productmeta WHERE product_id = v.ID AND meta_key = '_stock_status'     LIMIT 1) AS stock_status,
+                (SELECT meta_value FROM tbl_productmeta WHERE product_id = v.ID AND meta_key = '_stock'            LIMIT 1) AS stock_qty,
+                (SELECT meta_value FROM tbl_productmeta WHERE product_id = v.ID AND meta_key = '_thumbnail_id'     LIMIT 1) AS thumbnail_id,
+                (
+                    SELECT mm.meta_value
+                    FROM tbl_productmeta pm
+                    JOIN tbl_media m2 ON m2.media_id = CAST(pm.meta_value AS UNSIGNED)
+                    JOIN tbl_mediameta mm ON mm.media_id = m2.media_id
+                                         AND mm.meta_key = '_wp_attached_file'
+                    WHERE pm.product_id = v.ID AND pm.meta_key = '_thumbnail_id'
+                    LIMIT 1
+                ) AS thumbnail_url,
+                (SELECT meta_value FROM tbl_productmeta WHERE product_id = v.ID AND meta_key = '_sku'              LIMIT 1) AS sku
             FROM tbl_products v
-            LEFT JOIN tbl_productmeta pm_price
-                ON pm_price.product_id = v.ID AND pm_price.meta_key = '_price'
-            LEFT JOIN tbl_productmeta pm_reg
-                ON pm_reg.product_id = v.ID AND pm_reg.meta_key = '_regular_price'
-            LEFT JOIN tbl_productmeta pm_sale
-                ON pm_sale.product_id = v.ID AND pm_sale.meta_key = '_sale_price'
-            LEFT JOIN tbl_productmeta pm_color
-                ON pm_color.product_id = v.ID AND pm_color.meta_key = 'attribute_pa_color'
-            LEFT JOIN tbl_productmeta pm_size
-                ON pm_size.product_id = v.ID AND pm_size.meta_key = 'attribute_pa_size'
-            LEFT JOIN tbl_productmeta pm_stock
-                ON pm_stock.product_id = v.ID AND pm_stock.meta_key = '_stock_status'
-            LEFT JOIN tbl_productmeta pm_qty
-                ON pm_qty.product_id = v.ID AND pm_qty.meta_key = '_stock'
-            LEFT JOIN tbl_productmeta pm_thumb
-                ON pm_thumb.product_id = v.ID AND pm_thumb.meta_key = '_thumbnail_id'
-            LEFT JOIN tbl_productmeta pm_sku
-                ON pm_sku.product_id = v.ID AND pm_sku.meta_key = '_sku'
             WHERE v.parent_id = ? AND v.product_type = 'product_variation'
             ORDER BY v.menu_order ASC
         `, [id]));
+
+        // Fetch all images for each variation (for full gallery switch on color select)
+        const variationIds = variations.map(v => v.ID);
+        const variationImages = {};
+        if (variationIds.length) {
+            const [varImgRows] = await withRetry(() => db.query(
+                `SELECT m.parent_id AS variation_id, mm.meta_value AS file_path
+                 FROM tbl_media m
+                 JOIN tbl_mediameta mm ON mm.media_id = m.media_id
+                                      AND mm.meta_key = '_wp_attached_file'
+                 WHERE m.parent_id IN (${variationIds.map(() => '?').join(',')})
+                 ORDER BY m.parent_id, m.media_id ASC`,
+                variationIds
+            ));
+            for (const row of varImgRows) {
+                if (!variationImages[row.variation_id]) variationImages[row.variation_id] = [];
+                variationImages[row.variation_id].push(row.file_path);
+            }
+        }
+        // Attach image_urls array to each variation
+        for (const v of variations) {
+            v.image_urls = variationImages[v.ID] || [];
+        }
 
         // Unique colors available for this product (with in-stock flag)
         const [colors] = await withRetry(() => db.query(`
@@ -429,12 +439,29 @@ const getProduct = async (req, res) => {
         const price_min = prices.length ? Math.min(...prices) : null;
         const price_max = prices.length ? Math.max(...prices) : null;
 
+        // gallery_urls = all parent_id images EXCEPT the _thumbnail_id one
+        // The featured image (thumbnail_url) is shown separately on the product page
+        const [allMediaRows] = await withRetry(() => db.query(
+            `SELECT m.media_id, mm.meta_value AS file_path,
+                    CASE WHEN m.media_id = ? THEN 1 ELSE 0 END AS is_thumbnail
+             FROM tbl_media m
+             JOIN tbl_mediameta mm ON mm.media_id = m.media_id
+                                  AND mm.meta_key = '_wp_attached_file'
+             WHERE m.parent_id = ?
+             ORDER BY is_thumbnail DESC, m.media_id ASC`,
+            [product.thumbnail_id ? Number(product.thumbnail_id) : 0, id]
+        ));
+        const gallery_urls = allMediaRows
+            .filter(r => r.file_path)
+            .map(r => ({ file_path: r.file_path, is_thumbnail: r.is_thumbnail === 1 }));
+
         res.json({
             success: true,
             data: {
                 ...product,
                 price_min,
                 price_max,
+                gallery_urls,
                 variations,
                 attributes: { colors, sizes }
             }

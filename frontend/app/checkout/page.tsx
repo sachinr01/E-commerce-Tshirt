@@ -275,20 +275,13 @@ export default function CheckoutPage() {
 
       <Header />
       <div className="dima-main checkout-page">
-        <section className="title_container start-style">
-          <div className="page-section-content">
-            <div className="container page-section">
-              <h2 className="uppercase undertitle text-start">Checkout</h2>
-              <div className="dima-breadcrumbs breadcrumbs-end text-end">
-                <span><Link href="/" className="trail-begin">Home</Link></span>
-                <span className="sep">\</span>
-                <span><Link href="/shop">Shop</Link></span>
-                <span className="sep">\</span>
-                <span className="trail-end">Checkout</span>
-              </div>
-            </div>
-          </div>
-        </section>
+        <nav style={{ padding:'13px 48px', fontSize:13, color:'#888', display:'flex', gap:6, alignItems:'center', borderBottom:'1px solid #ececec', background:'#fff', flexWrap:'wrap' as const }}>
+          <Link href="/" style={{ color:'#888', textDecoration:'none' }}>Home</Link>
+          <span style={{ color:'#ccc' }}>›</span>
+          <Link href="/shop" style={{ color:'#888', textDecoration:'none' }}>Shop</Link>
+          <span style={{ color:'#ccc' }}>›</span>
+          <span style={{ color:'#1c1c1c', fontWeight:500 }}>Checkout</span>
+        </nav>
 
         <section className="section">
           <div className="page-section-content overflow-hidden checkout-content">

@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
-import { getMyOrderById, type OrderDetailResponse } from '../../lib/api';
+import { getMyOrderById, getImageUrl, type OrderDetailResponse } from '../../lib/api';
+import { formatPrice } from '../../lib/price';
 import './order-detail.css';
 
 function formatDate(value: string) {
@@ -86,9 +87,9 @@ export default function OrderDetailPage() {
       id: Number(order.order_id),
       status: normalizeStatus(order.order_status || ''),
       dateLabel: formatDate(order.order_date || ''),
-      totalLabel: order.total ? `Rs. ${Number(order.total).toFixed(2)}` : 'Rs. 0.00',
-      subtotalLabel: order.subtotal ? `Rs. ${Number(order.subtotal).toFixed(2)}` : 'Rs. 0.00',
-      shippingLabel: order.shipping ? `Rs. ${Number(order.shipping).toFixed(2)}` : 'Rs. 0.00',
+      totalLabel:    order.total    ? formatPrice(Number(order.total))    : formatPrice(0),
+      subtotalLabel: order.subtotal ? formatPrice(Number(order.subtotal)) : formatPrice(0),
+      shippingLabel: order.shipping ? formatPrice(Number(order.shipping)) : formatPrice(0),
       payment: order.payment_method || 'cod',
       name,
       email,
@@ -164,8 +165,12 @@ export default function OrderDetailPage() {
                   <div className="order-items-list">
                     {data!.items.map(item => (
                       <div key={item.order_item_id} className="order-item">
-                        <div className="order-item-thumb" aria-hidden="true">
-                          <span>{(item.order_item_name || 'Item').slice(0, 1).toUpperCase()}</span>
+                        <div className="order-item-thumb">
+                          {item.thumbnail_url ? (
+                            <img src={getImageUrl(item.thumbnail_url)} alt={item.order_item_name} />
+                          ) : (
+                            <span>{(item.order_item_name || 'Item').slice(0, 1).toUpperCase()}</span>
+                          )}
                         </div>
                         <div className="order-item-body">
                           <div className="order-item-name">{item.order_item_name}</div>
@@ -176,7 +181,7 @@ export default function OrderDetailPage() {
                           </div>
                         </div>
                         <div className="order-item-price">
-                          Rs. {Number(item.line_total || 0).toFixed(2)}
+                          {formatPrice(Number(item.line_total || 0))}
                         </div>
                       </div>
                     ))}

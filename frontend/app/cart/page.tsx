@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { useCart } from '../lib/cartContext';
+import { formatPrice } from '../lib/price';
 
 const PLACEHOLDER = '/store/images/dummy.jpg';
 
@@ -351,20 +352,13 @@ export default function CartPage() {
 
       <Header />
       <div className="dima-main cart-page">
-        <section className="title_container start-style">
-          <div className="page-section-content">
-            <div className="container page-section">
-              <h2 className="uppercase undertitle text-start">Cart</h2>
-              <div className="dima-breadcrumbs breadcrumbs-end text-end">
-                <span><Link href="/" className="trail-begin">Home</Link></span>
-                <span className="sep">\</span>
-                <span><Link href="/shop">Shop</Link></span>
-                <span className="sep">\</span>
-                <span className="trail-end">Cart</span>
-              </div>
-            </div>
-          </div>
-        </section>
+        <nav style={{ padding:'13px 48px', fontSize:13, color:'#888', display:'flex', gap:6, alignItems:'center', borderBottom:'1px solid #ececec', background:'#fff', flexWrap:'wrap' as const }}>
+          <Link href="/" style={{ color:'#888', textDecoration:'none' }}>Home</Link>
+          <span style={{ color:'#ccc' }}>›</span>
+          <Link href="/shop" style={{ color:'#888', textDecoration:'none' }}>Shop</Link>
+          <span style={{ color:'#ccc' }}>›</span>
+          <span style={{ color:'#1c1c1c', fontWeight:500 }}>Cart</span>
+        </nav>
 
         <section className="section">
           <div className="page-section-content overflow-hidden cart-content">
@@ -414,7 +408,7 @@ export default function CartPage() {
                             <div className="cart-item-details">
                               <div className="cart-detail">
                                 <span className="cart-detail-label">Price</span>
-                                <span className="cart-detail-value">₹{item.price.toFixed(2)}</span>
+                                <span className="cart-detail-value">{formatPrice(item.price)}</span>
                               </div>
 
                               <div className="cart-detail">
@@ -446,7 +440,7 @@ export default function CartPage() {
 
                               <div className="cart-detail">
                                 <span className="cart-detail-label">Total</span>
-                                <span className="cart-detail-value">₹{(item.price * item.quantity).toFixed(2)}</span>
+                                <span className="cart-detail-value">{formatPrice(item.price * item.quantity)}</span>
                               </div>
                             </div>
                           </div>
@@ -475,7 +469,7 @@ export default function CartPage() {
                     <div className="cart-summary-table">
                       <div className="cart-summary-row">
                         <span>Cart Subtotal</span>
-                        <span>₹{total.toFixed(2)}</span>
+                        <span>{formatPrice(total)}</span>
                       </div>
 
                       <div className="cart-summary-row">
@@ -485,7 +479,7 @@ export default function CartPage() {
 
                       <div className="cart-summary-row total">
                         <span>Order Total</span>
-                        <span>₹{orderTotal.toFixed(2)}</span>
+                        <span>{formatPrice(orderTotal)}</span>
                       </div>
                     </div>
 

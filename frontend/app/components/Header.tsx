@@ -3,17 +3,50 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
+import type { FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { useCart } from "../lib/cartContext";
 import { useAuth } from "../lib/authContext";
+import { formatPrice } from "../lib/price";
 
 const PLACEHOLDER = "/store/images/dummy.jpg";
 
+type MegaLink = {
+  label: string;
+  href: string;
+};
+
+type MegaColumn = {
+  heading: string;
+  links: MegaLink[];
+};
+
+type MegaFeature = {
+  image: string;
+  eyebrow: string;
+  title: string;
+  href: string;
+};
+
+type MegaMenu = {
+  featureGroupLabel?: string;
+  columns: MegaColumn[];
+  featured: MegaFeature[];
+  cta?: MegaLink;
+  contentColumns?: 2 | 3;
+};
+
 export default function Header() {
+  const router = useRouter();
   const { items, count, total, removeItem } = useCart();
   const { user, isLoggedIn } = useAuth();
   const [cartOpen, setCartOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const megaLeaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const headerRef = useRef<HTMLElement>(null);
   const cartRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
 
@@ -21,6 +54,9 @@ export default function Header() {
     const handlePointerDown = (event: MouseEvent) => {
       if (cartRef.current && !cartRef.current.contains(event.target as Node)) {
         setCartOpen(false);
+      }
+      if (headerRef.current && !headerRef.current.contains(event.target as Node)) {
+        setActiveMenu(null);
       }
     };
 
@@ -35,6 +71,7 @@ export default function Header() {
         setCartOpen(false);
         setSearchOpen(false);
         setMobileMenuOpen(false);
+        setActiveMenu(null);
       }
     };
 
@@ -62,17 +99,130 @@ export default function Header() {
     }
   }, [searchOpen]);
 
-  const navLinks = [
+  const navLinks: Array<{ label: string; href: string; mega?: MegaMenu }> = [
     { label: "Home", href: "/" },
-    { label: "Shop", href: "/shop" },
-    { label: "Collections", href: "/shop" },
-    { label: "Gifting", href: "/shop" },
+    {
+      label: "Shop",
+      href: "/shop",
+      mega: {
+        columns: [
+          {
+            heading: "Highlights",
+            links: [
+              { label: "New Arrivals", href: "/shop" },
+              { label: "Best Sellers", href: "/shop" },
+            ],
+          },
+          {
+            heading: "Featured Styles",
+            links: [
+              { label: "20oz Skinny Tumbler", href: "/shop/product/20oz-skinny-tumbler" },
+              { label: "26oz Flex Bottle", href: "/shop/product/26oz-flex-bottle-with-lid" },
+              { label: "Desk Essentials", href: "/shop" },
+              { label: "View All Products", href: "/shop" },
+            ],
+          },
+          {
+            heading: "New Arrivals",
+            links: [
+              { label: "Hoodies",          href: "/shop/product/hoodies" },
+              { label: "Coffee Mug",        href: "/shop/product/coffee-mug" },
+              { label: "Koozies",           href: "/shop/product/koozies" },
+              { label: "Decals",            href: "/shop/product/decals" },
+              { label: "View All New",      href: "/shop" },
+            ],
+          },
+        ],
+        featured: [
+          {
+            image: "https://topperskit.com/cdn/shop/files/Untitleddesign_6a4f9d08-7fe8-429b-81e0-b26977ba734b.jpg?v=1745325033&width=713",
+            eyebrow: "Smart Sip Tumbler",
+            title: "Smart Sip Tumbler",
+            href: "/shop/product/20oz-skinny-tumbler",
+          },
+          {
+            image: "/store/images/products/Anger_Green_Hoodies.jpg",
+            eyebrow: "Hoodie",
+            title: "Urban Style Hoodie",
+            href: "/shop/product/hoodies",
+          },
+          {
+            image: "https://rukminim1.flixcart.com/image/1280/1280/kumzpu80/water-purifier-bottle/9/x/1/temperature-display-500-ml-flask-pack-of-1-multicolor-steel-original-imag7q4aqmdgvpus.jpeg?q=90",
+            eyebrow: "Bottle",
+            title: "Bottle Collection",
+            href: "/shop",
+          },
+          {
+            image: "https://rukminim1.flixcart.com/image/1280/1280/xif0q/t-shirt/v/z/e/xxl-r-145-warriorworld-original-imahhv9p3zhqntbc.jpeg?q=90",
+            eyebrow: "Tshirt",
+            title: "Tshirt Collection",
+            href: "/shop",
+          },
+        ],
+        contentColumns: 3,
+      },
+    },
+    { label: "Collections", href: "/collection",
+      mega: {
+        columns: [],
+        featureGroupLabel: "Category",
+        featured: [
+          {
+            image: "https://www.claycraftindia.com/cdn/shop/files/004_e43fc663-79d9-415e-81af-6aa9a9a3b819.jpg?v=1756976133&width=1100",
+            eyebrow: "Ceramic Crockery Set",
+            title: "Ceramic Crockery Set",
+            href: "/collection/ceramic-crockery-set",
+          },
+          {
+            image: "https://icmedianew.gumlet.io/pub/media/catalog/product/cache/7c90eecf75182456ca0a208cc3917af8/i/n/india-circus-by-krsnaa-mehta-green-champagne-glass-52152102sd00638-2_1.jpg",
+            eyebrow: "Glassware Set",
+            title: "Glassware Set",
+            href: "/collection/glassware",
+          },
+          {
+            image: "https://m.media-amazon.com/images/I/91i+DqlPL7L._SL1500_.jpg",
+            eyebrow: "Cup Set",
+            title: "Cup Set",
+            href: "/collection",
+          },
+          {
+            image: "https://m.media-amazon.com/images/I/819sq6YEcYL._SL1500_.jpg",
+            eyebrow: "Ceramic Bowl Set",
+            title: "Ceramic Bowl Set",
+            href: "/collection",
+          },
+        ],
+        contentColumns: 2,
+      },
+    },
+    { label: "Gifting",     href: "/shop" },
   ];
 
   const closeOverlays = () => {
     setCartOpen(false);
     setSearchOpen(false);
     setMobileMenuOpen(false);
+    setActiveMenu(null);
+  };
+
+  const openMega = (label: string) => {
+    if (megaLeaveTimer.current) clearTimeout(megaLeaveTimer.current);
+    setActiveMenu(label);
+  };
+
+  const closeMega = () => {
+    megaLeaveTimer.current = setTimeout(() => setActiveMenu(null), 120);
+  };
+
+  const keepMega = () => {
+    if (megaLeaveTimer.current) clearTimeout(megaLeaveTimer.current);
+  };
+
+  const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const query = searchQuery.trim();
+    closeOverlays();
+    router.push(query ? `/shop?search=${encodeURIComponent(query)}` : "/shop");
   };
 
   return (
@@ -92,7 +242,7 @@ export default function Header() {
           height: 84px;
           padding: 0 24px;
           display: grid;
-          grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+          grid-template-columns: auto 1fr auto;
           align-items: center;
           gap: 16px;
         }
@@ -109,8 +259,19 @@ export default function Header() {
           justify-content: flex-start;
         }
 
+        .nh-center {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
         .nh-right {
           justify-content: flex-end;
+        }
+
+        .nh-search-wrap {
+          position: relative;
+          flex-shrink: 0;
         }
 
         .nh-logo-link {
@@ -158,22 +319,128 @@ export default function Header() {
         .nh-search-pill {
           display: flex;
           align-items: center;
-          gap: 8px;
+          gap: 10px;
           min-width: 0;
-          padding: 7px 12px;
-          border: 1px solid #dddddd;
+          width: 184px;
+          height: 42px;
+          padding: 0 16px;
+          border: 1px solid #dbd5cc;
           border-radius: 999px;
           background: #fff;
+          box-sizing: border-box;
+          transition: border-color 0.18s ease;
+        }
+
+        .nh-search-pill:focus-within {
+          border-color: #bcae9a;
         }
 
         .nh-search-pill input {
-          width: 120px;
+          width: 100%;
           min-width: 0;
           border: none;
           outline: none;
           background: transparent;
-          color: #333;
+          color: #2b2926;
           font-size: 13px;
+          letter-spacing: 0.01em;
+        }
+
+        .nh-search-pill input::placeholder {
+          color: #8f877d;
+        }
+
+        .nh-search-suggestions {
+          position: absolute;
+          top: calc(100% + 8px);
+          right: 0;
+          width: min(420px, calc(100vw - 24px));
+          border: 1px solid #e6dfd6;
+          background: #fff;
+          box-shadow: 0 20px 50px rgba(34, 25, 15, 0.08);
+          padding: 14px 16px 12px;
+          z-index: 1200;
+        }
+
+        .nh-search-suggestions-title {
+          margin: 0 0 8px;
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: #9a9083;
+        }
+
+        .nh-search-suggestion {
+          display: grid;
+          grid-template-columns: 68px minmax(0, 1fr);
+          gap: 14px;
+          align-items: center;
+          width: 100%;
+          padding: 12px 0;
+          text-decoration: none;
+          text-align: left;
+          background: transparent;
+          border: none;
+          border-bottom: 1px solid #f1ece5;
+          cursor: pointer;
+          transition: opacity 0.18s ease;
+        }
+
+        .nh-search-suggestion:hover {
+          opacity: 0.72;
+        }
+
+        .nh-search-suggestion:last-of-type {
+          border-bottom: none;
+        }
+
+        .nh-search-suggestion-thumb {
+          width: 68px;
+          height: 82px;
+          object-fit: cover;
+          background: #f5f3ef;
+        }
+
+        .nh-search-suggestion-name {
+          display: block;
+          color: #171717;
+          font-size: 14px;
+          font-weight: 500;
+          line-height: 1.4;
+          letter-spacing: 0.01em;
+        }
+
+        .nh-search-suggestion-price {
+          display: block;
+          margin-top: 6px;
+          color: #7b7065;
+          font-size: 12px;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+        }
+
+        .nh-search-view-all {
+          display: block;
+          width: 100%;
+          margin-top: 10px;
+          padding: 10px 0 2px;
+          border: none;
+          border-top: 1px solid #eee7de;
+          background: transparent;
+          color: #171717;
+          text-align: left;
+          text-decoration: none;
+          text-transform: uppercase;
+          letter-spacing: 0.12em;
+          font-size: 11px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: opacity 0.18s ease;
+        }
+
+        .nh-search-view-all:hover {
+          opacity: 0.72;
         }
 
         .nh-icon-btn {
@@ -198,6 +465,9 @@ export default function Header() {
         .nh-hamburger {
           display: none;
         }
+
+        /* Show search icon on desktop, hide the pill */
+        .nh-mobile-search { display: inline-flex !important; }
 
         .nh-hamburger-lines {
           display: flex;
@@ -396,14 +666,20 @@ export default function Header() {
           padding: 88px 16px 16px;
         }
 
-        .nh-search-box {
+        .nh-search-box-wrap {
           width: min(640px, 100%);
+          background: #fff;
+          box-shadow: 0 14px 34px rgba(0, 0, 0, 0.16);
+          overflow: hidden;
+        }
+
+        .nh-search-box {
+          width: 100%;
           display: flex;
           align-items: center;
           gap: 12px;
           padding: 18px 20px;
           background: #fff;
-          box-shadow: 0 14px 34px rgba(0, 0, 0, 0.16);
         }
 
         .nh-search-box input {
@@ -493,7 +769,11 @@ export default function Header() {
           }
 
           .nh-search-pill input {
-            width: 88px;
+            width: 100%;
+          }
+
+          .nh-search-pill {
+            width: 150px;
           }
 
           .nh-account-text {
@@ -503,7 +783,7 @@ export default function Header() {
 
         @media (max-width: 991px) {
           .nh-inner {
-            grid-template-columns: auto minmax(0, 1fr) auto;
+            grid-template-columns: auto 1fr auto;
             height: 72px;
             padding: 0 12px;
             gap: 10px;
@@ -513,7 +793,9 @@ export default function Header() {
             flex: 0 0 auto;
           }
 
+          .nh-center,
           .nh-nav,
+          .nh-mega-panel,
           .nh-search-pill,
           .nh-login-label {
             display: none;
@@ -525,12 +807,12 @@ export default function Header() {
           }
 
           .nh-right {
-            gap: 2px;
+            gap: 4px;
           }
 
-          .nh-logo-link {
-            justify-self: center;
-            min-width: 0;
+          .nh-icon-btn {
+            width: 34px;
+            height: 34px;
           }
 
           .nh-logo-image {
@@ -575,9 +857,264 @@ export default function Header() {
             padding: 16px;
           }
         }
+
+        /* ── Mega Menu ─────────────────────────────────────────── */
+        .nh-mega-wrap {
+          position: static;
+        }
+
+        .nh-mega-trigger {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          cursor: pointer;
+          background: none;
+          border: none;
+          padding: 0;
+          color: #1b1b1b;
+          font-size: 13px;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          white-space: nowrap;
+          text-decoration: none;
+        }
+
+        .nh-mega-trigger:hover { color: #555; }
+
+        .nh-mega-trigger svg {
+          transition: transform 0.2s;
+        }
+
+        .nh-mega-trigger.open svg {
+          transform: rotate(180deg);
+        }
+
+        .nh-mega-panel {
+          position: absolute;
+          top: calc(100% - 1px);
+          left: 0;
+          right: 0;
+          background: #fff;
+          border-top: 1px solid #ececec;
+          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+          opacity: 0;
+          pointer-events: none;
+          transform: translateY(-6px);
+          transition: opacity 0.22s ease, transform 0.22s ease;
+          z-index: 999;
+        }
+
+        .nh-mega-panel.open {
+          opacity: 1;
+          pointer-events: auto;
+          transform: translateY(0);
+        }
+
+        .nh-mega-inner {
+          max-width: 1360px;
+          margin: 0 auto;
+          padding: 28px 72px 34px;
+          display: grid;
+          grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+          gap: 28px;
+        }
+
+        .nh-mega-content {
+          min-width: 0;
+        }
+
+        .nh-mega-content:empty {
+          display: none;
+        }
+
+        .nh-mega-inner.collections-only {
+          grid-template-columns: 1fr;
+        }
+
+        .nh-mega-inner.collections-only .nh-mega-featured-grid {
+          max-width: 620px;
+          margin: 0 auto;
+          grid-template-rows: repeat(2, minmax(0, 1fr));
+          gap: 10px;
+        }
+
+        .nh-mega-inner.collections-only .nh-mega-featured {
+          min-height: 180px;
+        }
+
+        .nh-mega-feature-block {
+          width: 100%;
+        }
+
+        .nh-mega-feature-group-label {
+          margin: 0 0 16px;
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: #8f8f8f;
+          text-align: left;
+        }
+
+        .nh-mega-title-row {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 20px;
+          margin-bottom: 20px;
+        }
+
+        .nh-mega-cta {
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          padding-bottom: 4px;
+          border-bottom: 1px solid #171717;
+          color: #171717;
+          text-decoration: none;
+          text-transform: uppercase;
+          letter-spacing: 0.12em;
+          font-size: 11px;
+          font-weight: 700;
+          white-space: nowrap;
+        }
+
+        .nh-mega-grid {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 28px;
+          padding-top: 18px;
+          border-top: 1px solid #f0ece7;
+        }
+
+        .nh-mega-grid.cols-2 {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          max-width: 720px;
+        }
+
+        .nh-mega-grid.cols-3 {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .nh-mega-col-heading {
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: #aaa;
+          margin: 0 0 16px;
+        }
+
+        .nh-mega-col ul {
+          list-style: none;
+          margin: 0;
+          padding: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .nh-mega-col ul a {
+          font-size: 14px;
+          font-weight: 500;
+          color: #1b1b1b;
+          text-decoration: none;
+          letter-spacing: 0.01em;
+          transition: color 0.15s;
+        }
+
+        .nh-mega-col ul a:hover {
+          color: #888;
+        }
+
+        .nh-mega-featured-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 26px;
+          align-content: start;
+        }
+
+        /* Shop mega: 2x2 grid */
+        .nh-mega-inner:not(.collections-only) .nh-mega-featured-grid {
+          grid-template-rows: repeat(2, minmax(0, 1fr));
+          gap: 10px;
+        }
+
+        .nh-mega-inner.collections-only .nh-mega-feature-block {
+          grid-column: auto;
+          max-width: 620px;
+          margin: 0 auto;
+        }
+
+        .nh-mega-featured {
+          position: relative;
+          overflow: hidden;
+          min-height: 390px;
+          background: #f6f2ed;
+        }
+
+        /* Shop mega: 2x2 grid needs shorter images */
+        .nh-mega-inner:not(.collections-only) .nh-mega-featured {
+          min-height: 180px;
+        }
+
+        .nh-mega-featured img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+          transition: transform 0.4s ease;
+        }
+
+        .nh-mega-featured:hover img {
+          transform: scale(1.04);
+        }
+
+        .nh-mega-featured-overlay {
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          padding: 28px 14px 14px;
+          background: linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 100%);
+          display: flex;
+          flex-direction: column;
+          gap: 3px;
+          z-index: 2;
+        }
+
+        .nh-mega-featured-eyebrow {
+          font-size: 10px;
+          font-weight: 600;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          color: rgba(255,255,255,0.75);
+        }
+
+        .nh-mega-featured-title {
+          font-size: 13px;
+          font-weight: 700;
+          color: #fff;
+          letter-spacing: 0.02em;
+          line-height: 1.3;
+        }
+
+
+        @media (max-width: 1199px) {
+          .nh-mega-inner {
+            padding: 20px 36px 24px;
+            grid-template-columns: 1fr;
+            gap: 28px;
+          }
+
+          .nh-mega-grid {
+            gap: 20px;
+          }
+        }
       `}</style>
 
-      <header className="nh-header">
+      <header className="nh-header" ref={headerRef}>
         <div className="nh-inner">
           <div className="nh-left">
             <button
@@ -593,42 +1130,115 @@ export default function Header() {
               </span>
             </button>
 
+            <Link href="/" className="nh-logo-link" onClick={closeOverlays}>
+              <Image
+                src="/store/images/logo-white.png"
+                alt="Okab Online Store"
+                width={280}
+                height={64}
+                priority
+                className="nh-logo-image"
+              />
+            </Link>
+          </div>
+
+          <div className="nh-center">
             <ul className="nh-nav">
               {navLinks.map((link) => (
-                <li key={link.label}>
-                  <Link href={link.href}>{link.label}</Link>
+                <li key={link.label} className={link.mega ? 'nh-mega-wrap' : ''}>
+                  {link.mega ? (
+                    <>
+                      <Link
+                        href={link.href}
+                        className={`nh-mega-trigger${activeMenu === link.label ? ' open' : ''}`}
+                        onMouseEnter={() => openMega(link.label)}
+                        onMouseLeave={closeMega}
+                        onClick={closeOverlays}
+                      >
+                        {link.label}
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <polyline points="6 9 12 15 18 9" />
+                        </svg>
+                      </Link>
+                      <div
+                        className={`nh-mega-panel${activeMenu === link.label ? ' open' : ''}`}
+                        onMouseEnter={keepMega}
+                        onMouseLeave={closeMega}
+                      >
+                        <div className={`nh-mega-inner${link.mega.columns.length === 0 ? " collections-only" : ""}`}>
+                          {link.mega.columns.length > 0 && (
+                          <div className="nh-mega-content">
+                            {link.mega.cta ? (
+                              <div className="nh-mega-title-row">
+                                <div />
+                                <Link href={link.mega.cta.href} className="nh-mega-cta" onClick={closeOverlays}>
+                                  {link.mega.cta.label}
+                                </Link>
+                              </div>
+                            ) : null}
+
+                            <div className={`nh-mega-grid cols-${link.mega.contentColumns ?? 3}`}>
+                              {link.mega.columns.map((col) => (
+                                <div key={col.heading} className="nh-mega-col">
+                                  <p className="nh-mega-col-heading">{col.heading}</p>
+                                  <ul>
+                                    {col.links.map((l) => (
+                                      <li key={l.label}>
+                                        <Link href={l.href} onClick={closeOverlays}>{l.label}</Link>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          )}
+
+                          <div className="nh-mega-feature-block">
+                            {link.mega.featureGroupLabel ? (
+                              <p className="nh-mega-feature-group-label">{link.mega.featureGroupLabel}</p>
+                            ) : null}
+
+                            <div className="nh-mega-featured-grid">
+                              {link.mega.featured.map((feature) => (
+                                <Link
+                                  key={feature.title}
+                                  href={feature.href}
+                                  className="nh-mega-featured"
+                                  onClick={closeOverlays}
+                                >
+                                  <Image
+                                    src={feature.image}
+                                    alt={feature.title}
+                                    fill
+                                    sizes="(max-width: 1199px) 50vw, 280px"
+                                  />
+                                  <span className="nh-mega-featured-overlay">
+                                    <span className="nh-mega-featured-title">{feature.title}</span>
+                                  </span>
+                                </Link>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <Link href={link.href}>{link.label}</Link>
+                  )}
                 </li>
               ))}
             </ul>
           </div>
 
-          <Link href="/" className="nh-logo-link" onClick={closeOverlays}>
-            <Image
-              src="/store/images/logo-white.png"
-              alt="Okab Online Store"
-              width={280}
-              height={64}
-              priority
-              className="nh-logo-image"
-            />
-          </Link>
-
           <div className="nh-right">
-            <form className="nh-search-pill" onSubmit={(event) => event.preventDefault()}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="11" cy="11" r="8" />
-                <path d="m21 21-4.35-4.35" />
-              </svg>
-              <input type="text" placeholder="Search..." aria-label="Search products" />
-            </form>
-
             <button
               type="button"
               className="nh-icon-btn nh-mobile-search"
               onClick={() => setSearchOpen(true)}
               aria-label="Open search"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                 <circle cx="11" cy="11" r="8" />
                 <path d="m21 21-4.35-4.35" />
               </svg>
@@ -679,15 +1289,17 @@ export default function Header() {
                   <>
                     {items.map((item) => (
                       <div key={item.cartItemId} className="nh-cart-item">
-                        <img
+                        <Image
                           src={item.image || PLACEHOLDER}
                           alt={item.title}
+                          width={56}
+                          height={60}
                           className="nh-cart-thumb"
                         />
                         <div>
                           <p className="nh-cart-item-title">{item.title}</p>
                           <div className="nh-cart-item-meta">
-                            {item.quantity} x ₹{item.price.toFixed(2)}
+                            {item.quantity} x {formatPrice(item.price)}
                           </div>
                         </div>
                         <button
@@ -703,7 +1315,7 @@ export default function Header() {
 
                     <div className="nh-cart-subtotal">
                       <span>Subtotal</span>
-                      <span>₹{total.toFixed(2)}</span>
+                      <span>{formatPrice(total)}</span>
                     </div>
                   </>
                 )}
@@ -723,16 +1335,24 @@ export default function Header() {
       </header>
 
       {searchOpen && (
-        <div className="nh-search-overlay" onClick={() => setSearchOpen(false)}>
-          <div className="nh-search-box" onClick={(event) => event.stopPropagation()}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2">
-              <circle cx="11" cy="11" r="8" />
-              <path d="m21 21-4.35-4.35" />
-            </svg>
-            <input ref={searchRef} type="text" placeholder="Search products..." />
-            <button type="button" className="nh-search-close" onClick={() => setSearchOpen(false)} aria-label="Close search">
-              ×
-            </button>
+        <div className="nh-search-overlay" onClick={() => { setSearchOpen(false); setSearchQuery(''); }}>
+          <div className="nh-search-box-wrap" onClick={(event) => event.stopPropagation()}>
+            <form className="nh-search-box" onSubmit={handleSearchSubmit}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2">
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.35-4.35" />
+              </svg>
+              <input
+                ref={searchRef}
+                type="text"
+                placeholder="Search products..."
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+              />
+              <button type="button" className="nh-search-close" onClick={() => { setSearchOpen(false); setSearchQuery(''); }} aria-label="Close search">
+                ×
+              </button>
+            </form>
           </div>
         </div>
       )}

@@ -5,7 +5,8 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import { getProductById, getProductBySlug, type ProductDetail } from '../lib/api';
+import { getProductById, getProductBySlug, getImageUrl, type ProductDetail } from '../lib/api';
+import { formatPrice, formatPriceRange } from '../lib/price';
 import { useCart } from '../lib/cartContext';
 import { useWishlist } from '../lib/wishlistContext';
 
@@ -123,9 +124,21 @@ function StarRating({ rating, size = 16 }: { rating: number; size?: number }) {
 }
 
 export function ProductDetailsClient({ productId, productSlug }: { productId?: string; productSlug?: string } = {}) {
-  const searchParams   = useSearchParams();
-  const id             = productId ?? searchParams.get('id');
-  const slug           = productSlug ?? null;
+  // If slug is passed directly (from /shop/product/[slug] route), skip useSearchParams entirely
+  if (productSlug) {
+    return <ProductDetailsInner id={undefined} slug={productSlug} />;
+  }
+  return <ProductDetailsWithSearchParams productId={productId} />;
+}
+
+// Reads ?id= from URL — only used when navigating to /product-details?id=123
+function ProductDetailsWithSearchParams({ productId }: { productId?: string }) {
+  const searchParams = useSearchParams();
+  const id = productId ?? searchParams.get('id') ?? undefined;
+  return <ProductDetailsInner id={id} slug={undefined} />;
+}
+
+function ProductDetailsInner({ id, slug }: { id?: string; slug?: string }) {
   const { addItem }    = useCart();
   const { hasItem: inWishlist, addItem: addToWishlist, removeItem: removeFromWishlist } = useWishlist();
 
@@ -141,18 +154,31 @@ export function ProductDetailsClient({ productId, productSlug }: { productId?: s
   const [activeTab,     setActiveTab]     = useState('description');
 
   useEffect(() => {
-    if (slug) {
-      getProductBySlug(slug)
-        .then(p => { setProduct(p); setLoading(false); })
-        .catch(err => { setError(err.message); setLoading(false); });
-    } else if (id) {
-      getProductById(id)
-        .then(p => { setProduct(p); setLoading(false); })
-        .catch(err => { setError(err.message); setLoading(false); });
-    } else {
-      setError('Product not found.');
-      setLoading(false);
-    }
+    let cancelled = false;
+
+    const load = async () => {
+      try {
+        let p: ProductDetail;
+        if (slug) {
+          p = await getProductBySlug(slug);
+        } else if (id) {
+          p = await getProductById(id);
+        } else {
+          if (!cancelled) { setError('No product id or slug provided.'); setLoading(false); }
+          return;
+        }
+        if (!cancelled) { setProduct(p); setLoading(false); }
+      } catch (err: unknown) {
+        if (!cancelled) {
+          const msg = err instanceof Error ? err.message : String(err);
+          setError(msg || 'Failed to load product. Please try again.');
+          setLoading(false);
+        }
+      }
+    };
+
+    load();
+    return () => { cancelled = true; };
   }, [id, slug]);
 
   useEffect(() => {
@@ -160,6 +186,11 @@ export function ProductDetailsClient({ productId, productSlug }: { productId?: s
     window.addEventListener('scroll', onScroll);
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  // When color changes, reset to first image of the new image set
+  useEffect(() => {
+    setMainImage(0);
+  }, [selectedColor]);
 
   if (loading) return (
     <div style={S.centered}>
@@ -169,7 +200,10 @@ export function ProductDetailsClient({ productId, productSlug }: { productId?: s
   );
   if (error || !product) return (
     <div style={S.centered}>
-      <p style={{ fontFamily: 'sans-serif', color: '#e74c3c' }}>{error ?? 'Product not found.'}</p>
+      <p style={{ fontFamily: 'sans-serif', color: '#e74c3c', maxWidth: 480, textAlign: 'center', padding: '0 16px' }}>
+        {error ?? 'Product not found.'}
+      </p>
+      <a href="/shop" style={{ marginTop: 16, fontFamily: 'sans-serif', fontSize: 13, color: '#555' }}>← Back to shop</a>
     </div>
   );
 
@@ -205,9 +239,7 @@ export function ProductDetailsClient({ productId, productSlug }: { productId?: s
   const displayPrice     = currentPrice ?? simplePrice ?? (hasFullSelection ? priceMin : null);
   const displaySalePrice = currentSalePrice ?? simpleSalePrice ?? null;
   const showRange = !hasFullSelection && priceMax > priceMin;
-  const priceRangeStr = priceMax > priceMin
-    ? `₹${priceMin.toFixed(2)} - ₹${priceMax.toFixed(2)}`
-    : `₹${priceMin.toFixed(2)}`;
+  const priceRangeStr = formatPriceRange(priceMin, priceMax);
 
   const isAddToCartEnabled = !product.variations.length || hasFullSelection;
 
@@ -267,7 +299,7 @@ export function ProductDetailsClient({ productId, productSlug }: { productId?: s
         color: selectedColor || undefined,
         size: selectedSize || undefined,
         quantity,
-        image: PLACEHOLDER,
+        image: productImage,
       });
       setAddedFlash(true);
       setTimeout(() => setAddedFlash(false), 2000);
@@ -284,14 +316,33 @@ export function ProductDetailsClient({ productId, productSlug }: { productId?: s
         id: product.ID,
         title: product.title,
         price: Number(displaySalePrice ?? displayPrice) || 0,
-        image: PLACEHOLDER,
+        image: productImage,
         inStock,
       });
     }
   };
 
-  /* Fake gallery: 4 slots using the same placeholder */
-  const galleryImgs = [PLACEHOLDER, PLACEHOLDER, PLACEHOLDER, PLACEHOLDER];
+  // gallery_urls ordered: is_thumbnail=true first, then rest
+  // Sort ensures thumbnail is always position 0 regardless of media_id order
+  const sortedGallery = [...(product.gallery_urls ?? [])].sort(
+    (a, b) => (b.is_thumbnail ? 1 : 0) - (a.is_thumbnail ? 1 : 0)
+  );
+
+  const defaultImages = sortedGallery.length > 0
+    ? sortedGallery.map(g => getImageUrl(g.file_path))
+    : (product.thumbnail_url ? [getImageUrl(product.thumbnail_url)] : [PLACEHOLDER]);
+
+  const selectedVariationImages = (() => {
+    if (!selectedColor) return null;
+    const variation = product.variations.find(
+      v => v.color?.toLowerCase() === selectedColor.toLowerCase()
+    );
+    if (!variation?.image_urls?.length) return null;
+    return variation.image_urls.map(p => getImageUrl(p));
+  })();
+
+  const allImages = selectedVariationImages ?? defaultImages;
+  const productImage = allImages[0];
 
   const reviews: never[] = [];
   const avgRating  = Number(product.avg_rating  ?? 0);
@@ -318,7 +369,7 @@ export function ProductDetailsClient({ productId, productSlug }: { productId?: s
         <div className="cpd-gallery-col">
           {/* Vertical thumbnail strip */}
           <div className="cpd-thumbs-strip">
-            {galleryImgs.map((img, idx) => (
+            {allImages.map((img, idx) => (
               <button
                 key={idx}
                 onClick={() => setMainImage(idx)}
@@ -330,13 +381,13 @@ export function ProductDetailsClient({ productId, productSlug }: { productId?: s
 
           {/* Main image */}
           <div className="cpd-main-img-wrap">
-            <img src={galleryImgs[mainImage]} alt={product.title} className="cpd-main-img" />
+            <img src={allImages[mainImage]} alt={product.title} className="cpd-main-img" />
 
             {/* Image nav arrows (mobile) */}
             <button className="cpd-img-arrow prev"
               onClick={() => setMainImage(i => Math.max(0, i - 1))}>‹</button>
             <button className="cpd-img-arrow next"
-              onClick={() => setMainImage(i => Math.min(galleryImgs.length - 1, i + 1))}>›</button>
+              onClick={() => setMainImage(i => Math.min(allImages.length - 1, i + 1))}>›</button>
 
             {/* Sale badge */}
             {displaySalePrice && <span className="cpd-sale-badge">Sale</span>}
@@ -352,7 +403,7 @@ export function ProductDetailsClient({ productId, productSlug }: { productId?: s
 
             {/* Dot indicators */}
             <div className="cpd-img-dots">
-              {galleryImgs.map((_, i) => (
+              {allImages.map((_, i) => (
                 <button key={i} onClick={() => setMainImage(i)}
                   className={`cpd-dot${mainImage === i ? ' active' : ''}`} />
               ))}
@@ -385,14 +436,14 @@ export function ProductDetailsClient({ productId, productSlug }: { productId?: s
               <span className="cpd-price">{priceRangeStr}</span>
             ) : displaySalePrice ? (
               <>
-                <span className="cpd-price sale">₹{displaySalePrice.toFixed(2)}</span>
-                <span className="cpd-old-price">₹{Number(displayPrice).toFixed(2)}</span>
+                <span className="cpd-price sale">{formatPrice(displaySalePrice)}</span>
+                <span className="cpd-old-price">{formatPrice(displayPrice)}</span>
                 <span className="cpd-save-badge">
-                  Save ₹{(Number(displayPrice) - displaySalePrice).toFixed(2)}
+                  Save {formatPrice(Number(displayPrice) - displaySalePrice)}
                 </span>
               </>
             ) : displayPrice ? (
-              <span className="cpd-price">₹{Number(displayPrice).toFixed(2)}</span>
+              <span className="cpd-price">{formatPrice(displayPrice)}</span>
             ) : (
               <span className="cpd-price">{priceRangeStr}</span>
             )}
@@ -582,10 +633,10 @@ export function ProductDetailsClient({ productId, productSlug }: { productId?: s
       {/* ── Sticky bar ── */}
       {pinned && (
         <div className="cpd-sticky-bar">
-          <img src={PLACEHOLDER} alt="" className="cpd-sticky-thumb" />
+          <img src={productImage} alt="" className="cpd-sticky-thumb" />
           <span className="cpd-sticky-name">{product.title}</span>
           <span className="cpd-sticky-price">
-            {displaySalePrice ? `₹${displaySalePrice.toFixed(2)}` : displayPrice ? `₹${Number(displayPrice).toFixed(2)}` : priceRangeStr}
+            {displaySalePrice ? formatPrice(displaySalePrice) : displayPrice ? formatPrice(displayPrice) : priceRangeStr}
           </span>
           <button
             type="button"
