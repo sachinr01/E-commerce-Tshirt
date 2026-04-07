@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 
 export default function Footer() {
   return (
@@ -18,20 +18,20 @@ export default function Footer() {
           <div>
             <h4>ABOUT US</h4>
             <ul className="footer-nav-list" role="list">
-              <li><Link href="/footer/about-us" className="link-faded">Our Story</Link></li>
-              <li><Link href="/footer/contact-us" className="link-faded">Contact Us</Link></li>
-              <li><Link href="/footer/shipping-policy" className="link-faded">Shipping Policy</Link></li>
-              <li><Link href="/footer/refund_returns" className="link-faded">Refund &amp; Returns</Link></li>
-              <li><Link href="/footer/terms-conditions" className="link-faded">Terms &amp; Conditions</Link></li>
+              <li><Link href="/about-us" className="link-faded">Our Story</Link></li>
+              <li><Link href="/contact-us" className="link-faded">Contact Us</Link></li>
+              <li><Link href="/shipping-policy" className="link-faded">Shipping Policy</Link></li>
+              <li><Link href="/refund_returns" className="link-faded">Refund &amp; Returns</Link></li>
+              <li><Link href="/terms-conditions" className="link-faded">Terms &amp; Conditions</Link></li>
             </ul>
           </div>
           <div>
             <h4>COMPANY</h4>
             <ul className="footer-nav-list" role="list">
-              <li><Link href="/footer/privacy-policy" className="link-faded">Privacy Policy</Link></li>
-              <li><Link href="/footer/terms-conditions" className="link-faded">Terms Of Use</Link></li>
-              <li><Link href="/footer/contact-us" className="link-faded">Contact Us</Link></li>
-              <li><Link href="/footer/refund_returns" className="link-faded">Refund &amp; Returns</Link></li>
+              <li><Link href="/privacy-policy" className="link-faded">Privacy Policy</Link></li>
+              <li><Link href="/terms-conditions" className="link-faded">Terms Of Use</Link></li>
+              <li><Link href="/contact-us" className="link-faded">Contact Us</Link></li>
+              <li><Link href="/refund_returns" className="link-faded">Refund &amp; Returns</Link></li>
             </ul>
           </div>
           <div>
@@ -207,3 +207,6 @@ export default function Footer() {
     </footer>
   );
 }
+
+
+

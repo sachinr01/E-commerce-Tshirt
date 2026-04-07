@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import Header from '../../components/Header';
-import Footer from '../../components/Footer';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
 
 type StaticPage = {
   slug: string;
@@ -11,15 +11,13 @@ type StaticPage = {
   date: string;
 };
 
-export const dynamic = 'force-dynamic';
+type PageResult = { page?: StaticPage; error?: 'api' | 'not-found' };
+type PageListItem = { slug: string; title: string; date: string };
 
 const BASE_URL =
   process.env.SITE_URL ||
   process.env.NEXT_PUBLIC_SITE_URL ||
   'http://localhost:3001';
-
-type PageResult = { page?: StaticPage; error?: 'api' | 'not-found' };
-type PageListItem = { slug: string; title: string; date: string };
 
 const fetchPage = async (slug: string): Promise<PageResult> => {
   try {
@@ -50,9 +48,7 @@ const fetchPageList = async (): Promise<PageListItem[]> => {
   }
 };
 
-export default async function FooterSlugPage({ params }: { params: Promise<{ slug: string }> }) {
-  const resolved = await params;
-  const slug = (resolved?.slug || '').toString().trim().toLowerCase();
+export async function renderStaticPage(slug: string) {
   const [result, pageList] = await Promise.all([
     fetchPage(slug),
     fetchPageList(),
@@ -93,16 +89,13 @@ export default async function FooterSlugPage({ params }: { params: Promise<{ slu
           display: grid;
           grid-template-columns: minmax(0, 1fr) 300px;
           gap: 36px;
-          align-items: start;
         }
         .static-body.no-sidebar {
           max-width: 820px;
           grid-template-columns: 1fr;
           padding: 24px 20px 64px;
         }
-        .static-body.no-sidebar .static-sidebar {
-          display: none;
-        }
+        .static-body.no-sidebar .static-sidebar { display: none; }
         .static-title { margin: 0 0 6px; font-size: 28px; font-weight: 700; color: #1a1a1a; }
         .static-date { font-size: 12px; color: #999; margin-bottom: 18px; }
         .static-breadcrumb { font-size: 12px; color: #888; margin-bottom: 16px; display: flex; gap: 6px; align-items: center; }
@@ -133,7 +126,6 @@ export default async function FooterSlugPage({ params }: { params: Promise<{ slu
           display: flex;
           flex-direction: column;
           gap: 22px;
-          position: static;
           align-self: start;
         }
         .sidebar-box {
@@ -246,49 +238,47 @@ export default async function FooterSlugPage({ params }: { params: Promise<{ slu
             <Link href="/" className="static-back">Back to Home</Link>
           </div>
 
-            <aside className="static-sidebar">
+          <aside className="static-sidebar">
+            <div className="sidebar-box">
+              <h4 className="sidebar-title">Categories</h4>
+              <ul className="sidebar-list">
+                <li className="sidebar-item"><span>General</span><span>08</span></li>
+                <li className="sidebar-item"><span>Updates</span><span>04</span></li>
+                <li className="sidebar-item"><span>Stories</span><span>06</span></li>
+                <li className="sidebar-item"><span>Guides</span><span>03</span></li>
+              </ul>
+            </div>
+
+            {slug === 'contact-us' && (
               <div className="sidebar-box">
-                <h4 className="sidebar-title">Categories</h4>
-                <ul className="sidebar-list">
-                  <li className="sidebar-item"><span>General</span><span>08</span></li>
-                  <li className="sidebar-item"><span>Updates</span><span>04</span></li>
-                  <li className="sidebar-item"><span>Stories</span><span>06</span></li>
-                  <li className="sidebar-item"><span>Guides</span><span>03</span></li>
+                <h4 className="sidebar-title">Contact Info</h4>
+                <ul className="contact-info-list">
+                  <li>
+                    <strong>Location</strong>
+                    <span>India</span>
+                  </li>
+                  <li>
+                    <strong>Phone</strong>
+                    <span>+91 9876543210</span>
+                    <span>+91 1234567890</span>
+                  </li>
+                  <li>
+                    <strong>Email</strong>
+                    <span>admin@coffr.com</span>
+                    <span>owner@coffer.com</span>
+                  </li>
                 </ul>
               </div>
+            )}
 
-              {slug === 'contact-us' && (
-                <div className="sidebar-box">
-                  <h4 className="sidebar-title">Contact Info</h4>
-                  <ul className="contact-info-list">
-                    <li>
-                      <strong>Location</strong>
-                      <span>India</span>
-                    </li>
-                    <li>
-                      <strong>Phone</strong>
-                      <span>+91 9876543210</span>
-                      <span>+91 1234567890</span>
-                    </li>
-                    <li>
-                      <strong>Email</strong>
-                      <span>admin@coffr.com</span>
-                      <span>owner@coffer.com</span>
-                    </li>
-                  </ul>
-                </div>
-              )}
-
-              <div className="sidebar-box">
-                <h4 className="sidebar-title">Featured Posts</h4>
+            <div className="sidebar-box">
+              <h4 className="sidebar-title">Featured Posts</h4>
               <ul className="featured-list">
                 {pageList.length > 0 ? (
-                  (slug === 'contact-us' || slug === 'about-us'
-                    ? pageList.filter((p) =>
-                        p.slug && p.slug !== slug && (p.slug === 'about-us' || p.slug === 'contact-us')
-                      )
-                    : pageList.filter((p) => p.slug && p.slug !== slug)
-                  )
+                  pageList
+                    .filter((p) =>
+                      p.slug && p.slug !== slug && (p.slug === 'about-us' || p.slug === 'contact-us')
+                    )
                     .sort((a, b) => {
                       if (slug === 'contact-us') {
                         if (a.slug === 'about-us') return -1;
@@ -303,9 +293,9 @@ export default async function FooterSlugPage({ params }: { params: Promise<{ slu
                     .slice(0, 4)
                     .map((p) => (
                     <li key={p.slug} className="featured-item">
-                      <Link href={`/footer/${p.slug}`} className="featured-title">{p.title}</Link>
+                      <Link href={`/${p.slug}`} className="featured-title">{p.title}</Link>
                       <span className="featured-meta">
-                        By Admin <span>/</span> {p.date || '—'}
+                        By Admin <span>/</span> {p.date || '-'}
                       </span>
                     </li>
                   ))
@@ -321,3 +311,4 @@ export default async function FooterSlugPage({ params }: { params: Promise<{ slu
     </>
   );
 }
+
