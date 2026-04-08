@@ -227,6 +227,11 @@ function ProductDetailsInner({ id, slug }: { id?: string; slug?: string }) {
 
   const bestMatch = selectedVariation;
 
+  // Debug: log variation data to confirm API is returning variation_description
+  if (bestMatch) {
+    console.log('[Variation]', { id: bestMatch.ID, variation_description: bestMatch.variation_description });
+  }
+
   const currentPrice     = bestMatch ? Number(bestMatch.price || bestMatch.regular_price || 0) || null : null;
   const currentSalePrice = bestMatch?.sale_price && bestMatch.sale_price !== '' ? Number(bestMatch.sale_price) : null;
 
@@ -276,11 +281,14 @@ function ProductDetailsInner({ id, slug }: { id?: string; slug?: string }) {
        .replace(/&nbsp;/g, ' ');
 
   const shortDesc = decodeEntities(product.short_description?.replace(/<[^>]+>/g, '') || '');
-  const fullDesc  = decodeEntities(product.description?.replace(/<[^>]+>/g, '')       || shortDesc);
+  const varDesc   = bestMatch?.variation_description
+    ? decodeEntities(bestMatch.variation_description.replace(/<[^>]+>/g, ''))
+    : null;
+  const fullDesc  = varDesc || decodeEntities(product.description?.replace(/<[^>]+>/g, '') || shortDesc);
 
   const anyInStock = product.variations.length
     ? product.variations.some(isVariationInStock)
-    : product.stock_status === 'instock';
+    : (product.stock_status === 'instock' || product.stock_status === 'onbackorder');
 
   const inStock = hasFullSelection
     ? (bestMatch ? isVariationInStock(bestMatch) : false)
@@ -333,10 +341,13 @@ function ProductDetailsInner({ id, slug }: { id?: string; slug?: string }) {
     : (product.thumbnail_url ? [getImageUrl(product.thumbnail_url)] : [PLACEHOLDER]);
 
   const selectedVariationImages = (() => {
-    if (!selectedColor) return null;
-    const variation = product.variations.find(
-      v => v.color?.toLowerCase() === selectedColor.toLowerCase()
-    );
+    if (!selectedColor && !selectedSize) return null;
+    const norm = (v: string) => v.toLowerCase().trim().replace(/\s+/g, '-');
+    const variation = product.variations.find(v => {
+      const colorMatch = !selectedColor || norm(v.color ?? '') === norm(selectedColor);
+      const sizeMatch  = !selectedSize  || norm(v.size  ?? '') === norm(selectedSize);
+      return colorMatch && sizeMatch && v.image_urls?.length > 0;
+    });
     if (!variation?.image_urls?.length) return null;
     return variation.image_urls.map(p => getImageUrl(p));
   })();
@@ -367,16 +378,23 @@ function ProductDetailsInner({ id, slug }: { id?: string; slug?: string }) {
 
         {/* ════ LEFT: Gallery ════ */}
         <div className="cpd-gallery-col">
-          {/* Vertical thumbnail strip */}
+          {/* Vertical thumbnail strip — max 5, last shows +N if more */}
           <div className="cpd-thumbs-strip">
-            {allImages.map((img, idx) => (
-              <button
-                key={idx}
-                onClick={() => setMainImage(idx)}
-                className={`cpd-thumb${mainImage === idx ? ' active' : ''}`}>
-                <img src={img} alt="" loading="lazy" />
-              </button>
-            ))}
+            {allImages.slice(0, 5).map((img, idx) => {
+              const isLast = idx === 4 && allImages.length > 5;
+              const remaining = allImages.length - 5;
+              return (
+                <button
+                  key={idx}
+                  onClick={() => setMainImage(idx)}
+                  className={`cpd-thumb${mainImage === idx ? ' active' : ''}`}>
+                  <img src={img} alt="" loading="lazy" />
+                  {isLast && (
+                    <span className="cpd-thumb-more">+{remaining}</span>
+                  )}
+                </button>
+              );
+            })}
           </div>
 
           {/* Main image */}
@@ -452,9 +470,9 @@ function ProductDetailsInner({ id, slug }: { id?: string; slug?: string }) {
           <div className="cpd-divider" />
 
           {/* Short desc */}
-          {shortDesc && (
+          {(varDesc || shortDesc) && (
             <p className="cpd-short-desc">
-              {shortDesc.substring(0, 220)}{shortDesc.length > 220 ? '…' : ''}
+              {(varDesc || shortDesc).substring(0, 220)}{(varDesc || shortDesc).length > 220 ? '…' : ''}
             </p>
           )}
 
@@ -526,13 +544,18 @@ function ProductDetailsInner({ id, slug }: { id?: string; slug?: string }) {
           {/* Variation stock info */}
           {bestMatch && (
             <div className="cpd-variation-info">
-              <span className={`cpd-var-stock${bestMatch.stock_status === 'instock' ? ' in' : ' out'}`}>
-                {bestMatch.stock_status === 'instock' ? '✓ Available' : '✗ Out of Stock'}
+              <span className={`cpd-var-stock${isVariationInStock(bestMatch) ? ' in' : ' out'}`}>
+                {isVariationInStock(bestMatch) ? '✓ Available' : '✗ Out of Stock'}
               </span>
               {bestMatch.sku && (
                 <span className="cpd-var-sku">SKU: {bestMatch.sku}</span>
               )}
             </div>
+          )}
+
+          {/* Variation description */}
+          {varDesc && (
+            <p className="cpd-var-desc">{varDesc}</p>
           )}
 
           <div className="cpd-divider" />
@@ -668,6 +691,11 @@ function ProductDetailsInner({ id, slug }: { id?: string; slug?: string }) {
 
           {activeTab === 'description' && (
             <div className="cpd-desc-panel">
+              {varDesc && (
+                <p className="cpd-var-desc-label">
+                  Variation Description
+                </p>
+              )}
               <p className="cpd-desc-text">{fullDesc || 'No description available.'}</p>
             </div>
           )}
@@ -769,11 +797,21 @@ const baseCss = `
   width: 74px; height: 74px;
   border: 2px solid transparent; border-radius: 8px;
   overflow: hidden; padding: 0; cursor: pointer; background: #f4f4f4;
+  position: relative;
   transition: border-color .2s, transform .15s;
 }
 .cpd-thumb:hover { border-color: var(--cpd-brand); transform: scale(1.04); }
 .cpd-thumb.active { border-color: var(--cpd-brand); }
 .cpd-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
+.cpd-thumb-more {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,0.72);
+  backdrop-filter: blur(2px);
+  font-size: 18px; font-weight: 700; color: #444;
+  border-radius: 6px;
+  pointer-events: none;
+}
 
 .cpd-main-img-wrap {
   flex: 1; position: relative; border-radius: 14px; overflow: hidden;
@@ -930,6 +968,28 @@ const baseCss = `
 .cpd-var-stock.in  { color: var(--cpd-brand); font-weight: 600; }
 .cpd-var-stock.out { color: var(--cpd-sale);  font-weight: 600; }
 .cpd-var-sku { color: var(--cpd-muted); }
+
+/* Variation description */
+.cpd-var-desc {
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: #555;
+  margin: 10px 0 4px;
+  padding: 10px 14px;
+  background: #f9f9f9;
+  border-left: 3px solid var(--cpd-brand);
+  border-radius: 0 4px 4px 0;
+}
+.cpd-var-desc-label {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--cpd-brand);
+  margin: 0 0 10px;
+}
 
 /* Cart row */
 .cpd-cart-row {

@@ -75,7 +75,7 @@ function ShopProductCard({ product, idx }: { product: Product; idx: number }) {
 
         <div className="csp-badges">
           {isOnSale && <span className="csp-badge sale">Sale</span>}
-          {product.stock_status !== 'instock' && <span className="csp-badge oos">Sold Out</span>}
+          {product.stock_status !== 'instock' && product.stock_status !== 'onbackorder' && <span className="csp-badge oos">Sold Out</span>}
         </div>
 
         <button
@@ -91,7 +91,7 @@ function ShopProductCard({ product, idx }: { product: Product; idx: number }) {
                 title: product.title,
                 price: Number(product.sale_price_min ?? product.price_min ?? 0),
                 image: getImageUrl(product.thumbnail_url),
-                inStock: product.stock_status === 'instock',
+                inStock: product.stock_status === 'instock' || product.stock_status === 'onbackorder',
               });
             }
           }}

@@ -148,7 +148,24 @@ async function queryProductList(extraWhere = '', orderBy = 'p.menu_order ASC', l
             ) AS thumbnail_url,
             (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_product_image_gallery' LIMIT 1) AS gallery_ids,
             (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_sku'           LIMIT 1) AS sku,
-            (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_stock_status'  LIMIT 1) AS stock_status,
+            (
+                -- For variable products: 'instock' if ANY variation is instock, else 'outofstock'
+                -- For simple products: use the parent's own _stock_status
+                CASE
+                    WHEN EXISTS (
+                        SELECT 1 FROM tbl_products v WHERE v.parent_id = p.ID AND v.product_type = 'product_variation'
+                    ) THEN (
+                        CASE WHEN EXISTS (
+                            SELECT 1
+                            FROM tbl_products v
+                            JOIN tbl_productmeta pm ON pm.product_id = v.ID AND pm.meta_key = '_stock_status'
+                            WHERE v.parent_id = p.ID AND v.product_type = 'product_variation'
+                              AND pm.meta_value = 'instock'
+                        ) THEN 'instock' ELSE 'outofstock' END
+                    )
+                    ELSE (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_stock_status' ORDER BY meta_id DESC LIMIT 1)
+                END
+            ) AS stock_status,
             (SELECT CAST(meta_value AS UNSIGNED) FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = 'total_sales' LIMIT 1) AS total_sales,
             (
                 SELECT GROUP_CONCAT(DISTINCT a.attr_slug ORDER BY a.attr_slug SEPARATOR ',')
@@ -385,7 +402,7 @@ const getProduct = async (req, res) => {
                 )                     AS thumbnail_url,
                 (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_product_image_gallery' LIMIT 1) AS gallery_ids,
                 (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_sku' LIMIT 1) AS sku,
-                (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_stock_status' LIMIT 1) AS stock_status,
+                (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_stock_status' ORDER BY meta_id DESC LIMIT 1) AS stock_status,
                 (SELECT CAST(meta_value AS UNSIGNED) FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = 'total_sales' LIMIT 1) AS total_sales,
                 (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_price' LIMIT 1) AS price,
                 (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_regular_price' LIMIT 1) AS regular_price,
@@ -415,8 +432,8 @@ const getProduct = async (req, res) => {
                 (SELECT meta_value FROM tbl_productmeta WHERE product_id = v.ID AND meta_key = '_sale_price'       LIMIT 1) AS sale_price,
                 (SELECT meta_value FROM tbl_productmeta WHERE product_id = v.ID AND meta_key = 'attribute_pa_color' LIMIT 1) AS color,
                 (SELECT meta_value FROM tbl_productmeta WHERE product_id = v.ID AND meta_key = 'attribute_pa_size'  LIMIT 1) AS size,
-                (SELECT meta_value FROM tbl_productmeta WHERE product_id = v.ID AND meta_key = '_stock_status'     LIMIT 1) AS stock_status,
-                (SELECT meta_value FROM tbl_productmeta WHERE product_id = v.ID AND meta_key = '_stock'            LIMIT 1) AS stock_qty,
+                (SELECT meta_value FROM tbl_productmeta WHERE product_id = v.ID AND meta_key = '_stock_status'     ORDER BY meta_id DESC LIMIT 1) AS stock_status,
+                (SELECT meta_value FROM tbl_productmeta WHERE product_id = v.ID AND meta_key = '_stock'            ORDER BY meta_id DESC LIMIT 1) AS stock_qty,
                 (SELECT meta_value FROM tbl_productmeta WHERE product_id = v.ID AND meta_key = '_thumbnail_id'     LIMIT 1) AS thumbnail_id,
                 (
                     SELECT mm.meta_value
@@ -427,7 +444,8 @@ const getProduct = async (req, res) => {
                     WHERE pm.product_id = v.ID AND pm.meta_key = '_thumbnail_id'
                     LIMIT 1
                 ) AS thumbnail_url,
-                (SELECT meta_value FROM tbl_productmeta WHERE product_id = v.ID AND meta_key = '_sku'              LIMIT 1) AS sku
+                (SELECT meta_value FROM tbl_productmeta WHERE product_id = v.ID AND meta_key = '_sku'              LIMIT 1) AS sku,
+                (SELECT meta_value FROM tbl_productmeta WHERE product_id = v.ID AND meta_key = '_variation_description' LIMIT 1) AS variation_description
             FROM tbl_products v
             WHERE v.parent_id = ? AND v.product_type = 'product_variation'
             ORDER BY v.menu_order ASC
@@ -508,6 +526,16 @@ const getProduct = async (req, res) => {
         const gallery_urls = allMediaRows
             .filter(r => r.file_path)
             .map(r => ({ file_path: r.file_path, is_thumbnail: r.is_thumbnail === 1 }));
+
+        // Compute stock_status dynamically from variations (more reliable than parent meta)
+        // For variable products: instock if ANY variation is instock/onbackorder
+        // For simple products: keep the parent's own stock_status
+        if (variations.length > 0) {
+            const anyVarInStock = variations.some(
+                v => v.stock_status === 'instock' || v.stock_status === 'onbackorder'
+            );
+            product.stock_status = anyVarInStock ? 'instock' : 'outofstock';
+        }
 
         res.json({
             success: true,
