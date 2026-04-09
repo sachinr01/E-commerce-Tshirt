@@ -43,6 +43,7 @@ export interface Variation {
   thumbnail_url: string | null;
   image_urls: string[];
   sku: string | null;
+  variation_description: string | null;
 }
 
 // thumbnail_url from DB is a relative path e.g. "products/abc.jpg"
