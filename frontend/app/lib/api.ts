@@ -1,4 +1,4 @@
-﻿// Server-side (SSR/SSG): call admin directly
+// Server-side (SSR/SSG): call admin directly
 // Client-side (browser): go through Next.js rewrite proxy to avoid CORS
 const API_BASE =
   typeof window === 'undefined'
@@ -48,7 +48,7 @@ export interface Variation {
 }
 
 // thumbnail_url from DB is a relative path e.g. "products/abc.jpg"
-// In the browser it goes through the Next.js /uploads proxy → Express static
+// In the browser it goes through the Next.js /uploads proxy -> Express static
 // On the server (SSR) it hits Express directly
 const UPLOADS_ORIGIN =
   typeof window === 'undefined'
@@ -57,7 +57,7 @@ const UPLOADS_ORIGIN =
 
 export function getImageUrl(filePath: string | null | undefined): string {
   if (!filePath) return '/store/images/dummy.jpg';
-  // Already a full URL or absolute path — use as-is
+  // Already a full URL or absolute path - use as-is
   if (filePath.startsWith('http') || filePath.startsWith('/')) return filePath;
   return `${UPLOADS_ORIGIN}/uploads/${filePath}`;
 }
@@ -244,6 +244,23 @@ export interface OrderDetailResponse {
 export const getMyOrderById = (orderId: number | string) =>
   apiFetch<OrderDetailResponse>(`/orders/${orderId}`, true);
 
+export interface RecentOrderAddress {
+  address_id: number;
+  order_id: number;
+  address_billing: 'yes' | 'no';
+  first_name: string | null;
+  last_name: string | null;
+  phone: string | null;
+  address_line1: string | null;
+  address_line2: string | null;
+  city: string | null;
+  state_name: string | null;
+  zipcode: string | null;
+}
+
+export const getRecentOrderAddresses = () =>
+  apiFetch<RecentOrderAddress[]>('/address/recent', true);
+
 export interface ProfileAddressForm {
   firstName: string;
   lastName: string;
@@ -255,7 +272,6 @@ export interface ProfileAddressForm {
   city: string;
   state: string;
   postcode: string;
-  country: string;
 }
 
 export interface ProfileAddressesResponse {

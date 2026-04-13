@@ -240,7 +240,7 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
             <nav className="blog-breadcrumb">
               <Link href="/">Home</Link>
               <span>{'>'}</span>
-              <Link href="/#blog">Blog</Link>
+              <Link href="/blog">Blog</Link>
               <span>{'>'}</span>
               <span style={{ color: '#555' }}>{blog.title}</span>
             </nav>

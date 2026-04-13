@@ -25,6 +25,7 @@ const BREVO_SENDER_EMAIL = process.env.BREVO_SENDER_EMAIL || 'rupeshmutkule2005@
 const BREVO_SENDER_NAME = process.env.BREVO_SENDER_NAME || 'COFFR';
 const BREVO_LOGO_URL = process.env.BREVO_LOGO_URL || '';
 const DEFAULT_LOGO_PATH = path.join(__dirname, '..', '..', 'frontend', 'public', 'images', 'logo-white.png');
+const DEFAULT_COUNTRY = process.env.DEFAULT_COUNTRY || 'India';
 
 let cachedLogoDataUri = '';
 
@@ -124,7 +125,7 @@ function sanitizeBilling(billing) {
     city:       toStr(b.city),
     state:      toStr(b.state),
     postcode:   toStr(b.postcode),
-    country:    toStr(b.country),
+    country:    DEFAULT_COUNTRY,
     company:    toStr(b.company),
   };
 }
@@ -133,12 +134,15 @@ function sanitizeShipping(shipping, billing) {
   const s = shipping || {};
   const b = billing || {};
   return {
-    address:   toStr(s.address   || b.address),
-    address_2: toStr(s.address_2 || b.address_2),
-    city:      toStr(s.city      || b.city),
-    state:     toStr(s.state     || b.state),
-    postcode:  toStr(s.postcode  || b.postcode),
-    country:   toStr(s.country   || b.country),
+    first_name: toStr(s.first_name || b.first_name),
+    last_name:  toStr(s.last_name || b.last_name),
+    phone:      toStr(s.phone || b.phone),
+    address:    toStr(s.address   || b.address),
+    address_2:  toStr(s.address_2 || b.address_2),
+    city:       toStr(s.city      || b.city),
+    state:      toStr(s.state     || b.state),
+    postcode:   toStr(s.postcode  || b.postcode),
+    country:    DEFAULT_COUNTRY,
   };
 }
 
@@ -152,7 +156,6 @@ function validateBilling(billing) {
   if (!billing.city)       errors.city       = 'City required';
   if (!billing.state)      errors.state      = 'State required';
   if (!billing.postcode)   errors.postcode   = 'Postcode required';
-  if (!billing.country)    errors.country    = 'Country required';
   return errors;
 }
 
@@ -218,7 +221,7 @@ function normalizeProfileAddressInput(payload, kind) {
     city: toStr(payload.city),
     state: toStr(payload.state),
     postcode: toStr(payload.postcode),
-    country: toStr(payload.country),
+    country: DEFAULT_COUNTRY,
     meta: {
       [`${prefix}_first_name`]: toStr(payload.firstName),
       [`${prefix}_last_name`]: toStr(payload.lastName),
@@ -227,7 +230,7 @@ function normalizeProfileAddressInput(payload, kind) {
       [`${prefix}_city`]: toStr(payload.city),
       [`${prefix}_state`]: toStr(payload.state),
       [`${prefix}_postcode`]: toStr(payload.postcode),
-      [`${prefix}_country`]: toStr(payload.country),
+      [`${prefix}_country`]: DEFAULT_COUNTRY,
       [`${prefix}_company`]: toStr(payload.company),
       [`${prefix}_phone`]: toStr(payload.phone),
     },
@@ -242,7 +245,6 @@ function validateProfileAddress(address) {
   if (!address.city) errors.city = 'City required';
   if (!address.state) errors.state = 'State required';
   if (!address.postcode) errors.postcode = 'Postcode required';
-  if (!address.country) errors.country = 'Country required';
   return errors;
 }
 
@@ -266,7 +268,7 @@ function buildProfileAddressResponseWithFallback(userRow, meta, fallback) {
       city: toStr(meta.billing_city || billingFallback.city),
       state: toStr(meta.billing_state || billingFallback.state),
       postcode: toStr(meta.billing_postcode || billingFallback.postcode),
-      country: toStr(meta.billing_country),
+      country: DEFAULT_COUNTRY,
     },
     shipping: {
       firstName: toStr(meta.shipping_first_name || meta.first_name || userRow.display_name),
@@ -279,7 +281,7 @@ function buildProfileAddressResponseWithFallback(userRow, meta, fallback) {
       city: toStr(meta.shipping_city || shippingFallback.city),
       state: toStr(meta.shipping_state || shippingFallback.state),
       postcode: toStr(meta.shipping_postcode || shippingFallback.postcode),
-      country: toStr(meta.shipping_country),
+      country: DEFAULT_COUNTRY,
     },
   };
 }
@@ -356,24 +358,29 @@ async function insertAddress(conn, {
   await conn.query(
     `INSERT INTO tbl_user_address
      (user_id, order_id, address_type, address_primary,
+      first_name, last_name, phone,
       address_line1, address_line2, city, zipcode, state_name,
       city_id, state_id, country_id, address_notes,
       address_billing, latitude, longitude, created_at, updated_at, update_done)
      VALUES
      (?, ?, 'general', 'no',
+      ?, ?, ?,
       ?, ?, ?, ?, ?,
       0, NULL, 226, ?,
       ?, '', '', ?, ?, 'no')`,
     [
       userId,                    // user_id
       orderId,                   // order_id  (always a real ID for order rows)
+      address.firstName || '',   // first_name
+      address.lastName || '',    // last_name
+      address.phone || '',       // phone
       address.line1 || '',       // address_line1
       address.line2 || '',       // address_line2
       address.city  || '',       // city
       address.zip   || '',       // zipcode
       address.state || '',       // state_name
       notes,                     // address_notes
-      isBilling ? 'yes' : 'no', // address_billing → 'yes'=billing, 'no'=shipping
+      isBilling ? 'yes' : 'no', // address_billing ? 'yes'=billing, 'no'=shipping
       createdAt,                 // created_at
       createdAt,                 // updated_at
     ]
@@ -492,6 +499,9 @@ const placeOrder = async (req, res) => {
       createdAt,
       notes:     orderNotes,
       address: {
+        firstName: billing.first_name,
+        lastName: billing.last_name,
+        phone: billing.phone,
         line1: billing.address,
         line2: billing.address_2,
         city:  billing.city,
@@ -508,6 +518,9 @@ const placeOrder = async (req, res) => {
       createdAt,
       notes:     null,
       address: {
+        firstName: shipping.first_name,
+        lastName: shipping.last_name,
+        phone: shipping.phone,
         line1: shipping.address,
         line2: shipping.address_2,
         city:  shipping.city,
@@ -806,6 +819,29 @@ const setDefaultAddress = async (req, res) => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+const getRecentOrderAddresses = async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user) {
+    return res.status(401).json({ success: false, message: 'Login required.' });
+  }
+
+  try {
+    const [rows] = await db.query(
+      `SELECT address_id, order_id, address_billing,
+              first_name, last_name, phone,
+              address_line1, address_line2, city, state_name, zipcode
+       FROM tbl_user_address
+       WHERE user_id = ? AND order_id IS NOT NULL
+       ORDER BY order_id DESC, address_id DESC
+       LIMIT 20`,
+      [user.id]
+    );
+    res.json({ success: true, data: rows });
+  } catch (err) {
+    console.error('getRecentOrderAddresses error:', err);
+    res.status(500).json({ success: false, message: 'Failed to load recent addresses.' });
+  }
+};
 // getSavedAddresses
 // Returns only saved address-book rows (order_id IS NULL).
 // Order rows are excluded — they are fetched via getMyOrderById.
@@ -1029,12 +1065,18 @@ const getMyOrderById = async (req, res) => {
               MAX(om_pay.meta_value)   AS payment_method,
               MAX(u.display_name)      AS user_display_name,
               MAX(u.user_email)        AS user_email,
+              MAX(ub.first_name)       AS billing_first_name,
+              MAX(ub.last_name)        AS billing_last_name,
+              MAX(ub.phone)            AS billing_phone,
               MAX(ub.address_line1)    AS billing_address_1,
               MAX(ub.address_line2)    AS billing_address_2,
               MAX(ub.city)             AS billing_city,
               MAX(ub.state_name)       AS billing_state,
               MAX(ub.zipcode)          AS billing_postcode,
               MAX(ub.address_notes)    AS billing_notes,
+              MAX(us.first_name)       AS ship_first_name,
+              MAX(us.last_name)        AS ship_last_name,
+              MAX(us.phone)            AS ship_phone,
               MAX(us.address_line1)    AS ship_address_1,
               MAX(us.address_line2)    AS ship_address_2,
               MAX(us.city)             AS ship_city,
@@ -1044,6 +1086,9 @@ const getMyOrderById = async (req, res) => {
        LEFT JOIN tbl_users u ON u.ID = o.user_id
        LEFT JOIN (
          SELECT order_id,
+                MAX(first_name)   AS first_name,
+                MAX(last_name)    AS last_name,
+                MAX(phone)        AS phone,
                 MAX(address_line1) AS address_line1,
                 MAX(address_line2) AS address_line2,
                 MAX(city)          AS city,
@@ -1056,6 +1101,9 @@ const getMyOrderById = async (req, res) => {
        ) ub ON ub.order_id = o.order_id
        LEFT JOIN (
          SELECT order_id,
+                MAX(first_name)   AS first_name,
+                MAX(last_name)    AS last_name,
+                MAX(phone)        AS phone,
                 MAX(address_line1) AS address_line1,
                 MAX(address_line2) AS address_line2,
                 MAX(city)          AS city,
@@ -1158,7 +1206,13 @@ module.exports = {
   updateOrderStatus,
   getDefaultAddress,
   setDefaultAddress,
+  getRecentOrderAddresses,
   getSavedAddresses,
   getProfileAddresses,
   updateProfileAddress,
 };
+
+
+
+
+

@@ -16,7 +16,7 @@ type AddressBlock = {
 function formatAddressBlock(address: ProfileAddressForm): AddressBlock | null {
   const name = [address.firstName, address.lastName].filter(Boolean).join(' ').trim();
   const location = [address.city, address.state, address.postcode].filter(Boolean).join(', ').trim();
-  const lines = [address.address1, address.address2, location, address.country].filter(Boolean);
+  const lines = [address.address1, address.address2, location].filter(Boolean);
 
   if (!name && lines.length === 0) {
     return null;
