@@ -9,7 +9,7 @@ export default function TrendingCategories() {
   ];
 
   return (
-    <section className="home-section">
+    <section className="home-section" style={{ paddingTop: '24px' }}>
       <h2 className="section-title">Trending Categories</h2>
       <div className="cat-grid">
         {categories.map((c) => (

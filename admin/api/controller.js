@@ -279,6 +279,7 @@ const getProducts = async (req, res) => {
         const styles = getArray('filter.p.m.pa_style').map(toSlug).filter(Boolean);
         const occasions = getArray('filter.p.m.pa_occasion').map(toSlug).filter(Boolean);
         const features = getArray('filter.p.m.pa_feature').map(toSlug).filter(Boolean);
+        const searchTerm = String(getSingle('search') || '').trim();
 
         const priceGte = getSingle('filter.v.price.gte');
         const priceLte = getSingle('filter.v.price.lte');
@@ -286,6 +287,17 @@ const getProducts = async (req, res) => {
 
         const whereParts = [];
         const params = [];
+
+        // Full-text search on title, slug, short_description
+        if (searchTerm) {
+            whereParts.push(`AND (
+                p.product_title LIKE ?
+                OR p.product_url LIKE ?
+                OR p.product_short_desc LIKE ?
+            )`);
+            const like = `%${searchTerm}%`;
+            params.push(like, like, like);
+        }
 
         if (productTypes.length > 0) {
             const placeholders = productTypes.map(() => '?').join(', ');

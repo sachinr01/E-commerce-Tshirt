@@ -336,25 +336,7 @@ export default function EditAddressPage() {
                         )}
                       </section>
 
-                      <section className="account-address-card" style={{ marginTop: 40 }}>
-                        <h3 className="account-address-title">Shipping Address</h3>
-                        <Link href="/my-account/edit-address/shipping" className="account-address-edit-link">
-                          <span className="account-address-edit-icon">{'->'}</span>
-                          <span>Edit Shipping address</span>
-                        </Link>
-
-                        {shippingAddress ? (
-                          <div className="account-address-lines">
-                            {shippingAddress.name && <p>{shippingAddress.name}</p>}
-                            {shippingAddress.company && <p>{shippingAddress.company}</p>}
-                            {shippingLines.map((line) => <p key={line}>{line}</p>)}
-                          </div>
-                        ) : (
-                          <p className="account-address-empty">
-                            You have not set up a shipping address yet.
-                          </p>
-                        )}
-                      </section>
+                      
                     </div>
                   </div>
                 </div>

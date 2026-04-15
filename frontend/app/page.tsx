@@ -3,10 +3,12 @@ import './home.css';
 import Header from './components/Header';
 import Slider from './components/Slider';
 import TrendingCategories from './components/Banners';
-import NewlyLaunched from './components/NewArrivals';
+import NewlyLaunched, { BestSellers } from './components/NewArrivals';
 import VideoBanner from './components/SalesEvent';
-import CuratedGifting from './components/PopularProducts';
+import CuratedGifting, { PopularCategories } from './components/PopularProducts';
+import GiftingWorld from './components/GiftingWorld';
 import LatestPosts from './components/LatestPosts';
+import TrustBar from './components/TrustBar';
 import Footer from './components/Footer';
 
 const SITE_URL  = process.env.NEXT_PUBLIC_SITE_URL  ?? 'http://localhost:3001';
@@ -90,10 +92,11 @@ export default function Home() {
       </div>
       <Header />
       <Slider />
-      <TrendingCategories />
+      <CuratedGifting />
       <NewlyLaunched />
       <VideoBanner />
-      <CuratedGifting />
+      <GiftingWorld />
+      <BestSellers />
       <LatestPosts />
       <Footer />
     </>

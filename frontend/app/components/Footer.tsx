@@ -1,8 +1,10 @@
 import Link from "next/link";
+import TrustBar from "./TrustBar";
 
 export default function Footer() {
   return (
     <footer className="okab-footer">
+      <TrustBar />
       <div className="footer-top">
         <div className="footer-grid">
           <div>
