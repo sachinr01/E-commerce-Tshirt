@@ -45,6 +45,7 @@ router.post('/auth/register', auth.register);
 router.post('/auth/login',    auth.login);
 router.post('/auth/logout',   auth.logout);
 router.get('/auth/me',        auth.me);
+router.put('/auth/profile',   requireLogin, auth.updateProfile);
 
 // ── Cart ──────────────────────────────────────────────────────────────────────
 router.get('/cart',                   cart.getCart);
@@ -69,6 +70,7 @@ router.get('/orders/:orderId',    requireLogin, orders.getMyOrderById);
 router.get('/address/default',              requireLogin, orders.getDefaultAddress);
 router.put('/address/default/:addressId',   requireLogin, orders.setDefaultAddress);
 router.get('/address/saved',               requireLogin, orders.getSavedAddresses);
+router.get('/address/recent',              requireLogin, orders.getRecentOrderAddresses);
 router.get('/address/profile',             requireLogin, orders.getProfileAddresses);
 router.put('/address/profile/:kind',       requireLogin, orders.updateProfileAddress);
 
@@ -78,3 +80,4 @@ router.put('/admin/orders/:orderId/status',     requireAdmin,        orders.upda
 router.get('/agent/orders',                     requireAgentOrAdmin, orders.getAllOrders);
 
 module.exports = router;
+

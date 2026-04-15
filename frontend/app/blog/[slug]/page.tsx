@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
+import { staticBlogs, getStaticBlogBySlug } from '../staticblog';
 
 type Blog = {
   slug: string;
@@ -58,33 +59,21 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
     fetchBlogList(),
   ]);
 
-  if (blogResult.error === 'api') {
-    return (
-      <>
-        <Header />
-        <div className="dima-main" style={{ padding: '80px 20px', textAlign: 'center' }}>
-          <h2 style={{ marginBottom: 10 }}>We&apos;re having trouble loading this blog.</h2>
-          <p style={{ color: '#666', marginBottom: 22 }}>
-            Please try again in a few minutes.
-          </p>
-          <Link href="/" className="button fill uppercase">Back to Home</Link>
-        </div>
-        <Footer />
-      </>
-    );
-  }
+  const fallbackBlog = getStaticBlogBySlug(slug);
+  const blog = blogResult.blog ?? fallbackBlog;
 
-  if (blogResult.error === 'not-found' || !blogResult.blog) {
+  if (!blog) {
+    if (blogResult.error === 'not-found') notFound();
     notFound();
   }
 
-  const blog = blogResult.blog;
-
   const htmlContent = blog.content || '';
 
-  const related = (list && list.length ? list : [])
-    .filter((b) => b.slug !== blog.slug)
-    .slice(0, 3);
+  const combinedList = [...(list || []), ...staticBlogs];
+  const uniqueList = combinedList.filter((item, index, arr) =>
+    arr.findIndex((b) => b.slug === item.slug) === index
+  );
+  const related = uniqueList.filter((b) => b.slug !== blog.slug).slice(0, 3);
 
   const categories = [
     { name: 'General', count: list.length || 1 },
@@ -251,7 +240,7 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
             <nav className="blog-breadcrumb">
               <Link href="/">Home</Link>
               <span>{'>'}</span>
-              <Link href="/#blog">Blog</Link>
+              <Link href="/blog">Blog</Link>
               <span>{'>'}</span>
               <span style={{ color: '#555' }}>{blog.title}</span>
             </nav>
@@ -265,7 +254,7 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
 
             <div className="blog-content" dangerouslySetInnerHTML={{ __html: htmlContent }} />
 
-            <Link href="/" className="blog-back-btn">Back to Home</Link>
+            <Link href="/blog" className="blog-back-btn">Back to Blogs</Link>
           </div>
 
           <aside className="blog-sidebar">

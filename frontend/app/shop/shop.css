@@ -822,9 +822,15 @@
   font-family: var(--font-head);
   font-size: 15.5px;
   font-weight: 700;
-  color: var(--cs-text);
+  color: #dc2626;
 }
 .csp-price.sale { color: var(--cs-sale); }
+.csp-save-badge {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--cs-sale);
+}
 
 .csp-state-wrap {
   display: flex;

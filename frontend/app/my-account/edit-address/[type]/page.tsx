@@ -8,21 +8,6 @@ import Footer from '../../../components/Footer';
 import { getProfileAddresses, updateProfileAddress, type ProfileAddressForm } from '../../../lib/api';
 import { useAuth } from '../../../lib/authContext';
 
-const COUNTRIES = [
-  'Afghanistan', 'Albania', 'Algeria', 'Andorra', 'Angola', 'Argentina', 'Armenia', 'Australia',
-  'Austria', 'Azerbaijan', 'Bahrain', 'Bangladesh', 'Belgium', 'Bolivia', 'Brazil', 'Bulgaria',
-  'Cambodia', 'Canada', 'Chile', 'China', 'Colombia', 'Croatia', 'Cuba', 'Cyprus', 'Czech Republic',
-  'Denmark', 'Ecuador', 'Egypt', 'Estonia', 'Ethiopia', 'Finland', 'France', 'Georgia', 'Germany',
-  'Ghana', 'Greece', 'Guatemala', 'Honduras', 'Hungary', 'India', 'Indonesia', 'Iran', 'Iraq',
-  'Ireland', 'Israel', 'Italy', 'Jamaica', 'Japan', 'Jordan', 'Kazakhstan', 'Kenya', 'Kuwait',
-  'Latvia', 'Lebanon', 'Libya', 'Lithuania', 'Luxembourg', 'Malaysia', 'Mexico', 'Morocco',
-  'Netherlands', 'New Zealand', 'Nigeria', 'Norway', 'Pakistan', 'Panama', 'Peru', 'Philippines',
-  'Poland', 'Portugal', 'Qatar', 'Romania', 'Russia', 'Saudi Arabia', 'Serbia', 'Singapore',
-  'Slovakia', 'South Africa', 'South Korea', 'Spain', 'Sri Lanka', 'Sweden', 'Switzerland',
-  'Syria', 'Taiwan', 'Thailand', 'Tunisia', 'Turkey', 'Ukraine', 'United Arab Emirates',
-  'United Kingdom', 'United States', 'Uruguay', 'Venezuela', 'Vietnam', 'Yemen', 'Zimbabwe',
-];
-
 const EMPTY_FORM: ProfileAddressForm = {
   firstName: '',
   lastName: '',
@@ -34,7 +19,6 @@ const EMPTY_FORM: ProfileAddressForm = {
   city: '',
   state: '',
   postcode: '',
-  country: '',
 };
 
 export default function EditAddressTypePage() {
@@ -407,7 +391,6 @@ export default function EditAddressTypePage() {
                           <Link href="/my-account/edit-account" className="account-address-link">Edit Profile</Link>
                           <Link href="/my-account/edit-address" className="account-address-link active">My Addresses</Link>
                           <Link href="/orders" className="account-address-link">My Orders</Link>
-                          <Link href="/my-account/order-tracking" className="account-address-link">Order Tracking</Link>
                           <Link href="/wishlist" className="account-address-link">Wishlist</Link>
                           <button className="account-address-button" onClick={logout}>Logout</button>
                         </nav>
@@ -430,17 +413,6 @@ export default function EditAddressTypePage() {
                         <p className="account-address-message">Loading saved address...</p>
                       ) : (
                         <form className="account-address-form" onSubmit={handleSubmit} noValidate>
-                          <div className="account-address-field">
-                            <label htmlFor="country">Country</label>
-                            <select id="country" value={form.country} onChange={setField('country')}>
-                              <option value="">Select country</option>
-                              {COUNTRIES.map((country) => (
-                                <option key={country} value={country}>{country}</option>
-                              ))}
-                            </select>
-                            {errors.country && <span className="account-address-field-error">{errors.country}</span>}
-                          </div>
-
                           <div className="account-address-row">
                             <div className="account-address-field">
                               <label htmlFor="firstName">First Name</label>

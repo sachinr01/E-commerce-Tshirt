@@ -1,4 +1,4 @@
-﻿// Server-side (SSR/SSG): call admin directly
+// Server-side (SSR/SSG): call admin directly
 // Client-side (browser): go through Next.js rewrite proxy to avoid CORS
 const API_BASE =
   typeof window === 'undefined'
@@ -13,7 +13,8 @@ export interface Product {
   menu_order: number;
   price_min: number | null;
   price_max: number | null;
-  sale_price_min: number | null;
+  _regular_price: string | null;
+  _sale_price: string | null;
   thumbnail_id: string | null;
   thumbnail_url: string | null;
   gallery_ids: string | null;
@@ -47,7 +48,7 @@ export interface Variation {
 }
 
 // thumbnail_url from DB is a relative path e.g. "products/abc.jpg"
-// In the browser it goes through the Next.js /uploads proxy → Express static
+// In the browser it goes through the Next.js /uploads proxy -> Express static
 // On the server (SSR) it hits Express directly
 const UPLOADS_ORIGIN =
   typeof window === 'undefined'
@@ -56,7 +57,7 @@ const UPLOADS_ORIGIN =
 
 export function getImageUrl(filePath: string | null | undefined): string {
   if (!filePath) return '/store/images/dummy.jpg';
-  // Already a full URL or absolute path — use as-is
+  // Already a full URL or absolute path - use as-is
   if (filePath.startsWith('http') || filePath.startsWith('/')) return filePath;
   return `${UPLOADS_ORIGIN}/uploads/${filePath}`;
 }
@@ -78,6 +79,12 @@ export interface ProductDetail extends Product {
   price: string | null;
   regular_price: string | null;
   sale_price: string | null;
+  product_features: string | null;
+  product_material: string | null;
+  product_collection: string | null;
+  product_care: string | null;
+  product_included: string | null;
+  product_more_info: string | null;
   seo_title: string | null;
   seo_description: string | null;
   avg_rating: number | null;
@@ -169,6 +176,15 @@ export const authLogin    = (username: string, password: string) =>
 export const authRegister = (username: string, email: string, password: string) =>
   apiPost<{ userId: number }>('/auth/register', { username, email, password });
 
+export const updateProfile = (body: {
+  displayName: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  currentPassword?: string;
+  newPassword?: string;
+}) => apiPut<AuthUser>('/auth/profile', body);
+
 export interface OrderSummary {
   order_id: number;
   order_status: string;
@@ -228,6 +244,23 @@ export interface OrderDetailResponse {
 export const getMyOrderById = (orderId: number | string) =>
   apiFetch<OrderDetailResponse>(`/orders/${orderId}`, true);
 
+export interface RecentOrderAddress {
+  address_id: number;
+  order_id: number;
+  address_billing: 'yes' | 'no';
+  first_name: string | null;
+  last_name: string | null;
+  phone: string | null;
+  address_line1: string | null;
+  address_line2: string | null;
+  city: string | null;
+  state_name: string | null;
+  zipcode: string | null;
+}
+
+export const getRecentOrderAddresses = () =>
+  apiFetch<RecentOrderAddress[]>('/address/recent', true);
+
 export interface ProfileAddressForm {
   firstName: string;
   lastName: string;
@@ -239,7 +272,6 @@ export interface ProfileAddressForm {
   city: string;
   state: string;
   postcode: string;
-  country: string;
 }
 
 export interface ProfileAddressesResponse {
