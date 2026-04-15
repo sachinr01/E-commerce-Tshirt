@@ -149,10 +149,10 @@ async function queryProductList(extraWhere = '', orderBy = 'p.menu_order ASC', l
             ) AS _sale_price,
             (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_thumbnail_id' ORDER BY meta_id DESC LIMIT 1) AS thumbnail_id,
             (
-                SELECT mm.meta_value
+                SELECT COALESCE(mm.meta_value, m2.media_path)
                 FROM tbl_productmeta pm
                 JOIN tbl_media m2 ON m2.media_id = CAST(pm.meta_value AS UNSIGNED)
-                JOIN tbl_mediameta mm ON mm.media_id = m2.media_id
+                LEFT JOIN tbl_mediameta mm ON mm.media_id = m2.media_id
                                      AND mm.meta_key = '_wp_attached_file'
                 WHERE pm.product_id = p.ID AND pm.meta_key = '_thumbnail_id'
                 ORDER BY pm.meta_id DESC
@@ -279,7 +279,6 @@ const getProducts = async (req, res) => {
         const styles = getArray('filter.p.m.pa_style').map(toSlug).filter(Boolean);
         const occasions = getArray('filter.p.m.pa_occasion').map(toSlug).filter(Boolean);
         const features = getArray('filter.p.m.pa_feature').map(toSlug).filter(Boolean);
-        const searchTerm = String(getSingle('search') || '').trim();
 
         const priceGte = getSingle('filter.v.price.gte');
         const priceLte = getSingle('filter.v.price.lte');
@@ -287,17 +286,6 @@ const getProducts = async (req, res) => {
 
         const whereParts = [];
         const params = [];
-
-        // Full-text search on title, slug, short_description
-        if (searchTerm) {
-            whereParts.push(`AND (
-                p.product_title LIKE ?
-                OR p.product_url LIKE ?
-                OR p.product_short_desc LIKE ?
-            )`);
-            const like = `%${searchTerm}%`;
-            params.push(like, like, like);
-        }
 
         if (productTypes.length > 0) {
             const placeholders = productTypes.map(() => '?').join(', ');
@@ -439,10 +427,10 @@ const getProduct = async (req, res) => {
                 p.product_date_added  AS date_added,
                 (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_thumbnail_id' ORDER BY meta_id DESC LIMIT 1) AS thumbnail_id,
                 (
-                    SELECT mm.meta_value
+                    SELECT COALESCE(mm.meta_value, m2.media_path)
                     FROM tbl_productmeta pm
                     JOIN tbl_media m2 ON m2.media_id = CAST(pm.meta_value AS UNSIGNED)
-                    JOIN tbl_mediameta mm ON mm.media_id = m2.media_id
+                    LEFT JOIN tbl_mediameta mm ON mm.media_id = m2.media_id
                                          AND mm.meta_key = '_wp_attached_file'
                     WHERE pm.product_id = p.ID AND pm.meta_key = '_thumbnail_id'
                     ORDER BY pm.meta_id DESC
@@ -490,10 +478,10 @@ const getProduct = async (req, res) => {
                 (SELECT meta_value FROM tbl_productmeta WHERE product_id = v.ID AND meta_key = '_stock'            ORDER BY meta_id DESC LIMIT 1) AS stock_qty,
                 (SELECT meta_value FROM tbl_productmeta WHERE product_id = v.ID AND meta_key = '_thumbnail_id' ORDER BY meta_id DESC LIMIT 1) AS thumbnail_id,
                 (
-                    SELECT mm.meta_value
+                    SELECT COALESCE(mm.meta_value, m2.media_path)
                     FROM tbl_productmeta pm
                     JOIN tbl_media m2 ON m2.media_id = CAST(pm.meta_value AS UNSIGNED)
-                    JOIN tbl_mediameta mm ON mm.media_id = m2.media_id
+                    LEFT JOIN tbl_mediameta mm ON mm.media_id = m2.media_id
                                          AND mm.meta_key = '_wp_attached_file'
                     WHERE pm.product_id = v.ID AND pm.meta_key = '_thumbnail_id'
                     LIMIT 1
@@ -510,9 +498,9 @@ const getProduct = async (req, res) => {
         const variationImages = {};
         if (variationIds.length) {
             const [varImgRows] = await withRetry(() => db.query(
-                `SELECT m.parent_id AS variation_id, mm.meta_value AS file_path
+                `SELECT m.parent_id AS variation_id, COALESCE(mm.meta_value, m.media_path) AS file_path
                  FROM tbl_media m
-                 JOIN tbl_mediameta mm ON mm.media_id = m.media_id
+                 LEFT JOIN tbl_mediameta mm ON mm.media_id = m.media_id
                                       AND mm.meta_key = '_wp_attached_file'
                  WHERE m.parent_id IN (${variationIds.map(() => '?').join(',')})
                  ORDER BY m.parent_id, m.media_id ASC`,
@@ -576,10 +564,10 @@ const getProduct = async (req, res) => {
         // gallery_urls = all parent_id images EXCEPT the _thumbnail_id one
         // The featured image (thumbnail_url) is shown separately on the product page
         const [allMediaRows] = await withRetry(() => db.query(
-            `SELECT m.media_id, mm.meta_value AS file_path,
+            `SELECT m.media_id, COALESCE(mm.meta_value, m.media_path) AS file_path,
                     CASE WHEN m.media_id = ? THEN 1 ELSE 0 END AS is_thumbnail
              FROM tbl_media m
-             JOIN tbl_mediameta mm ON mm.media_id = m.media_id
+             LEFT JOIN tbl_mediameta mm ON mm.media_id = m.media_id
                                   AND mm.meta_key = '_wp_attached_file'
              WHERE m.parent_id = ?
              ORDER BY is_thumbnail DESC, m.media_id ASC`,
