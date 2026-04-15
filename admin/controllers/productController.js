@@ -197,6 +197,249 @@ const showAddProduct = async (req, res) => {
   }
 };
 
+// ─── SHOW EDIT PRODUCT ────────────────────────────────────────────────────────
+const showEditProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // STEP 1: Get main product
+    const [[product]] = await db.query(
+      "SELECT * FROM tbl_products WHERE ID = ?",
+      [id],
+    );
+    if (!product) {
+      return res.redirect("/store/admin/products?error=Product not found");
+    }
+
+    // STEP 2: Get main product meta
+    const [mainMetaRows] = await db.query(
+      "SELECT meta_key, meta_value FROM tbl_productmeta WHERE product_id = ?",
+      [id],
+    );
+    const mainMeta = {};
+    mainMetaRows.forEach((row) => {
+      mainMeta[row.meta_key] = row.meta_value;
+    });
+
+    product.sku = mainMeta["_sku"] || "";
+    product.regular_price =
+      mainMeta["_regular_price"] || mainMeta["_price"] || "";
+    product.sale_price = mainMeta["_sale_price"] || "";
+    product.stock = mainMeta["_stock"] || "";
+    product.stock_status = mainMeta["_stock_status"] || "instock";
+    product.weight = mainMeta["_weight"] || "";
+    product.length = mainMeta["_length"] || "";
+    product.width = mainMeta["_width"] || "";
+    product.backorders = mainMeta["_backorders"] || "no";
+    product.product_features = mainMeta["_product_features"] || "";
+    product.product_material = mainMeta["_product_material"] || "";
+    product.product_collection = mainMeta["_product_collection"] || "";
+    product.product_included = mainMeta["_product_included"] || "";
+    product.product_care = mainMeta["_product_care"] || "";
+    product.product_more_info = mainMeta["_product_more_info"] || "";
+
+    // ── Main product thumbnail ──────────────────────────────
+    // Read media_path directly from tbl_media (no _wp_attached_file in mediameta)
+    product.thumbnail = "";
+    product.thumbnailId = mainMeta["_thumbnail_id"] || "";
+
+    if (product.thumbnailId) {
+      const [[thumbMedia]] = await db.query(
+        `SELECT 
+      m.media_path,
+      m.media_title,
+      alt.meta_value   AS alt_text
+      FROM tbl_media m
+      LEFT JOIN tbl_mediameta alt 
+        ON alt.media_id = m.media_id 
+        AND alt.meta_key = '_wp_attachment_image_alt'
+      WHERE m.media_id = ?`,
+        [product.thumbnailId],
+      );
+      if (thumbMedia && thumbMedia.media_path) {
+        product.thumbnail = thumbMedia.media_path || "";
+        product.title = thumbMedia.media_title || "";
+        product.alt = thumbMedia.alt_text || "";
+      }
+    }
+
+    // ── Main product gallery images ─────────────────────────
+    // All product_image rows for this parent except the thumbnail
+    const [galleryRows] = await db.query(
+      `SELECT m.media_id, m.media_title, m.media_path,
+              alt.meta_value   AS alt_text
+       FROM tbl_media m
+       LEFT JOIN tbl_mediameta alt ON alt.media_id = m.media_id AND alt.meta_key = '_wp_attachment_image_alt'
+       WHERE m.parent_id = ? AND m.media_type = 'product_image'
+       ORDER BY m.media_id ASC`,
+      [id],
+    );
+    product.gallery = galleryRows
+      .filter(
+        (r) =>
+          r.media_path && String(r.media_id) !== String(product.thumbnailId),
+      )
+      .map((r) => ({
+        media_id: r.media_id,
+        url: r.media_path,
+        title: r.media_title || "",
+        alt: r.alt_text || "",
+      }));
+
+    // STEP 3: Get all variation products + their meta
+    const [variationProducts] = await db.query(
+      "SELECT * FROM tbl_products WHERE parent_id = ? ORDER BY menu_order ASC",
+      [id],
+    );
+
+    const variations = [];
+
+    for (const v of variationProducts) {
+      const [varMetaRows] = await db.query(
+        "SELECT meta_key, meta_value FROM tbl_productmeta WHERE product_id = ?",
+        [v.ID],
+      );
+      const vm = {};
+      varMetaRows.forEach((row) => {
+        vm[row.meta_key] = row.meta_value;
+      });
+
+      v.sku = vm["_sku"] || "";
+      v.regular_price = vm["_regular_price"] || vm["_price"] || "";
+      v.sale_price = vm["_sale_price"] || "";
+      v.stock = vm["_stock"] || "0";
+      v.stock_status = vm["_stock_status"] || "instock";
+      v.weight = vm["_weight"] || "";
+      v.manage_stock = vm["_manage_stock"] || "no";
+      v.downloadable = vm["_downloadable"] || "no";
+      v.virtual = vm["_virtual"] || "no";
+      v.enabled = vm["_variation_is_active"] || "yes";
+      v.variation_description = vm["_variation_description"] || "";
+
+      v.thumbnail_url = "";
+      v.thumbnailId = vm["_thumbnail_id"] || "";
+      v.gallery = [];
+
+      // Build attr_meta from meta keys starting with "attribute_pa_"
+      v.attr_meta = {};
+      varMetaRows
+        .filter((row) => row.meta_key.startsWith("attribute_pa_"))
+        .sort((a, b) => a.meta_key.localeCompare(b.meta_key))
+        .forEach((row) => {
+          v.attr_meta[row.meta_key] = row.meta_value;
+        });
+
+      // Build combo string
+      v.combo = Object.entries(v.attr_meta)
+        .map((entry) => entry[0].replace("attribute_", "") + ":" + entry[1])
+        .join(",");
+
+      // Get attr_ids from lookup
+      const [vLookupRows] = await db.query(
+        "SELECT DISTINCT attr_id FROM tbl_attributes_lookup WHERE product_id = ? ORDER BY attr_id ASC",
+        [v.ID],
+      );
+      v.attr_ids = vLookupRows.map((r) => r.attr_id).join(",");
+
+      // Fallback: resolve from slugs if lookup empty
+      if (!vLookupRows.length && Object.keys(v.attr_meta).length) {
+        const slugs = Object.values(v.attr_meta).filter(Boolean);
+        if (slugs.length) {
+          const ph = slugs.map(() => "?").join(",");
+          const [slugRows] = await db.query(
+            "SELECT attr_id FROM tbl_attributes WHERE attr_slug IN (" +
+              ph +
+              ")",
+            slugs,
+          );
+          v.attr_ids = slugRows.map((r) => r.attr_id).join(",");
+        }
+      }
+
+      // ── Variation thumbnail: read media_path from tbl_media ──
+      if (v.thumbnailId) {
+        const [[vThumb]] = await db.query(
+          `SELECT 
+      m.media_path,
+      m.media_title,
+      alt.meta_value AS alt_text
+      FROM tbl_media m
+      LEFT JOIN tbl_mediameta alt 
+        ON alt.media_id = m.media_id 
+        AND alt.meta_key = '_wp_attachment_image_alt'
+      WHERE m.media_id = ?`,
+          [v.thumbnailId],
+        );
+
+        if (vThumb && vThumb.media_path) {
+          v.thumbnail_url = vThumb.media_path || "";
+          v.title = vThumb.media_title || "";
+          v.alt = vThumb.alt_text || "";
+        }
+      }
+
+      // ── Variation gallery images ─────────────────────────────
+      const [vGalleryRows] = await db.query(
+        `SELECT m.media_id, m.media_title, m.media_path,
+                alt.meta_value AS alt_text
+         FROM tbl_media m
+         LEFT JOIN tbl_mediameta alt ON alt.media_id = m.media_id AND alt.meta_key = '_wp_attachment_image_alt'
+         WHERE m.parent_id = ? AND m.media_type = 'product_image'
+         ORDER BY m.media_id ASC`,
+        [v.ID],
+      );
+      v.gallery = vGalleryRows
+        .filter(
+          (r) => r.media_path && String(r.media_id) !== String(v.thumbnailId),
+        )
+        .map((r) => ({
+          media_id: r.media_id,
+          url: r.media_path,
+          title: r.media_title || "",
+          alt: r.alt_text || "",
+        }));
+
+      variations.push(v);
+    }
+
+    // STEP 4: Build selectedAttributes from tbl_attributes_lookup
+    const selectedAttributes = {};
+    const [lookupRows] = await db.query(
+      `SELECT DISTINCT taxonomy, attr_id, is_variation_attribute
+       FROM tbl_attributes_lookup
+       WHERE product_or_parent_id = ?
+       ORDER BY taxonomy, attr_id`,
+      [id],
+    );
+
+    for (const row of lookupRows) {
+      if (!selectedAttributes[row.taxonomy]) {
+        selectedAttributes[row.taxonomy] = {
+          value_ids: [],
+          is_variation: row.is_variation_attribute,
+        };
+      }
+      selectedAttributes[row.taxonomy].value_ids.push(String(row.attr_id));
+    }
+
+    // STEP 5: Get attribute types with all their values
+    const attributeTypes = await getAttributeTypes();
+
+    // STEP 6: Render
+    res.render("products/add", {
+      title: "Edit Product",
+      product,
+      variations,
+      attributeTypes,
+      selectedAttributes,
+      errors: null,
+    });
+  } catch (err) {
+    console.error("showEditProduct error:", err.message);
+    res.status(500).send("Server Error: " + err.message);
+  }
+};
+
 // ─── STORE NEW PRODUCT ────────────────────────────────────────────────────────
 const storeProduct = async (req, res) => {
   const conn = await db.getConnection();
@@ -268,71 +511,115 @@ const storeProduct = async (req, res) => {
       "_stock_status",
       body.stock_status || "instock",
     );
-    await insertMeta(productId, "_product_features", body.product_features || "");
-    await insertMeta(productId, "_product_material", body.product_material || "");
-    await insertMeta(productId, "_product_collection", body.product_collection || "");
-    await insertMeta(productId, "_product_included", body.product_included || "");
+    await insertMeta(
+      productId,
+      "_product_features",
+      body.product_features || "",
+    );
+    await insertMeta(
+      productId,
+      "_product_material",
+      body.product_material || "",
+    );
+    await insertMeta(
+      productId,
+      "_product_collection",
+      body.product_collection || "",
+    );
+    await insertMeta(
+      productId,
+      "_product_included",
+      body.product_included || "",
+    );
     await insertMeta(productId, "_product_care", body.product_care || "");
-    await insertMeta(productId, "_product_more_info", body.product_more_info || "");
-
-    
+    await insertMeta(
+      productId,
+      "_product_more_info",
+      body.product_more_info || "",
+    );
 
     // ═══════════════════════════════════════════════════════
     // STEP 3: MAIN FEATURED IMAGE
-    // field: main_image
+    // field: featured_image
     // save to tbl_media + tbl_mediameta, store media_id in _thumbnail_id
     // ═══════════════════════════════════════════════════════
     if (req.files) {
-      const mainImageFile = req.files.find(function (f) {
-        return f.fieldname === "main_image";
-      });
+      // =========================
+      // ✅ MAIN IMAGE
+      // =========================
+      const mainImageFile = req.files.find(
+        (f) => f.fieldname === "featured_image",
+      );
 
       if (mainImageFile) {
-        const savedPath = "products/" + mainImageFile.filename;
+        const savedPath = "uploads/products/" + mainImageFile.filename;
+
+        const title = body.featured_image_title || mainImageFile.originalname;
+        const alt = body.featured_image_alt || "";
 
         const [mediaRes] = await conn.query(
           `INSERT INTO tbl_media
-             (author_id, parent_id, media_title, media_status, media_type, media_mime_type, date_added, date_modified)
-           VALUES (?, ?, ?, 'inherit', 'product_image', ?, NOW(), NOW())`,
-          [
-            authorId,
-            productId,
-            mainImageFile.originalname,
-            mainImageFile.mimetype,
-          ],
+       (author_id, parent_id, media_title, media_path, media_status, media_type, media_mime_type, date_added, date_modified, media_order)
+       VALUES (?, ?, ?, ?, 'inherit', 'product_image', ?, NOW(), NOW(), 0)`,
+          [authorId, productId, title, savedPath, mainImageFile.mimetype],
         );
+
         const mediaId = mediaRes.insertId;
 
+        // ✅ ALT TEXT
         await conn.query(
-          "INSERT INTO tbl_mediameta (media_id, meta_key, meta_value) VALUES (?, '_wp_attached_file', ?)",
-          [mediaId, savedPath],
+          `INSERT INTO tbl_mediameta (media_id, meta_key, meta_value)
+       VALUES (?, '_wp_attachment_image_alt', ?)`,
+          [mediaId, alt],
+        );
+
+        // ✅ title TEXT
+        await conn.query(
+          `INSERT INTO tbl_mediameta (media_id, meta_key, meta_value)
+       VALUES (?, '_wp_attachment_image_title', ?)`,
+          [mediaId, title],
         );
 
         await insertMeta(productId, "_thumbnail_id", mediaId);
       }
 
-      // ═══════════════════════════════════════════════════════
-      // STEP 4: MAIN PRODUCT GALLERY IMAGES
-      // field: gallery_images[]
-      // ═══════════════════════════════════════════════════════
-      const galleryFiles = req.files.filter(function (f) {
-        return f.fieldname === "gallery_images[]";
-      });
+      // =========================
+      // ✅ GALLERY IMAGES
+      // =========================
+      const galleryFiles = req.files.filter(
+        (f) => f.fieldname === "gallery_image[]",
+      );
 
-      for (const file of galleryFiles) {
-        const savedPath = "products/" + file.filename;
+      const titles = [].concat(body.gallery_image_titles || []);
+      const alts = [].concat(body.gallery_image_alts || []);
+
+      for (let i = 0; i < galleryFiles.length; i++) {
+        const file = galleryFiles[i];
+        const savedPath = "uploads/products/" + file.filename;
+
+        const title = titles[i] || file.originalname;
+        const alt = alts[i] || "";
 
         const [mediaRes] = await conn.query(
           `INSERT INTO tbl_media
-             (author_id, parent_id, media_title, media_status, media_type, media_mime_type, date_added, date_modified)
-           VALUES (?, ?, ?, 'inherit', 'product_image', ?, NOW(), NOW())`,
-          [authorId, productId, file.originalname, file.mimetype],
+       (author_id, parent_id, media_title, media_path, media_status, media_type, media_mime_type, date_added, date_modified, media_order)
+       VALUES (?, ?, ?, ?, 'inherit', 'product_image', ?, NOW(), NOW(), 0)`,
+          [authorId, productId, title, savedPath, file.mimetype],
         );
+
         const mediaId = mediaRes.insertId;
 
+        // ✅ ALT TEXT
         await conn.query(
-          "INSERT INTO tbl_mediameta (media_id, meta_key, meta_value) VALUES (?, '_wp_attached_file', ?)",
-          [mediaId, savedPath],
+          `INSERT INTO tbl_mediameta (media_id, meta_key, meta_value)
+       VALUES (?, '_wp_attachment_image_alt', ?)`,
+          [mediaId, alt],
+        );
+        // ✅ title TEXT
+        await conn.query(
+          `INSERT INTO tbl_mediameta (media_id, meta_key, meta_value)
+       VALUES (?, '_wp_attachment_image_title', ?)`,
+          [mediaId, title],
         );
       }
     }
@@ -483,64 +770,95 @@ const storeProduct = async (req, res) => {
           );
         }
 
-        // Variation main image — field: var_image_{varId}
-        // Note: for new products, varId is newly generated so field uses index
-        // field sent as: var_image_new_{i} for new products
         if (req.files) {
-          // Try by new index first (add page), then by varId (if somehow known)
+          // =========================
+          // ✅ VARIATION MAIN IMAGE
+          // =========================
           const varImageFile = req.files.find(function (f) {
             return (
-              f.fieldname === "var_image_new_" + i ||
-              f.fieldname === "var_image_" + varId
+              f.fieldname === "var_featured_image_new_" + i ||
+              f.fieldname === "var_featured_image_" + varId
             );
           });
 
           if (varImageFile) {
-            const savedPath = "products/" + varImageFile.filename;
+            const savedPath = "uploads/products/" + varImageFile.filename;
+
+            // ✅ GET TITLE + ALT FROM FORM
+            const titleArr = [].concat(body.var_featured_image_titles || []);
+            const altArr = [].concat(body.var_featured_image_alts || []);
+
+            const title = titleArr[i] || varImageFile.originalname;
+            const alt = altArr[i] || "";
 
             const [mediaRes] = await conn.query(
               `INSERT INTO tbl_media
-                 (author_id, parent_id, media_title, media_status, media_type, media_mime_type, date_added, date_modified)
-               VALUES (?, ?, ?, 'inherit', 'product_image', ?, NOW(), NOW())`,
-              [
-                authorId,
-                varId,
-                varImageFile.originalname,
-                varImageFile.mimetype,
-              ],
+                (author_id, parent_id, media_title, media_path, media_status, media_type, media_mime_type, date_added, date_modified, media_order)
+                VALUES (?, ?, ?, ?, 'inherit', 'product_image', ?, NOW(), NOW(), 0)`,
+              [authorId, varId, title, savedPath, varImageFile.mimetype],
             );
+
             const mediaId = mediaRes.insertId;
 
+            // ✅ ALT TEXT
             await conn.query(
-              "INSERT INTO tbl_mediameta (media_id, meta_key, meta_value) VALUES (?, '_wp_attached_file', ?)",
-              [mediaId, savedPath],
+              `INSERT INTO tbl_mediameta (media_id, meta_key, meta_value)
+               VALUES (?, '_wp_attachment_image_alt', ?)`,
+              [mediaId, alt],
+            );
+            // ✅ title TEXT
+            await conn.query(
+              `INSERT INTO tbl_mediameta (media_id, meta_key, meta_value)
+               VALUES (?, '_wp_attachment_image_title', ?)`,
+              [mediaId, title],
             );
 
             await insertMeta(varId, "_thumbnail_id", mediaId);
           }
 
-          // Variation gallery — field: var_gallery_new_{i}[]
+          // =========================
+          // ✅ VARIATION GALLERY
+          // =========================
           const varGalleryFiles = req.files.filter(function (f) {
             return (
-              f.fieldname === "var_gallery_new_" + i + "[]" ||
-              f.fieldname === "var_gallery_" + varId + "[]"
+              f.fieldname === "var_gallery_image_new_" + i + "[]" ||
+              f.fieldname === "var_gallery_image_" + varId + "[]"
             );
           });
 
-          for (const file of varGalleryFiles) {
-            const savedPath = "products/" + file.filename;
+          const galleryTitles = [].concat(
+            body.var_gallery_image_titles_ + varId || [],
+          );
+          const galleryAlts = [].concat(body.var_gallery_alts_ + varId || []);
+
+          for (let g = 0; g < varGalleryFiles.length; g++) {
+            const file = varGalleryFiles[g];
+            const savedPath = varGalleryUrls[g];
+
+            const title = galleryTitles[g] || file.originalname;
+            const alt = galleryAlts[g] || "";
 
             const [mediaRes] = await conn.query(
               `INSERT INTO tbl_media
-                 (author_id, parent_id, media_title, media_status, media_type, media_mime_type, date_added, date_modified)
-               VALUES (?, ?, ?, 'inherit', 'product_image', ?, NOW(), NOW())`,
-              [authorId, varId, file.originalname, file.mimetype],
+              (author_id, parent_id, media_title, media_path, media_status, media_type, media_mime_type, date_added, date_modified, media_order)
+              VALUES (?, ?, ?, ?, 'inherit', 'product_image', ?, NOW(), NOW(), 0)`,
+              [authorId, varId, title, savedPath, file.mimetype],
             );
+
             const mediaId = mediaRes.insertId;
 
+            // ✅ ALT TEXT
             await conn.query(
-              "INSERT INTO tbl_mediameta (media_id, meta_key, meta_value) VALUES (?, '_wp_attached_file', ?)",
-              [mediaId, savedPath],
+              `INSERT INTO tbl_mediameta (media_id, meta_key, meta_value)
+               VALUES (?, '_wp_attachment_image_alt', ?)`,
+              [mediaId, alt],
+            );
+
+            // ✅ title TEXT
+            await conn.query(
+              `INSERT INTO tbl_mediameta (media_id, meta_key, meta_value)
+               VALUES (?, '_wp_attachment_image_title', ?)`,
+              [mediaId, title],
             );
           }
         }
@@ -560,342 +878,302 @@ const storeProduct = async (req, res) => {
   }
 };
 
-const showEditProduct = async (req, res) => {
-  try {
-    const { id } = req.params;
+// const showEditProduct = async (req, res) => {
+//   try {
+//     const { id } = req.params;
 
-    // ═══════════════════════════════════════════════════════
-    // STEP 1: Get main product
-    // ═══════════════════════════════════════════════════════
-    const [[product]] = await db.query(
-      "SELECT * FROM tbl_products WHERE ID = ?",
-      [id],
-    );
+//     // ═══════════════════════════════════════════════════════
+//     // STEP 1: Get main product
+//     // ═══════════════════════════════════════════════════════
+//     const [[product]] = await db.query(
+//       "SELECT * FROM tbl_products WHERE ID = ?",
+//       [id],
+//     );
 
-    if (!product) {
-      return res.redirect("/store/admin/products?error=Product not found");
-    }
+//     if (!product) {
+//       return res.redirect("/store/admin/products?error=Product not found");
+//     }
 
-    // ═══════════════════════════════════════════════════════
-    // STEP 2: Get main product meta
-    // Attach fields to product object so EJS uses p.sku, p.regular_price etc.
-    // ═══════════════════════════════════════════════════════
-    const [mainMetaRows] = await db.query(
-      "SELECT meta_key, meta_value FROM tbl_productmeta WHERE product_id = ?",
-      [id],
-    );
+//     // ═══════════════════════════════════════════════════════
+//     // STEP 2: Get main product meta
+//     // Attach fields to product object so EJS uses p.sku, p.regular_price etc.
+//     // ═══════════════════════════════════════════════════════
+//     const [mainMetaRows] = await db.query(
+//       "SELECT meta_key, meta_value FROM tbl_productmeta WHERE product_id = ?",
+//       [id],
+//     );
 
-    const mainMeta = {};
-    mainMetaRows.forEach(function (row) {
-      mainMeta[row.meta_key] = row.meta_value;
-    });
+//     const mainMeta = {};
+//     mainMetaRows.forEach(function (row) {
+//       mainMeta[row.meta_key] = row.meta_value;
+//     });
 
+//     product.sku = mainMeta["_sku"] || "";
+//     product.regular_price =
+//       mainMeta["_regular_price"] || mainMeta["_price"] || "";
+//     product.sale_price = mainMeta["_sale_price"] || "";
+//     product.stock = mainMeta["_stock"] || "";
+//     product.stock_status = mainMeta["_stock_status"] || "instock";
+//     product.weight = mainMeta["_weight"] || "";
+//     product.length = mainMeta["_length"] || "";
+//     product.width = mainMeta["_width"] || "";
+//     product.backorders = mainMeta["_backorders"] || "no";
+//     product.product_features = mainMeta["_product_features"] || "";
+//     product.product_material = mainMeta["_product_material"] || "";
+//     product.product_collection = mainMeta["_product_collection"] || "";
+//     product.product_included = mainMeta["_product_included"] || "";
+//     product.product_care = mainMeta["_product_care"] || "";
+//     product.product_more_info = mainMeta["_product_more_info"] || "";
 
-    product.sku = mainMeta["_sku"] || "";
-    product.regular_price =
-      mainMeta["_regular_price"] || mainMeta["_price"] || "";
-    product.sale_price = mainMeta["_sale_price"] || "";
-    product.stock = mainMeta["_stock"] || "";
-    product.stock_status = mainMeta["_stock_status"] || "instock";
-    product.weight = mainMeta["_weight"] || "";
-    product.length = mainMeta["_length"] || "";
-    product.width = mainMeta["_width"] || "";
-    product.backorders = mainMeta["_backorders"] || "no";
-    product.product_features = mainMeta["_product_features"] || "";
-    product.product_material = mainMeta["_product_material"] || "";
-    product.product_collection = mainMeta["_product_collection"] || "";
-    product.product_included = mainMeta["_product_included"] || "";
-    product.product_care = mainMeta["_product_care"] || "";
-    product.product_more_info = mainMeta["_product_more_info"] || "";
+//     // ── Main product thumbnail ──────────────────────────────
+//     // _thumbnail_id = media_id of the featured image
+//     product.thumbnail = "";
+//     product.thumbnailId = mainMeta["_thumbnail_id"] || "";
 
-    // ── Main product thumbnail ──────────────────────────────
-    // _thumbnail_id = media_id of the featured image
-    product.thumbnail = "";
-    product.thumbnailId = mainMeta["_thumbnail_id"] || "";
+//     if (product.thumbnailId) {
+//       const [[thumbMedia]] = await db.query(
+//         `SELECT mm.meta_value AS file_path
+//          FROM tbl_media m
+//          LEFT JOIN tbl_mediameta mm ON mm.media_id = m.media_id AND mm.meta_key = '_wp_attached_file'
+//          WHERE m.media_id = ?`,
+//         [product.thumbnailId],
+//       );
+//       if (thumbMedia && thumbMedia.file_path) {
+//         product.thumbnail = "/" + thumbMedia.file_path;
+//       }
+//     }
 
-    if (product.thumbnailId) {
-      const [[thumbMedia]] = await db.query(
-        `SELECT mm.meta_value AS file_path
-         FROM tbl_media m
-         LEFT JOIN tbl_mediameta mm ON mm.media_id = m.media_id AND mm.meta_key = '_wp_attached_file'
-         WHERE m.media_id = ?`,
-        [product.thumbnailId],
-      );
-      if (thumbMedia && thumbMedia.file_path) {
-        product.thumbnail = "/uploads/" + thumbMedia.file_path;
-      }
-    }
+//     // ── Main product gallery images ─────────────────────────
+//     // All images in tbl_media where parent_id = product id
+//     // except the featured image (thumbnail_id)
+//     const [galleryRows] = await db.query(
+//       `SELECT m.media_id, m.media_title, mm.meta_value AS file_path,
+//               alt.meta_value AS alt_text
+//        FROM tbl_media m
+//        LEFT JOIN tbl_mediameta mm ON mm.media_id = m.media_id AND mm.meta_key = '_wp_attached_file'
+//        LEFT JOIN tbl_mediameta alt ON alt.media_id = m.media_id AND alt.meta_key = '_wp_attachment_image_alt'
+//        WHERE m.parent_id = ? AND m.media_type = 'product_image'
+//        ORDER BY m.media_id ASC`,
+//       [id],
+//     );
+//     product.gallery = galleryRows
+//       .filter(function (r) {
+//         return (
+//           r.file_path && String(r.media_id) !== String(product.thumbnailId)
+//         );
+//       })
+//       .map(function (r) {
+//         return {
+//           media_id: r.media_id,
+//           url: "/" + r.file_path,
+//           title: r.media_title || "",
+//           alt: r.alt_text || "",
+//         };
+//       });
 
-    // ── Main product gallery images ─────────────────────────
-    // All images in tbl_media where parent_id = product id
-    // except the featured image (thumbnail_id)
-    const [galleryRows] = await db.query(
-      `SELECT m.media_id, mm.meta_value AS file_path
-       FROM tbl_media m
-       LEFT JOIN tbl_mediameta mm ON mm.media_id = m.media_id AND mm.meta_key = '_wp_attached_file'
-       WHERE m.parent_id = ? AND m.media_type = 'product_image'
-       ORDER BY m.media_id ASC`,
-      [id],
-    );
-    product.gallery = galleryRows
-      .filter(function (r) {
-        return (
-          r.file_path && String(r.media_id) !== String(product.thumbnailId)
-        );
-      })
-      .map(function (r) {
-        return { media_id: r.media_id, url: "/uploads/" + r.file_path };
-      });
+//     // ═══════════════════════════════════════════════════════
+//     // STEP 3: Get all variation products + their meta
+//     //
+//     // Each variation gets these fields attached:
+//     //   v.sku, v.regular_price, v.sale_price, v.stock, v.stock_status
+//     //   v.weight, v.manage_stock, v.downloadable, v.virtual, v.enabled
+//     //   v.variation_description, v.thumbnail_url
+//     //   v.attr_meta  = { attribute_pa_color: 'white-ocean-camo', attribute_pa_size: '3xl' }
+//     //   v.combo      = "pa_color:white-ocean-camo,pa_size:3xl"
+//     //   v.attr_ids   = "116,142"  (from tbl_attributes_lookup)
+//     // ═══════════════════════════════════════════════════════
+//     const [variationProducts] = await db.query(
+//       "SELECT * FROM tbl_products WHERE parent_id = ? ORDER BY menu_order ASC",
+//       [id],
+//     );
 
-    // ═══════════════════════════════════════════════════════
-    // STEP 3: Get all variation products + their meta
-    //
-    // Each variation gets these fields attached:
-    //   v.sku, v.regular_price, v.sale_price, v.stock, v.stock_status
-    //   v.weight, v.manage_stock, v.downloadable, v.virtual, v.enabled
-    //   v.variation_description, v.thumbnail_url
-    //   v.attr_meta  = { attribute_pa_color: 'white-ocean-camo', attribute_pa_size: '3xl' }
-    //   v.combo      = "pa_color:white-ocean-camo,pa_size:3xl"
-    //   v.attr_ids   = "116,142"  (from tbl_attributes_lookup)
-    // ═══════════════════════════════════════════════════════
-    const [variationProducts] = await db.query(
-      "SELECT * FROM tbl_products WHERE parent_id = ? ORDER BY menu_order ASC",
-      [id],
-    );
+//     const variations = [];
 
-    const variations = [];
+//     for (const v of variationProducts) {
+//       // Load all meta for this variation
+//       const [varMetaRows] = await db.query(
+//         "SELECT meta_key, meta_value FROM tbl_productmeta WHERE product_id = ?",
+//         [v.ID],
+//       );
 
-    for (const v of variationProducts) {
-      // Load all meta for this variation
-      const [varMetaRows] = await db.query(
-        "SELECT meta_key, meta_value FROM tbl_productmeta WHERE product_id = ?",
-        [v.ID],
-      );
+//       const vm = {};
+//       varMetaRows.forEach(function (row) {
+//         vm[row.meta_key] = row.meta_value;
+//       });
 
-      const vm = {};
-      varMetaRows.forEach(function (row) {
-        vm[row.meta_key] = row.meta_value;
-      });
+//       // Attach price / stock / sku fields
+//       v.sku = vm["_sku"] || "";
+//       v.regular_price = vm["_regular_price"] || vm["_price"] || "";
+//       v.sale_price = vm["_sale_price"] || "";
+//       v.stock = vm["_stock"] || "0";
+//       v.stock_status = vm["_stock_status"] || "instock";
+//       v.weight = vm["_weight"] || "";
+//       v.manage_stock = vm["_manage_stock"] || "no";
+//       v.downloadable = vm["_downloadable"] || "no";
+//       v.virtual = vm["_virtual"] || "no";
+//       v.enabled = vm["_variation_is_active"] || "yes";
+//       v.variation_description = vm["_variation_description"] || "";
+//       // ── Variation thumbnail URL from tbl_media ──────────
+//       v.thumbnail_url = "";
+//       v.thumbnailId = vm["_thumbnail_id"] || "";
+//       v.gallery = [];
 
-      // Attach price / stock / sku fields
-      v.sku = vm["_sku"] || "";
-      v.regular_price = vm["_regular_price"] || vm["_price"] || "";
-      v.sale_price = vm["_sale_price"] || "";
-      v.stock = vm["_stock"] || "0";
-      v.stock_status = vm["_stock_status"] || "instock";
-      v.weight = vm["_weight"] || "";
-      v.manage_stock = vm["_manage_stock"] || "no";
-      v.downloadable = vm["_downloadable"] || "no";
-      v.virtual = vm["_virtual"] || "no";
-      v.enabled = vm["_variation_is_active"] || "yes";
-      v.variation_description = vm["_variation_description"] || "";
-      // ── Variation thumbnail URL from tbl_media ──────────
-      v.thumbnail_url = "";
-      v.thumbnailId = vm["_thumbnail_id"] || "";
-      v.gallery = [];
+//       // Build attr_meta from meta keys starting with "attribute_pa_"
+//       // Result: { attribute_pa_color: 'white-ocean-camo', attribute_pa_size: '3xl' }
+//       v.attr_meta = {};
+//       varMetaRows
+//         .filter(function (row) {
+//           return row.meta_key.startsWith("attribute_pa_");
+//         })
+//         .sort(function (a, b) {
+//           return a.meta_key.localeCompare(b.meta_key);
+//         })
+//         .forEach(function (row) {
+//           v.attr_meta[row.meta_key] = row.meta_value;
+//         });
 
-      // Build attr_meta from meta keys starting with "attribute_pa_"
-      // Result: { attribute_pa_color: 'white-ocean-camo', attribute_pa_size: '3xl' }
-      v.attr_meta = {};
-      varMetaRows
-        .filter(function (row) {
-          return row.meta_key.startsWith("attribute_pa_");
-        })
-        .sort(function (a, b) {
-          return a.meta_key.localeCompare(b.meta_key);
-        })
-        .forEach(function (row) {
-          v.attr_meta[row.meta_key] = row.meta_value;
-        });
+//       // Build combo string for hidden form field
+//       // Result: "pa_color:white-ocean-camo,pa_size:3xl"
+//       v.combo = Object.entries(v.attr_meta)
+//         .map(function (entry) {
+//           return entry[0].replace("attribute_", "") + ":" + entry[1];
+//         })
+//         .join(",");
 
-      // Build combo string for hidden form field
-      // Result: "pa_color:white-ocean-camo,pa_size:3xl"
-      v.combo = Object.entries(v.attr_meta)
-        .map(function (entry) {
-          return entry[0].replace("attribute_", "") + ":" + entry[1];
-        })
-        .join(",");
+//       // Get attr_ids from tbl_attributes_lookup for this variation
+//       const [vLookupRows] = await db.query(
+//         "SELECT DISTINCT attr_id FROM tbl_attributes_lookup WHERE product_id = ? ORDER BY attr_id ASC",
+//         [v.ID],
+//       );
+//       v.attr_ids = vLookupRows
+//         .map(function (r) {
+//           return r.attr_id;
+//         })
+//         .join(",");
 
-      // Get attr_ids from tbl_attributes_lookup for this variation
-      const [vLookupRows] = await db.query(
-        "SELECT DISTINCT attr_id FROM tbl_attributes_lookup WHERE product_id = ? ORDER BY attr_id ASC",
-        [v.ID],
-      );
-      v.attr_ids = vLookupRows
-        .map(function (r) {
-          return r.attr_id;
-        })
-        .join(",");
+//       // Fallback: if lookup empty, resolve attr_ids from slugs
+//       if (!vLookupRows.length && Object.keys(v.attr_meta).length) {
+//         const slugs = Object.values(v.attr_meta).filter(Boolean);
+//         if (slugs.length) {
+//           const ph = slugs
+//             .map(function () {
+//               return "?";
+//             })
+//             .join(",");
+//           const [slugRows] = await db.query(
+//             "SELECT attr_id FROM tbl_attributes WHERE attr_slug IN (" +
+//               ph +
+//               ")",
+//             slugs,
+//           );
+//           v.attr_ids = slugRows
+//             .map(function (r) {
+//               return r.attr_id;
+//             })
+//             .join(",");
+//         }
+//       }
 
-      // Fallback: if lookup empty, resolve attr_ids from slugs
-      if (!vLookupRows.length && Object.keys(v.attr_meta).length) {
-        const slugs = Object.values(v.attr_meta).filter(Boolean);
-        if (slugs.length) {
-          const ph = slugs
-            .map(function () {
-              return "?";
-            })
-            .join(",");
-          const [slugRows] = await db.query(
-            "SELECT attr_id FROM tbl_attributes WHERE attr_slug IN (" +
-              ph +
-              ")",
-            slugs,
-          );
-          v.attr_ids = slugRows
-            .map(function (r) {
-              return r.attr_id;
-            })
-            .join(",");
-        }
-      }
+//       // ── Variation thumbnail URL from tbl_media ──────────────
+//       if (v.thumbnailId) {
+//         const [[vThumb]] = await db.query(
+//           `SELECT mm.meta_value AS file_path
+//            FROM tbl_media m
+//            LEFT JOIN tbl_mediameta mm ON mm.media_id = m.media_id AND mm.meta_key = '_wp_attached_file'
+//            WHERE m.media_id = ?`,
+//           [v.thumbnailId],
+//         );
+//         if (vThumb && vThumb.file_path) {
+//           v.thumbnail_url = "/" + vThumb.file_path;
+//         }
+//       }
 
-      // ── Variation thumbnail URL from tbl_media ──────────────
-      if (v.thumbnailId) {
-        const [[vThumb]] = await db.query(
-          `SELECT mm.meta_value AS file_path
-           FROM tbl_media m
-           LEFT JOIN tbl_mediameta mm ON mm.media_id = m.media_id AND mm.meta_key = '_wp_attached_file'
-           WHERE m.media_id = ?`,
-          [v.thumbnailId],
-        );
-        if (vThumb && vThumb.file_path) {
-          v.thumbnail_url = "/uploads/" + vThumb.file_path;
-        }
-      }
+//       // ── Variation gallery images ─────────────────────────────
+//       const [vGalleryRows] = await db.query(
+//         `SELECT m.media_id, m.media_title, mm.meta_value AS file_path,
+//                 alt.meta_value AS alt_text
+//          FROM tbl_media m
+//          LEFT JOIN tbl_mediameta mm ON mm.media_id = m.media_id AND mm.meta_key = '_wp_attached_file'
+//          LEFT JOIN tbl_mediameta alt ON alt.media_id = m.media_id AND alt.meta_key = '_wp_attachment_image_alt'
+//          WHERE m.parent_id = ? AND m.media_type = 'product_image'
+//          ORDER BY m.media_id ASC`,
+//         [v.ID],
+//       );
+//       v.gallery = vGalleryRows
+//         .filter(function (r) {
+//           return r.file_path && String(r.media_id) !== String(v.thumbnailId);
+//         })
+//         .map(function (r) {
+//           return {
+//             media_id: r.media_id,
+//             url: "/" + r.file_path,
+//             title: r.media_title || "",
+//             alt: r.alt_text || "",
+//           };
+//         });
 
-      // ── Variation gallery images ─────────────────────────────
-      const [vGalleryRows] = await db.query(
-        `SELECT m.media_id, mm.meta_value AS file_path
-         FROM tbl_media m
-         LEFT JOIN tbl_mediameta mm ON mm.media_id = m.media_id AND mm.meta_key = '_wp_attached_file'
-         WHERE m.parent_id = ? AND m.media_type = 'product_image'
-         ORDER BY m.media_id ASC`,
-        [v.ID],
-      );
-      v.gallery = vGalleryRows
-        .filter(function (r) {
-          return r.file_path && String(r.media_id) !== String(v.thumbnailId);
-        })
-        .map(function (r) {
-          return { media_id: r.media_id, url: "/uploads/" + r.file_path };
-        });
+//       variations.push(v);
+//     }
 
-      variations.push(v);
-    }
+//     // ═══════════════════════════════════════════════════════
+//     // STEP 4: Build selectedAttributes from tbl_attributes_lookup
+//     //
+//     // This is the ONLY source we need — your screenshot confirms
+//     // tbl_attributes_lookup has all correct data:
+//     //   product_or_parent_id = 6684
+//     //   pa_color → attr_ids 93, 116, 125
+//     //   pa_size  → attr_ids 119, 120, 141, 142
+//     //
+//     // Result:
+//     // {
+//     //   pa_color: { value_ids: ['93','116','125'], is_variation: 1 },
+//     //   pa_size:  { value_ids: ['119','120','141','142'], is_variation: 1 }
+//     // }
+//     // ═══════════════════════════════════════════════════════
+//     const selectedAttributes = {};
 
-    // ═══════════════════════════════════════════════════════
-    // STEP 4: Build selectedAttributes from tbl_attributes_lookup
-    //
-    // This is the ONLY source we need — your screenshot confirms
-    // tbl_attributes_lookup has all correct data:
-    //   product_or_parent_id = 6684
-    //   pa_color → attr_ids 93, 116, 125
-    //   pa_size  → attr_ids 119, 120, 141, 142
-    //
-    // Result:
-    // {
-    //   pa_color: { value_ids: ['93','116','125'], is_variation: 1 },
-    //   pa_size:  { value_ids: ['119','120','141','142'], is_variation: 1 }
-    // }
-    // ═══════════════════════════════════════════════════════
-    const selectedAttributes = {};
+//     const [lookupRows] = await db.query(
+//       `SELECT DISTINCT taxonomy, attr_id, is_variation_attribute
+//        FROM tbl_attributes_lookup
+//        WHERE product_or_parent_id = ?
+//        ORDER BY taxonomy, attr_id`,
+//       [id],
+//     );
 
-    const [lookupRows] = await db.query(
-      `SELECT DISTINCT taxonomy, attr_id, is_variation_attribute
-       FROM tbl_attributes_lookup
-       WHERE product_or_parent_id = ?
-       ORDER BY taxonomy, attr_id`,
-      [id],
-    );
+//     for (const row of lookupRows) {
+//       if (!selectedAttributes[row.taxonomy]) {
+//         selectedAttributes[row.taxonomy] = {
+//           value_ids: [],
+//           is_variation: row.is_variation_attribute,
+//         };
+//       }
+//       selectedAttributes[row.taxonomy].value_ids.push(String(row.attr_id));
+//     }
 
-    for (const row of lookupRows) {
-      if (!selectedAttributes[row.taxonomy]) {
-        selectedAttributes[row.taxonomy] = {
-          value_ids: [],
-          is_variation: row.is_variation_attribute,
-        };
-      }
-      selectedAttributes[row.taxonomy].value_ids.push(String(row.attr_id));
-    }
+//     // ═══════════════════════════════════════════════════════
+//     // STEP 5: Get attribute types with all their values
+//     // Used to build the tag boxes and dropdowns in EJS
+//     // ═══════════════════════════════════════════════════════
+//     const attributeTypes = await getAttributeTypes();
 
-    // ═══════════════════════════════════════════════════════
-    // STEP 5: Get attribute types with all their values
-    // Used to build the tag boxes and dropdowns in EJS
-    // ═══════════════════════════════════════════════════════
-    const attributeTypes = await getAttributeTypes();
+//     // ═══════════════════════════════════════════════════════
+//     // STEP 6: Render
+//     // ═══════════════════════════════════════════════════════
+//     res.render("products/add", {
+//       title: "Edit Product",
+//       product, // main product + meta fields
+//       variations, // variations with attr_meta, combo, attr_ids
+//       attributeTypes, // all types + values for dropdowns
+//       selectedAttributes, // { pa_color: { value_ids: [...], is_variation: 1 } }
+//       errors: null,
+//     });
+//   } catch (err) {
+//     console.error("showEditProduct error:", err.message);
+//     res.status(500).send("Server Error: " + err.message);
+//   }
+// };
 
-    // ═══════════════════════════════════════════════════════
-    // STEP 6: Render
-    // ═══════════════════════════════════════════════════════
-    res.render("products/add", {
-      title: "Edit Product",
-      product, // main product + meta fields
-      variations, // variations with attr_meta, combo, attr_ids
-      attributeTypes, // all types + values for dropdowns
-      selectedAttributes, // { pa_color: { value_ids: [...], is_variation: 1 } }
-      errors: null,
-    });
-  } catch (err) {
-    console.error("showEditProduct error:", err.message);
-    res.status(500).send("Server Error: " + err.message);
-  }
-};
-
-const moveTobin = (filePath) => {
-  try {
-    // filePath = "products/1773817269410-1-main-1.jpg"  (value from tbl_mediameta)
-    const fullPath = path.join(__dirname, "../public/uploads", filePath);
-    const binDir = path.join(__dirname, "../public/uploads/bin");
-
-    // Create bin folder if not exists
-    if (!fs.existsSync(binDir)) {
-      fs.mkdirSync(binDir, { recursive: true });
-    }
-
-    if (fs.existsSync(fullPath)) {
-      const fileName = path.basename(fullPath);
-      const binPath = path.join(binDir, fileName);
-      fs.renameSync(fullPath, binPath);
-      console.log("Moved to bin:", fileName);
-    }
-  } catch (err) {
-    console.error("moveTobin error:", err.message);
-    // Don't throw — file move failure should not break the DB update
-  }
-};
-
-// ─── HELPER: Delete media record + move file to bin ──────────────────────────
-const deleteMedia = async (conn, mediaId) => {
-  // Get file path from mediameta
-  const [[mm]] = await conn.query(
-    "SELECT meta_value FROM tbl_mediameta WHERE media_id = ? AND meta_key = '_wp_attached_file'",
-    [mediaId],
-  );
-  if (mm && mm.meta_value) {
-    moveTobin(mm.meta_value);
-  }
-  // Delete mediameta rows
-  await conn.query("DELETE FROM tbl_mediameta WHERE media_id = ?", [mediaId]);
-  // Delete media row
-  await conn.query("DELETE FROM tbl_media WHERE media_id = ?", [mediaId]);
-};
-
-// ─── HELPER: Delete all media for a product (main + gallery) ─────────────────
-const deleteProductMedia = async (conn, productId, exceptMediaId = null) => {
-  let query =
-    "SELECT media_id FROM tbl_media WHERE parent_id = ? AND media_type = 'product_image'";
-  const args = [productId];
-  if (exceptMediaId) {
-    query += " AND media_id != ?";
-    args.push(exceptMediaId);
-  }
-  const [mediaRows] = await conn.query(query, args);
-  for (const row of mediaRows) {
-    await deleteMedia(conn, row.media_id);
-  }
-};
-
+// Update product handler
 const updateProduct = async (req, res) => {
   const conn = await db.getConnection();
 
@@ -909,12 +1187,20 @@ const updateProduct = async (req, res) => {
     // HELPER: upsert meta
     // ═══════════════════════════════════════════════════════
     const updateMeta = async (pid, key, value) => {
-      await conn.query(
-        `INSERT INTO tbl_productmeta (product_id, meta_key, meta_value)
-         VALUES (?, ?, ?)
-         ON DUPLICATE KEY UPDATE meta_value = VALUES(meta_value)`,
-        [pid, key, value || ""],
-      );
+      try {
+        await conn.query(
+          `INSERT INTO tbl_productmeta (product_id, meta_key, meta_value)
+           VALUES (?, ?, ?)
+           ON DUPLICATE KEY UPDATE meta_value = VALUES(meta_value)`,
+          [pid, key, value || ""],
+        );
+      } catch (metaErr) {
+        console.error(
+          `updateMeta FAILED — pid:${pid} key:${key} value:${value}`,
+          metaErr.message,
+        );
+        throw metaErr;
+      }
     };
 
     // ═══════════════════════════════════════════════════════
@@ -979,339 +1265,502 @@ const updateProduct = async (req, res) => {
     await updateMeta(id, "_product_care", body.product_care || "");
     await updateMeta(id, "_product_more_info", body.product_more_info || "");
 
+    // ─────────────────────────────────────────
+    // ✅ DELETE OLD MEDIA (FIXED - ALWAYS RUN)
+    // ─────────────────────────────────────────
+    const [oldMediaRows] = await conn.query(
+      "SELECT media_id FROM tbl_media WHERE parent_id = ?",
+      [id],
+    );
+
+    const oldMediaIds = oldMediaRows.map((r) => r.media_id);
+
+    if (oldMediaIds.length > 0) {
+      const placeholders = oldMediaIds.map(() => "?").join(",");
+
+      // 🔥 DELETE META FIRST
+      const [metaDel] = await conn.query(
+        `DELETE FROM tbl_mediameta WHERE media_id IN (${placeholders})`,
+        oldMediaIds,
+      );
+
+      // 🔥 DELETE MEDIA
+      const [mediaDel] = await conn.query(
+        `DELETE FROM tbl_media WHERE media_id IN (${placeholders})`,
+        oldMediaIds,
+      );
+    }
+
+    await updateMeta(id, "_thumbnail_id", "");
+
     // ═══════════════════════════════════════════════════════
     // STEP 3: MAIN IMAGE
-    // file field name: "main_image"
+    // file field name: "featured_image"
     // save original filename to tbl_media + tbl_mediameta
     // ═══════════════════════════════════════════════════════
     if (req.files) {
-      const mainImageFile = req.files.find(function (f) {
-        return f.fieldname === "main_image";
-      });
+      // =========================
+      // ✅ MAIN IMAGE (FILE OR URL)
+      // =========================
 
-      if (mainImageFile) {
-        // ── Delete old thumbnail ──────────────────────────────
-        const [[oldThumbMeta]] = await conn.query(
-          "SELECT meta_value FROM tbl_productmeta WHERE product_id = ? AND meta_key = '_thumbnail_id'",
-          [id],
-        );
-        if (oldThumbMeta && oldThumbMeta.meta_value) {
-          await deleteMedia(conn, oldThumbMeta.meta_value);
+      // If uploaded via file
+      const mainImageFile = req.files?.find(
+        (f) => f.fieldname === "featured_image",
+      );
+
+      if (mainImageFile || body.featured_image) {
+        const title =
+          body.featured_image_title || mainImageFile?.originalname || "Image";
+        const alt = body.featured_image_alt || "";
+
+        let savedPath = "";
+
+        if (mainImageFile) {
+          savedPath = "uploads/products/" + mainImageFile.filename;
+        } else {
+          savedPath = body.featured_image; // from media modal (URL)
         }
-
-        // ── Insert new thumbnail ──────────────────────────────
-        const savedPath = "products/" + mainImageFile.filename;
 
         const [mediaRes] = await conn.query(
           `INSERT INTO tbl_media
-         (author_id, parent_id, media_title, media_status, media_type, media_mime_type, date_added, date_modified)
-       VALUES (?, ?, ?, 'inherit', 'product_image', ?, NOW(), NOW())`,
+          (author_id, parent_id, media_title, media_path, media_status, media_type, media_mime_type, date_added, date_modified, media_order)
+          VALUES (?, ?, ?, ?, 'inherit', 'product_image', ?, NOW(), NOW(), 0)`,
           [
             req.session.admin.id,
             id,
-            mainImageFile.originalname,
-            mainImageFile.mimetype,
+            title,
+            savedPath,
+            mainImageFile?.mimetype || "image/jpeg",
           ],
         );
+
         const mediaId = mediaRes.insertId;
 
+        // ✅ title
         await conn.query(
-          "INSERT INTO tbl_mediameta (media_id, meta_key, meta_value) VALUES (?, '_wp_attached_file', ?)",
-          [mediaId, savedPath],
+          `INSERT INTO tbl_mediameta (media_id, meta_key, meta_value)
+         VALUES (?, '_wp_attachment_image_title', ?)`,
+          [mediaId, title],
+        );
+
+        // ✅ ALT
+        await conn.query(
+          `INSERT INTO tbl_mediameta (media_id, meta_key, meta_value)
+         VALUES (?, '_wp_attachment_image_alt', ?)`,
+          [mediaId, alt],
         );
 
         await updateMeta(id, "_thumbnail_id", mediaId);
       }
-    }
 
-    // ═══════════════════════════════════════════════════════
-    // STEP 4: PRODUCT GALLERY IMAGES
-    // file field name: "gallery_images[]"
-    // ═══════════════════════════════════════════════════════
-    if (req.files) {
-      const galleryFiles = req.files.filter(function (f) {
-        return f.fieldname === "gallery_images[]";
-      });
+      // ═══════════════════════════════════════════════════════
+      // STEP 4: PRODUCT GALLERY IMAGES
+      // file field name: "gallery_images[]"
+      // ═══════════════════════════════════════════════════════
 
-      if (galleryFiles.length > 0) {
-        // Get current thumbnail_id so we don't delete it
-        const [[thumbMeta]] = await conn.query(
-          "SELECT meta_value FROM tbl_productmeta WHERE product_id = ? AND meta_key = '_thumbnail_id'",
-          [id],
-        );
-        const thumbId = thumbMeta ? thumbMeta.meta_value : null;
+      // =========================
+      // ✅ GALLERY (FILE + MEDIA MODAL)
+      // =========================
 
-        // Delete all old gallery media for this product (except thumbnail)
-        await deleteProductMedia(conn, id, thumbId);
+      // FROM FILES
+      const galleryFiles =
+        req.files?.filter((f) => f.fieldname === "gallery_image[]") || [];
 
-        // Insert new gallery images
-        for (const file of galleryFiles) {
-          const savedPath = "products/" + file.filename;
+      // FROM MEDIA MODAL
+      const galleryUrls = [].concat(body.gallery_image || []);
+      const galleryTitles = [].concat(body.gallery_image_titles || []);
+      const galleryAlts = [].concat(body.gallery_image_alts || []);
+
+      if (galleryFiles.length || galleryUrls.length) {
+        // 🔹 FILES
+        for (let i = 0; i < galleryFiles.length; i++) {
+          const file = galleryFiles[i];
 
           const [mediaRes] = await conn.query(
-            `INSERT INTO tbl_media
-           (author_id, parent_id, media_title, media_status, media_type, media_mime_type, date_added, date_modified)
-         VALUES (?, ?, ?, 'inherit', 'product_image', ?, NOW(), NOW())`,
-            [req.session.admin.id, id, file.originalname, file.mimetype],
+            `INSERT INTO tbl_media (author_id, parent_id, media_title, media_path, media_status, media_type, media_mime_type, date_added, date_modified, media_order)
+           VALUES (?, ?, ?, ?, 'inherit', 'product_image', ?, NOW(), NOW(), 0)`,
+            [
+              req.session.admin.id,
+              id,
+              file.originalname,
+              "uploads/products/" + file.filename,
+              file.mimetype,
+            ],
           );
+
           const mediaId = mediaRes.insertId;
 
           await conn.query(
-            "INSERT INTO tbl_mediameta (media_id, meta_key, meta_value) VALUES (?, '_wp_attached_file', ?)",
-            [mediaId, savedPath],
+            `INSERT INTO tbl_mediameta (media_id, meta_key, meta_value)
+           VALUES (?, '_wp_attachment_image_alt', ?)`,
+            [mediaId, galleryAlts[i] || ""],
+          );
+
+          await conn.query(
+            "INSERT INTO tbl_mediameta (media_id, meta_key, meta_value) VALUES (?, '_wp_attachment_image_title', ?)",
+            [mediaId, galleryTitles[i] || file.originalname],
+          );
+        }
+
+        // 🔹 MEDIA MODAL
+        for (let i = 0; i < galleryUrls.length; i++) {
+          const [mediaRes] = await conn.query(
+            `INSERT INTO tbl_media (author_id, parent_id, media_title, media_path, media_status, media_type, media_mime_type, date_added, date_modified, media_order)
+           VALUES (?, ?, ?, ?, 'inherit', 'product_image', 'image/jpeg', NOW(), NOW(), 0)`,
+            [
+              req.session.admin.id,
+              id,
+              galleryTitles[i] || "Image",
+              galleryUrls[i],
+            ],
+          );
+
+          const mediaId = mediaRes.insertId;
+
+          await conn.query(
+            `INSERT INTO tbl_mediameta (media_id, meta_key, meta_value)
+           VALUES (?, '_wp_attachment_image_alt', ?)`,
+            [mediaId, galleryAlts[i] || ""],
+          );
+
+          await conn.query(
+            `INSERT INTO tbl_mediameta (media_id, meta_key, meta_value)
+           VALUES (?, '_wp_attachment_image_title', ?)`,
+            [mediaId, galleryTitles[i] || ""],
           );
         }
       }
-    }
-    // ═══════════════════════════════════════════════════════
-    // STEP 5: ATTRIBUTES
-    // selected_attr_type[]   = attribute_type_id (e.g. "1")
-    // selected_attr_values[] = comma-separated attr_ids (e.g. "93,116,125")
-    // attr_for_variation[]   = "1" if used for variations (only checked ones sent)
-    //
-    // Strategy: delete existing lookup for this parent, re-insert
-    // ═══════════════════════════════════════════════════════
-    await conn.query(
-      `DELETE FROM tbl_attributes_lookup WHERE product_or_parent_id = ? AND product_id = ?`,
-      [id, id],
-    );
 
-    const attrTypeIds = [].concat(body.selected_attr_type || []);
-    const attrValuesCsv = [].concat(body.selected_attr_values || []);
-    const attrForVar = [].concat(body.attr_for_variation || []);
-
-    for (let i = 0; i < attrTypeIds.length; i++) {
-      const typeId = attrTypeIds[i];
-      const isVariation = attrForVar.includes("1") ? 1 : 0;
-      const valueIds = (attrValuesCsv[i] || "")
-        .split(",")
-        .map((v) => v.trim())
-        .filter(Boolean);
-
-      if (!valueIds.length) continue;
-
-      // Get taxonomy name from type id
-      const [[attrType]] = await conn.query(
-        "SELECT attribute_type_name FROM tbl_attribute_type WHERE attribute_type_id = ?",
-        [typeId],
+      // ═══════════════════════════════════════════════════════
+      // STEP 5: ATTRIBUTES
+      // selected_attr_type[]   = attribute_type_id (e.g. "1")
+      // selected_attr_values[] = comma-separated attr_ids (e.g. "93,116,125")
+      // attr_for_variation[]   = "1" if used for variations (only checked ones sent)
+      //
+      // Strategy: delete existing lookup for this parent, re-insert
+      // ═══════════════════════════════════════════════════════
+      await conn.query(
+        `DELETE FROM tbl_attributes_lookup WHERE product_or_parent_id = ? AND product_id = ?`,
+        [id, id],
       );
-      if (!attrType) continue;
 
-      const taxonomy = "pa_" + attrType.attribute_type_name;
+      const attrTypeIds = [].concat(body.selected_attr_type || []);
+      const attrValuesCsv = [].concat(body.selected_attr_values || []);
+      const attrForVar = [].concat(body.attr_for_variation || []);
 
-      for (const attrId of valueIds) {
-        await conn.query(
-          `INSERT IGNORE INTO tbl_attributes_lookup
+      for (let i = 0; i < attrTypeIds.length; i++) {
+        const typeId = attrTypeIds[i];
+        const isVariation = attrForVar.includes("1") ? 1 : 0;
+        const valueIds = (attrValuesCsv[i] || "")
+          .split(",")
+          .map((v) => v.trim())
+          .filter(Boolean);
+
+        if (!valueIds.length) continue;
+
+        // Get taxonomy name from type id
+        const [[attrType]] = await conn.query(
+          "SELECT attribute_type_name FROM tbl_attribute_type WHERE attribute_type_id = ?",
+          [typeId],
+        );
+        if (!attrType) continue;
+
+        const taxonomy = "pa_" + attrType.attribute_type_name;
+
+        for (const attrId of valueIds) {
+          await conn.query(
+            `INSERT IGNORE INTO tbl_attributes_lookup
              (product_id, product_or_parent_id, taxonomy, attr_id, is_variation_attribute, in_stock)
            VALUES (?, ?, ?, ?, ?, 1)`,
-          [id, id, taxonomy, attrId, isVariation],
+            [id, id, taxonomy, attrId, isVariation],
+          );
+        }
+
+        // Update attribute meta on main product
+        const [attrRows] = await conn.query(
+          `SELECT attr_slug FROM tbl_attributes WHERE attr_id IN (${valueIds.map(() => "?").join(",")})`,
+          valueIds,
+        );
+        await updateMeta(
+          id,
+          "attribute_" + taxonomy,
+          attrRows.map((r) => r.attr_slug).join("|"),
         );
       }
 
-      // Update attribute meta on main product
-      const [attrRows] = await conn.query(
-        `SELECT attr_slug FROM tbl_attributes WHERE attr_id IN (${valueIds.map(() => "?").join(",")})`,
-        valueIds,
-      );
-      await updateMeta(
-        id,
-        "attribute_" + taxonomy,
-        attrRows.map((r) => r.attr_slug).join("|"),
-      );
-    }
+      // ═══════════════════════════════════════════════════════
+      // STEP 6: VARIATIONS
+      // var_product_id[] = existing variation ID (update) or empty (insert)
+      // var_attr_combo[] = "pa_color:white,pa_size:xl"
+      // var_attr_ids[]   = "93,119"
+      // ═══════════════════════════════════════════════════════
+      const combos = [].concat(body.var_attr_combo || []);
+      const existingIds = [].concat(body.var_product_id || []);
+      const varSkus = [].concat(body.var_sku || []);
+      const varPrices = [].concat(body.var_regular_price || []);
+      const varSalePrices = [].concat(body.var_sale_price || []);
+      const varStocks = [].concat(body.var_stock || []);
+      const varStatuses = [].concat(body.var_stock_status || []);
+      const varWeights = [].concat(body.var_weight || []);
+      const varDescs = [].concat(body.var_description || []);
+      const varAttrIds = [].concat(body.var_attr_ids || []);
 
-    // ═══════════════════════════════════════════════════════
-    // STEP 6: VARIATIONS
-    // var_product_id[] = existing variation ID (update) or empty (insert)
-    // var_attr_combo[] = "pa_color:white,pa_size:xl"
-    // var_attr_ids[]   = "93,119"
-    // ═══════════════════════════════════════════════════════
-    const combos = [].concat(body.var_attr_combo || []);
-    const existingIds = [].concat(body.var_product_id || []);
-    const varSkus = [].concat(body.var_sku || []);
-    const varPrices = [].concat(body.var_regular_price || []);
-    const varSalePrices = [].concat(body.var_sale_price || []);
-    const varStocks = [].concat(body.var_stock || []);
-    const varStatuses = [].concat(body.var_stock_status || []);
-    const varWeights = [].concat(body.var_weight || []);
-    const varDescs = [].concat(body.var_description || []);
-    const varAttrIds = [].concat(body.var_attr_ids || []);
+      for (let i = 0; i < combos.length; i++) {
+        const combo = combos[i];
+        const existVid = existingIds[i];
+        let vid;
 
-    for (let i = 0; i < combos.length; i++) {
-      const combo = combos[i];
-      const existVid = existingIds[i];
-      let vid;
+        if (existVid && existVid !== "" && existVid !== "0") {
+          // ── UPDATE existing variation ──────────────────────────
+          vid = existVid;
 
-      if (existVid && existVid !== "" && existVid !== "0") {
-        // ── UPDATE existing variation ──────────────────────────
-        vid = existVid;
+          // Build label from combo: "pa_color:white,pa_size:xl" → "White / Xl"
+          const label = combo
+            .split(",")
+            .map(function (part) {
+              var val = part.split(":")[1] || "";
+              return val.charAt(0).toUpperCase() + val.slice(1);
+            })
+            .join(" / ");
 
-        // Build label from combo: "pa_color:white,pa_size:xl" → "White / Xl"
-        const label = combo
-          .split(",")
-          .map(function (part) {
-            var val = part.split(":")[1] || "";
-            return val.charAt(0).toUpperCase() + val.slice(1);
-          })
-          .join(" / ");
-
-        await conn.query(
-          `UPDATE tbl_products SET
+          await conn.query(
+            `UPDATE tbl_products SET
              product_title = ?,
              product_short_desc = ?,
              product_date_modified = NOW()
            WHERE ID = ?`,
-          [body.product_title + " - " + label, combo, vid],
-        );
-      } else {
-        // ── INSERT new variation ───────────────────────────────
-        const label = combo
-          .split(",")
-          .map(function (part) {
-            var val = part.split(":")[1] || "";
-            return val.charAt(0).toUpperCase() + val.slice(1);
-          })
-          .join(" / ");
+            [body.product_title + " - " + label, combo, vid],
+          );
+        } else {
+          // ── INSERT new variation ───────────────────────────────
+          const label = combo
+            .split(",")
+            .map(function (part) {
+              var val = part.split(":")[1] || "";
+              return val.charAt(0).toUpperCase() + val.slice(1);
+            })
+            .join(" / ");
 
-        const [ins] = await conn.query(
-          `INSERT INTO tbl_products
+          const [ins] = await conn.query(
+            `INSERT INTO tbl_products
              (author_id, parent_id, product_url, product_title, product_short_desc,
               product_status, product_type, product_date_added, product_date_modified, menu_order)
            VALUES (?, ?, ?, ?, ?, 'publish', 'product_variation', NOW(), NOW(), ?)`,
-          [
-            req.session.admin.id,
-            id,
-            slug + "-var-" + (i + 1),
-            body.product_title + " - " + label,
-            combo,
-            i,
-          ],
-        );
-        vid = ins.insertId;
-      }
-
-      // ── Variation meta ───────────────────────────────────────
-      await updateMeta(vid, "_sku", varSkus[i] || "");
-      await updateMeta(vid, "_regular_price", varPrices[i] || "");
-      await updateMeta(vid, "_sale_price", varSalePrices[i] || "");
-      await updateMeta(vid, "_price", varSalePrices[i] || varPrices[i] || "");
-      await updateMeta(vid, "_stock", varStocks[i] || "0");
-      await updateMeta(vid, "_stock_status", varStatuses[i] || "instock");
-      await updateMeta(vid, "_variation_description", varDescs[i] || "");
-
-      // ── Attribute meta on variation ─────────────────────────
-      // combo = "pa_color:white,pa_size:xl"
-      const comboParts = combo.split(",");
-      for (const part of comboParts) {
-        const colonIdx = part.indexOf(":");
-        if (colonIdx === -1) continue;
-        const taxKey = part.substring(0, colonIdx).trim(); // "pa_color"
-        const taxVal = part.substring(colonIdx + 1).trim(); // "white"
-        await updateMeta(vid, "attribute_" + taxKey, taxVal);
-      }
-
-      // ── Variation lookup ────────────────────────────────────
-      // Delete old entries for this variation, re-insert
-      await conn.query(
-        "DELETE FROM tbl_attributes_lookup WHERE product_id = ?",
-        [vid],
-      );
-
-      const attrIdList = (varAttrIds[i] || "")
-        .split(",")
-        .map((v) => v.trim())
-        .filter(Boolean);
-      for (const attrId of attrIdList) {
-        // Get taxonomy from tbl_attributemeta
-        const [amRows] = await conn.query(
-          "SELECT meta_key FROM tbl_attributemeta WHERE attr_id = ? AND meta_key LIKE 'order_pa_%' LIMIT 1",
-          [attrId],
-        );
-        if (!amRows.length) continue;
-        const taxonomy = amRows[0].meta_key.replace("order_", ""); // "pa_color"
-        const inStock = varStatuses[i] === "instock" ? 1 : 0;
-
-        await conn.query(
-          `INSERT IGNORE INTO tbl_attributes_lookup
-             (product_id, product_or_parent_id, taxonomy, attr_id, is_variation_attribute, in_stock)
-           VALUES (?, ?, ?, ?, 1, ?)`,
-          [vid, id, taxonomy, attrId, inStock],
-        );
-      }
-
-      // ── Variation main image ────────────────────────────────
-      // field name: var_image_{variation_ID}
-      if (req.files) {
-        const varImageFile = req.files.find(function (f) {
-          return f.fieldname === "var_image_" + vid;
-        });
-
-        if (varImageFile) {
-          // Delete old variation thumbnail
-          const [[oldVarThumb]] = await conn.query(
-            "SELECT meta_value FROM tbl_productmeta WHERE product_id = ? AND meta_key = '_thumbnail_id'",
-            [vid],
-          );
-          if (oldVarThumb && oldVarThumb.meta_value) {
-            await deleteMedia(conn, oldVarThumb.meta_value);
-          }
-
-          // Insert new variation thumbnail
-          const savedPath = "products/" + varImageFile.filename;
-
-          const [mediaRes] = await conn.query(
-            `INSERT INTO tbl_media
-         (author_id, parent_id, media_title, media_status, media_type, media_mime_type, date_added, date_modified)
-       VALUES (?, ?, ?, 'inherit', 'product_image', ?, NOW(), NOW())`,
             [
               req.session.admin.id,
-              vid,
-              varImageFile.originalname,
-              varImageFile.mimetype,
+              id,
+              slug + "-var-" + (i + 1),
+              body.product_title + " - " + label,
+              combo,
+              i,
             ],
           );
-          const mediaId = mediaRes.insertId;
-
-          await conn.query(
-            "INSERT INTO tbl_mediameta (media_id, meta_key, meta_value) VALUES (?, '_wp_attached_file', ?)",
-            [mediaId, savedPath],
-          );
-
-          await updateMeta(vid, "_thumbnail_id", mediaId);
+          vid = ins.insertId;
         }
 
-        // ── Variation gallery images ──────────────────────────
-        // field name: var_gallery_{variation_ID}[]
-        const varGalleryFiles = req.files.filter(function (f) {
-          return f.fieldname === "var_gallery_" + vid + "[]";
-        });
+        // ── Variation meta ───────────────────────────────────────
+        await updateMeta(vid, "_sku", varSkus[i] || "");
+        await updateMeta(vid, "_regular_price", varPrices[i] || "");
+        await updateMeta(vid, "_sale_price", varSalePrices[i] || "");
+        await updateMeta(vid, "_price", varSalePrices[i] || varPrices[i] || "");
+        await updateMeta(vid, "_stock", varStocks[i] || "0");
+        await updateMeta(vid, "_stock_status", varStatuses[i] || "instock");
+        await updateMeta(vid, "_variation_description", varDescs[i] || "");
 
-        if (varGalleryFiles.length > 0) {
-          // Get variation thumbnail id to protect it
-          const [[varThumbMeta]] = await conn.query(
-            "SELECT meta_value FROM tbl_productmeta WHERE product_id = ? AND meta_key = '_thumbnail_id'",
-            [vid],
+        // ── Attribute meta on variation ─────────────────────────
+        // combo = "pa_color:white,pa_size:xl"
+        const comboParts = combo.split(",");
+        for (const part of comboParts) {
+          const colonIdx = part.indexOf(":");
+          if (colonIdx === -1) continue;
+          const taxKey = part.substring(0, colonIdx).trim(); // "pa_color"
+          const taxVal = part.substring(colonIdx + 1).trim(); // "white"
+          await updateMeta(vid, "attribute_" + taxKey, taxVal);
+        }
+
+        // ── Variation lookup ────────────────────────────────────
+        // Delete old entries for this variation, re-insert
+        await conn.query(
+          "DELETE FROM tbl_attributes_lookup WHERE product_id = ?",
+          [vid],
+        );
+
+        const attrIdList = (varAttrIds[i] || "")
+          .split(",")
+          .map((v) => v.trim())
+          .filter(Boolean);
+        for (const attrId of attrIdList) {
+          // Get taxonomy from tbl_attributemeta
+          const [amRows] = await conn.query(
+            "SELECT meta_key FROM tbl_attributemeta WHERE attr_id = ? AND meta_key LIKE 'order_pa_%' LIMIT 1",
+            [attrId],
           );
-          const varThumbId = varThumbMeta ? varThumbMeta.meta_value : null;
+          if (!amRows.length) continue;
+          const taxonomy = amRows[0].meta_key.replace("order_", ""); // "pa_color"
+          const inStock = varStatuses[i] === "instock" ? 1 : 0;
 
-          // Delete old variation gallery (except thumbnail)
-          await deleteProductMedia(conn, vid, varThumbId);
+          await conn.query(
+            `INSERT IGNORE INTO tbl_attributes_lookup
+             (product_id, product_or_parent_id, taxonomy, attr_id, is_variation_attribute, in_stock)
+           VALUES (?, ?, ?, ?, 1, ?)`,
+            [vid, id, taxonomy, attrId, inStock],
+          );
+        }
 
-          // Insert new variation gallery
-          for (const file of varGalleryFiles) {
-            const savedPath = "products/" + file.filename;
+
+        // ─────────────────────────────────────────
+        // ✅ DELETE OLD VARIATION MEDIA (MAIN + GALLERY)
+
+        const [oldVarMediaRows] = await conn.query(
+          "SELECT media_id FROM tbl_media WHERE parent_id = ?",
+          [vid],
+        );
+
+
+        const oldVarMediaIds = oldVarMediaRows.map((r) => r.media_id);
+
+
+        if (oldVarMediaIds.length > 0) {
+          const placeholders = oldVarMediaIds.map(() => "?").join(",");
+
+          const [metaDel] = await conn.query(
+            `DELETE FROM tbl_mediameta WHERE media_id IN (${placeholders})`,
+            oldVarMediaIds,
+          );
+
+
+          const [mediaDel] = await conn.query(
+            `DELETE FROM tbl_media WHERE media_id IN (${placeholders})`,
+            oldVarMediaIds,
+          );
+
+         
+        } 
+
+        // Remove old thumbnail
+        await updateMeta(vid, "_thumbnail_id", "");
+
+        // ── Variation main image ────────────────────────────────
+        // field name: var_image_{variation_ID}
+
+        // ── Variation main image ────────────────────────────────
+        if (req.files || body) {
+          const varImageFile = req.files?.find(
+            (f) => f.fieldname === "var_featured_image_" + vid,
+          );
+
+          const varImageUrl = body["var_featured_image_" + vid];
+          const varTitle = body["var_featured_image_title_" + vid];
+          const varAlt = body["var_featured_image_alt_" + vid];
+
+          if (varImageFile || varImageUrl) {
+            const title = varTitle || varImageFile?.originalname || "Image";
+            const alt = varAlt || "";
+
+            const savedPath = varImageFile
+              ? "uploads/products/" + varImageFile.filename
+              : varImageUrl;
 
             const [mediaRes] = await conn.query(
               `INSERT INTO tbl_media
-           (author_id, parent_id, media_title, media_status, media_type, media_mime_type, date_added, date_modified)
-         VALUES (?, ?, ?, 'inherit', 'product_image', ?, NOW(), NOW())`,
-              [req.session.admin.id, vid, file.originalname, file.mimetype],
+                (author_id, parent_id, media_title, media_path, media_status, media_type, media_mime_type, date_added, date_modified, media_order)
+                VALUES (?, ?, ?, ?, 'inherit', 'product_image', ?, NOW(), NOW(), 0)`,
+              [
+                req.session.admin.id,
+                vid,
+                title,
+                savedPath,
+                varImageFile?.mimetype || "image/jpeg",
+              ],
             );
+
             const mediaId = mediaRes.insertId;
 
             await conn.query(
-              "INSERT INTO tbl_mediameta (media_id, meta_key, meta_value) VALUES (?, '_wp_attached_file', ?)",
-              [mediaId, savedPath],
+              `INSERT INTO tbl_mediameta (media_id, meta_key, meta_value)
+              VALUES (?, '_wp_attachment_image_alt', ?)`,
+              [mediaId, alt],
+            );
+
+            await conn.query(
+              `INSERT INTO tbl_mediameta (media_id, meta_key, meta_value)
+              VALUES (?, '_wp_attachment_image_title', ?)`,
+              [mediaId, title],
+            );
+
+            await updateMeta(vid, "_thumbnail_id", mediaId);
+          }
+        }
+
+        // =========================
+        // ✅ VARIATION GALLERY
+        // =========================
+        const varGalleryFiles =
+          req.files?.filter((f) => f.fieldname === "_image" + vid + "[]") || [];
+
+        const varGalleryUrls = [].concat(body["_image" + vid] || []);
+        const varGalleryTitles = [].concat(
+          body["var_gallery_image_titles_" + vid] || [],
+        );
+        const varGalleryAlts = [].concat(
+          body["var_gallery_image_alts_" + vid] || [],
+        );
+
+        if (varGalleryFiles.length || varGalleryUrls.length) {
+          // FILES
+          for (let g = 0; g < varGalleryFiles.length; g++) {
+            const file = varGalleryFiles[g];
+            const [mediaRes] = await conn.query(
+              `INSERT INTO tbl_media (author_id, parent_id, media_title, media_path, media_status, media_type, media_mime_type, date_added, date_modified, media_order)
+               VALUES (?, ?, ?, 'inherit', 'product_image', ?, NOW(), NOW(), 0)`,
+              [
+                req.session.admin.id,
+                vid,
+                file.originalname,
+                "uploads/products/" + file.filename,
+                file.mimetype,
+              ],
+            );
+
+            const mediaId = mediaRes.insertId;
+
+            await conn.query(
+              `INSERT INTO tbl_mediameta (media_id, meta_key, meta_value)
+               VALUES (?, '_wp_attachment_image_alt', ?)`,
+              [mediaId, varGalleryAlts[g] || ""],
+            );
+
+            await conn.query(
+              "INSERT INTO tbl_mediameta (media_id, meta_key, meta_value) VALUES (?, '_wp_attachment_image_title', ?)",
+              [mediaId, varGalleryTitles[g] || ""],
+            );
+          }
+
+          // MEDIA MODAL
+          for (let g = 0; g < varGalleryUrls.length; g++) {
+            const [mediaRes] = await conn.query(
+              `INSERT INTO tbl_media (author_id, parent_id, media_title, media_path, media_status, media_type, media_mime_type, date_added, date_modified, media_order)
+               VALUES (?, ?, ?, ?, 'inherit', 'product_image', 'image/jpeg', NOW(), NOW(), 0)`,
+              [
+                req.session.admin.id,
+                vid,
+                varGalleryTitles[g] || "Image",
+                varGalleryUrls[g],
+              ],
+            );
+
+            const mediaId = mediaRes.insertId;
+
+            await conn.query(
+              `INSERT INTO tbl_mediameta (media_id, meta_key, meta_value)
+               VALUES (?, '_wp_attachment_image_alt', ?)`,
+              [mediaId, varGalleryAlts[g] || ""],
+            );
+
+            await conn.query(
+              `INSERT INTO tbl_mediameta (media_id, meta_key, meta_value)
+               VALUES (?, '_wp_attachment_image_title', ?)`,
+              [mediaId, varGalleryTitles[g] || ""],
             );
           }
         }
@@ -1319,10 +1768,13 @@ const updateProduct = async (req, res) => {
     }
 
     await conn.commit();
+    console.log("✅ UPDATE PRODUCT SUCCESS — id:", id);
     res.redirect("/store/admin/products?success=Product updated successfully");
   } catch (err) {
     await conn.rollback();
-    console.error("Update Product Error:", err.message, err.stack);
+    console.error("❌ Update Product Error:", err.message);
+    console.error("SQL:", err.sql || "N/A");
+    console.error("Stack:", err.stack);
     res.redirect(
       `/store/admin/products/edit/${req.params.id}?error=` +
         encodeURIComponent(err.message),
