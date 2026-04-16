@@ -65,7 +65,7 @@
                   Name <span class="text-danger">*</span>
                 </label>
                 <input
-                  type="text" name="name" id="add_name"
+                  type="text" name="category_name" id="add_name"
                   class="form-control" placeholder="e.g. T-Shirts" required
                 />
                 <div class="form-text">The name is how it appears on your site.</div>
@@ -74,7 +74,7 @@
               <div class="mb-3">
                 <label class="form-label fw-semibold">Slug</label>
                 <input
-                  type="text" name="slug" id="add_slug"
+                  type="text" name="category_slug" id="add_slug"
                   class="form-control" placeholder="auto-generated-from-name"
                 />
                 <div class="form-text">URL-friendly version. Leave blank to auto-generate.</div>
@@ -85,7 +85,7 @@
                 <select name="parent_id" class="form-select">
                   <option value="0">— None (Top-level) —</option>
                   <% categories.forEach(c => { %>
-                    <option value="<%= c.id %>"><%= c.name %></option>
+                    <option value="<%= c.category_id %>"><%= c.category_name %></option>
                   <% }) %>
                 </select>
                 <div class="form-text">Categories can have a hierarchy.</div>
@@ -94,7 +94,7 @@
               <div class="mb-3">
                 <label class="form-label fw-semibold">Description</label>
                 <textarea
-                  name="description" class="form-control" rows="3"
+                  name="category_desc" class="form-control" rows="3"
                   placeholder="Optional category description..."
                 ></textarea>
                 <div class="form-text">Shown on some themes, not required.</div>
@@ -167,7 +167,7 @@
                   </thead>
                   <tbody>
                     <% categories.forEach(cat => {
-                      const parentCat = categories.find(c => c.id === cat.parent_id);
+                      const parentCat = categories.find(c => c.category_id  === cat.parent_id);
                     %>
                       <tr>
 
@@ -179,10 +179,10 @@
                               <i data-feather="tag" class="text-primary" style="width:14px;height:14px;"></i>
                             </div>
                             <div class="overflow-hidden">
-                              <div class="fw-semibold text-dark lh-sm"><%= cat.name %></div>
-                              <% if (cat.description) { %>
+                              <div class="fw-semibold text-dark lh-sm"><%= cat.category_name %></div>
+                              <% if (cat.category_desc) { %>
                                 <div class="text-muted small text-truncate" style="max-width:160px;">
-                                  <%= cat.description %>
+                                  <%= cat.category_desc %>
                                 </div>
                               <% } %>
                             </div>
@@ -192,7 +192,7 @@
                         <!-- Slug -->
                         <td>
                           <code class="bg-light border rounded px-2 py-1 small text-secondary d-inline-block">
-                            <%= cat.slug %>
+                            <%= cat.category_slug %>
                           </code>
                         </td>
 
@@ -201,7 +201,7 @@
                           <% if (parentCat) { %>
                             <span class="badge bg-primary bg-opacity-10 text-primary fw-normal px-2 py-1 rounded-pill">
                               <i data-feather="corner-down-right" style="width:11px;height:11px;" class="me-1"></i>
-                              <%= parentCat.name %>
+                              <%= parentCat.category_name %>
                             </span>
                           <% } else { %>
                             <span class="text-muted small">—</span>
@@ -214,20 +214,20 @@
                             <button
                               class="btn btn-sm btn-outline-primary rounded-pill px-3"
                              onclick='editCategory(
-                                <%= cat.id %>,
-                                "<%= cat.name.replace(/"/g, '\\"') %>",
-                                "<%= cat.slug %>",
+                                <%= cat.category_id %>,
+                                "<%= cat.category_name.replace(/"/g, '\\"') %>",
+                                "<%= cat.category_slug %>",
                                 "<%= cat.parent_id || 0 %>",
-                                "<%= (cat.description || '').replace(/"/g, '\\"') %>"
+                                "<%= (cat.category_desc || '').replace(/"/g, '\\"') %>"
                                 )'>
                               <div class="d-flex align-items-center gap-1">
                                 <i data-feather="edit-2" class="feather-sm"></i> Edit
                               </div>
                             </button>
                             <a
-                              href="/store/admin/product/category/delete/<%= cat.id %>"
+                              href="/store/admin/product/category/delete/<%= cat.category_id %>"
                               class="btn btn-sm btn-outline-danger rounded-pill px-3"
-                              onclick="return confirm('Delete \'<%= cat.name %>\'? This action cannot be undone.')">
+                              onclick="return confirm('Delete \'<%= cat.category_name %>\'? This action cannot be undone.')">
                               <div class="d-flex align-items-center gap-1">
                                 <i data-feather="trash-2" class="feather-sm"></i> Delete
                               </div>
@@ -293,7 +293,7 @@
               Name <span class="text-danger">*</span>
             </label>
             <input
-              type="text" name="name" id="edit_name"
+              type="text" name="category_name" id="edit_name"
               class="form-control" required placeholder="Category name"
             />
           </div>
@@ -301,7 +301,7 @@
           <div class="mb-3">
             <label class="form-label fw-semibold">Slug</label>
             <input
-              type="text" name="slug" id="edit_slug"
+              type="text" name="category_slug" id="edit_slug"
               class="form-control" placeholder="url-friendly-slug"
             />
             <div class="form-text">Leave blank to auto-generate from name.</div>
@@ -312,7 +312,7 @@
             <select name="parent_id" id="edit_parent" class="form-select">
               <option value="0">— None (Top-level) —</option>
               <% categories.forEach(c => { %>
-                <option value="<%= c.id %>"><%= c.name %></option>
+                <option value="<%= c.category_id  %>"><%= c.category_name %></option>
               <% }) %>
             </select>
           </div>
@@ -320,7 +320,7 @@
           <div class="mb-3">
             <label class="form-label fw-semibold">Description</label>
             <textarea
-              name="description" id="edit_desc"
+              name="category_desc" id="edit_desc"
               class="form-control" rows="3"
               placeholder="Optional description..."
             ></textarea>
