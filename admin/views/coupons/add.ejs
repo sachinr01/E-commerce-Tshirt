@@ -1,0 +1,525 @@
+<%- include('../partials/head') %>
+
+  <% var c=locals.coupon || null; var isEdit=!!c; %>
+
+    <%- include('../partials/navbar') %>
+      <%- include('../partials/sidebar') %>
+
+        <div class="page-wrapper">
+
+          <!-- Breadcrumb -->
+          <div class="page-breadcrumb">
+            <div class="row">
+              <div class="col-7 align-self-center">
+                <h4 class="page-title">
+                  <%= isEdit ? 'Edit Coupon' : 'Add New Coupon' %>
+                </h4>
+                <div class="d-flex align-items-center">
+                  <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                      <li class="breadcrumb-item"><a href="/store/admin/dashboard">Home</a></li>
+                      <li class="breadcrumb-item"><a href="/store/admin/coupons">Coupons</a></li>
+                      <li class="breadcrumb-item active">
+                        <%= isEdit ? 'Edit' : 'Add New' %>
+                      </li>
+                    </ol>
+                  </nav>
+                </div>
+              </div>
+              <div class="col-5 align-self-center text-end">
+                <a href="/store/admin/coupons" class="btn btn-outline-secondary rounded-pill px-4">
+                  <div class="d-flex align-items-center gap-1">
+                    <i data-feather="arrow-left" class="feather-sm"></i> Back to Coupons
+                  </div>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div class="container-fluid">
+
+            <% if (locals.errors) { %>
+              <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2">
+                <i data-feather="alert-circle" class="feather-sm flex-shrink-0"></i>
+                <%= locals.errors %>
+                  <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+              </div>
+              <% } %>
+
+                <form
+                  action="<%= isEdit ? '/store/admin/coupons/update/' + c.coupon_id : '/store/admin/coupons/store' %>"
+                  method="POST" id="couponForm">
+
+                  <div class="row">
+
+                    <!-- ══════════════════════════════════════════
+             LEFT COLUMN — Main fields
+        ══════════════════════════════════════════ -->
+                    <div class="col-lg-8">
+
+                      <!-- Coupon Code -->
+                      <div class="card mb-3">
+                        <div class="card-body">
+                          <h4 class="card-title mb-3 pb-3 border-bottom">Coupon Code</h4>
+
+                          <div class="mb-3">
+                            <label class="form-label fw-semibold">
+                              Coupon Code <span class="text-danger">*</span>
+                            </label>
+                            <div class="d-flex gap-2">
+                              <input type="text" name="coupon_code" id="couponCode"
+                                class="form-control form-control-lg text-uppercase" placeholder="e.g. SAVE20"
+                                value="<%= isEdit ? c.coupon_code : '' %>" required style="letter-spacing:.08em;" />
+                              <button type="button" class="btn btn-outline-secondary rounded-pill px-3 flex-shrink-0"
+                                onclick="generateCode()">
+                                <div class="d-flex align-items-center gap-1">
+                                  <i data-feather="refresh-cw" class="feather-sm"></i> Generate
+                                </div>
+                              </button>
+                            </div>
+                            <div class="form-text">The coupon code customers will enter at checkout.</div>
+                          </div>
+
+                          <div class="mb-3">
+                            <label class="form-label fw-semibold">Coupon Name</label>
+                            <input type="text" name="coupon_name" class="form-control"
+                              placeholder="Internal reference name"
+                              value="<%= isEdit ? (c.coupon_name || '') : '' %>" />
+                            <div class="form-text">Optional internal name for reference only.</div>
+                          </div>
+
+                          <div class="mb-0">
+                            <label class="form-label fw-semibold">Description</label>
+                            <textarea name="coupon_details" class="form-control" rows="3"
+                              placeholder="Description (optional)"><%= isEdit ? (c.coupon_details || '') : '' %></textarea>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- ── GENERAL ── -->
+                      <div class="card mb-3">
+                        <div class="card-body">
+                          <div class="d-flex align-items-center gap-2 mb-3 pb-3 border-bottom">
+                            <div
+                              class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0"
+                              style="width:32px;height:32px;">
+                              <i data-feather="percent" class="text-primary" style="width:14px;height:14px;"></i>
+                            </div>
+                            <h4 class="card-title mb-0">General</h4>
+                          </div>
+
+                          <div class="row">
+                            <div class="col-md-6">
+                              <div class="mb-3">
+                                <label class="form-label fw-semibold">Discount Type <span
+                                    class="text-danger">*</span></label>
+                                <select name="coupon_type" id="couponType" class="form-select"
+                                  onchange="onTypeChange(this.value)">
+                                  <option value="percent" <%=(!isEdit || c.coupon_type==='percent' ) ? 'selected' : ''
+                                    %>>Percentage discount</option>
+                                  <option value="fixed_cart" <%=(isEdit && c.coupon_type==='fixed_cart' ) ? 'selected'
+                                    : '' %>>Fixed cart discount</option>
+                                  <option value="fixed_product" <%=(isEdit && c.coupon_type==='fixed_product' )
+                                    ? 'selected' : '' %>>Fixed product discount</option>
+                                </select>
+                              </div>
+                            </div>
+                            <div class="col-md-6">
+                              <div class="mb-3">
+                                <label class="form-label fw-semibold">Coupon Amount <span
+                                    class="text-danger">*</span></label>
+                                <div class="input-group">
+                                  <span class="input-group-text" id="amountPrefix">%</span>
+                                  <input type="number" name="coupon_amount" class="form-control" placeholder="0"
+                                    step="0.01" min="0" value="<%= isEdit ? (c.coupon_amount || '') : '' %>" required />
+                                </div>
+                                <div class="form-text">Value of the coupon.</div>
+                              </div>
+                            </div>
+                            <div class="col-md-6">
+                              <div class="mb-3">
+                                <label class="form-label fw-semibold">Coupon Expiry Date</label>
+                                <input type="date" name="coupon_expiry_date" class="form-control"
+                                  value="<%= isEdit && c.coupon_expiry_date ? c.coupon_expiry_date.toString().slice(0,10) : '' %>" />
+                                <div class="form-text">Leave blank for no expiry.</div>
+                              </div>
+                            </div>
+
+                          </div>
+
+                        </div>
+                      </div>
+
+                      <!-- ── USAGE RESTRICTION ── -->
+                      <div class="card mb-3">
+                        <div class="card-body">
+                          <div class="d-flex align-items-center gap-2 mb-3 pb-3 border-bottom">
+                            <div
+                              class="rounded-circle bg-warning bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0"
+                              style="width:32px;height:32px;">
+                              <i data-feather="shield" class="text-warning" style="width:14px;height:14px;"></i>
+                            </div>
+                            <h4 class="card-title mb-0">Usage Restriction</h4>
+                          </div>
+
+                          <div class="row">
+                            <div class="col-md-6">
+                              <div class="mb-3">
+                                <label class="form-label fw-semibold">Minimum Spend (₹)</label>
+                                <div class="input-group">
+                                  <span class="input-group-text">₹</span>
+                                  <input type="number" name="minimum_spend" class="form-control"
+                                    placeholder="No minimum" step="0.01" min="0"
+                                    value="<%= isEdit ? (c.minimum_spend || '') : '' %>" />
+                                </div>
+                                <div class="form-text">Minimum order amount that needs to be in the cart.</div>
+                              </div>
+                            </div>
+                            <div class="col-md-6">
+                              <div class="mb-3">
+                                <label class="form-label fw-semibold">Maximum Spend (₹)</label>
+                                <div class="input-group">
+                                  <span class="input-group-text">₹</span>
+                                  <input type="number" name="maximum_spend" class="form-control"
+                                    placeholder="No maximum" step="0.01" min="0"
+                                    value="<%= isEdit ? (c.maximum_spend || '') : '' %>" />
+                                </div>
+                                <div class="form-text">Maximum order amount allowed when using the coupon.</div>
+                              </div>
+                            </div>
+
+
+
+                            <div class="col-md-6">
+                              <div class="mb-3">
+                                <label class="form-label fw-semibold">Include Products</label>
+
+                                <select class="include_products_select2 form-control" name="include_products"
+                                  multiple="multiple" style="width: 100%">
+                                  <% const selProducts=isEdit && c.include_products ?
+                                    c.include_products.split(',').map(s=> s.trim())
+                                    : [];
+                                    %>
+
+                                    <% if (locals.products && products.length) { %>
+                                      <% products.forEach(p=> { %>
+                                        <option value="<%= p.ID %>" <%=selProducts.includes(String(p.ID)) ? 'selected'
+                                          : '' %>>
+                                          <%= p.product_title %>
+                                        </option>
+                                        <% }) %>
+                                          <% } %>
+                                </select>
+
+                                <div class="form-text">Leave blank to apply to all products.</div>
+                              </div>
+                            </div>
+
+                            <div class="col-md-6">
+                              <div class="mb-3">
+                                <label class="form-label fw-semibold">Exclude Products</label>
+
+                                <select class="exclude_products_select2 form-control" name="exclude_products"
+                                  multiple="multiple" style="width: 100%">
+                                  <% const selExProducts=isEdit && c.exclude_products ?
+                                    c.exclude_products.split(',').map(s=> s.trim())
+                                    : [];
+                                    %>
+
+                                    <% if (locals.products && products.length) { %>
+                                      <% products.forEach(p=> { %>
+                                        <option value="<%= p.ID %>" <%=selExProducts.includes(String(p.ID)) ? 'selected'
+                                          : '' %>>
+                                          <%= p.product_title %>
+                                        </option>
+                                        <% }) %>
+                                          <% } %>
+                                </select>
+
+                                <div class="form-text">Products that the coupon will not be applied to.</div>
+                              </div>
+                            </div>
+
+                            <div class="col-md-6">
+                              <div class="mb-3">
+                                <label class="form-label fw-semibold">Include Categories</label>
+                                <select class="include_categories_select2 form-control" name="include_categories"
+                                  multiple="multiple" style="height: 36px; width: 100%">
+                                  <% if (locals.categories && categories.length) { %>
+                                    <% const selIn=isEdit && c.include_categories ?
+                                      c.include_categories.split(',').map(s=> s.trim()) : []; %>
+                                      <% categories.forEach(cat=> { %>
+                                        <option value="<%= cat.id %>" <%=selIn.includes(String(cat.id)) ? 'selected'
+                                          : '' %>>
+                                          <%= cat.name %>
+                                        </option>
+                                        <% }) %>
+                                          <% } %>
+                                </select>
+                                <div class="form-text">Ctrl+click to select multiple.</div>
+                              </div>
+                            </div>
+                            <div class="col-md-6">
+                              <div class="mb-3">
+                                <label class="form-label fw-semibold">Exclude Categories</label>
+                                <select class="exclude_categories_select2 form-control" name="exclude_categories"
+                                  multiple="multiple" style="height: 36px; width: 100%">
+                                  <% if (locals.categories && categories.length) { %>
+                                    <% const selEx=isEdit && c.exclude_categories ?
+                                      c.exclude_categories.split(',').map(s=> s.trim()) : []; %>
+                                      <% categories.forEach(cat=> { %>
+                                        <option value="<%= cat.id %>" <%=selEx.includes(String(cat.id)) ? 'selected'
+                                          : '' %>>
+                                          <%= cat.name %>
+                                        </option>
+                                        <% }) %>
+                                          <% } %>
+                                </select>
+                                <div class="form-text">Categories that the coupon will not be applied to.</div>
+                              </div>
+                            </div>
+
+
+                          </div>
+
+                        </div>
+                      </div>
+
+                      <!-- ── USAGE LIMITS ── -->
+                      <div class="card mb-3">
+                        <div class="card-body">
+                          <div class="d-flex align-items-center gap-2 mb-3 pb-3 border-bottom">
+                            <div
+                              class="rounded-circle bg-info bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0"
+                              style="width:32px;height:32px;">
+                              <i data-feather="bar-chart-2" class="text-info" style="width:14px;height:14px;"></i>
+                            </div>
+                            <h4 class="card-title mb-0">Usage Limits</h4>
+                          </div>
+
+                          <div class="row">
+                            <div class="col-md-6">
+                              <div class="mb-3">
+                                <label class="form-label fw-semibold">Usage Limit per Coupon</label>
+                                <input type="number" name="usage_limit_per_coupon" class="form-control"
+                                  placeholder="Unlimited usage" min="0"
+                                  value="<%= isEdit ? (c.usage_limit_per_coupon || '') : '' %>" />
+                                <div class="form-text">How many times this coupon can be used before it is void.
+                                  Unlimited if blank.</div>
+                              </div>
+                            </div>
+                            <div class="col-md-6">
+                              <div class="mb-3">
+                                <label class="form-label fw-semibold">Usage Limit per User</label>
+                                <input type="number" name="usage_limit_per_user" class="form-control"
+                                  placeholder="Unlimited usage" min="0"
+                                  value="<%= isEdit ? (c.usage_limit_per_user || '') : '' %>" />
+                                <div class="form-text">How many times this coupon can be used by each customer.
+                                  Unlimited if blank.</div>
+                              </div>
+                            </div>
+                            <div class="col-md-6">
+                              <div class="mb-0">
+                                <label class="form-label fw-semibold">Usage Limit per Products</label>
+                                <input type="number" name="usage_limit_per_products" class="form-control"
+                                  placeholder="Unlimited" min="0"
+                                  value="<%= isEdit ? (c.usage_limit_per_products || '') : '' %>" />
+                                <div class="form-text">How many items the coupon can be applied to in the cart.</div>
+                              </div>
+                            </div>
+                            <% if (isEdit) { %>
+                              <div class="col-md-6">
+                                <div class="mb-0">
+                                  <label class="form-label fw-semibold text-muted">Current Usage Count</label>
+                                  <div class="form-control bg-light text-muted">
+                                    <%= c.coupon_count || 0 %> times used
+                                  </div>
+                                </div>
+                              </div>
+                              <% } %>
+                          </div>
+
+                        </div>
+                      </div>
+
+                    </div>
+                    <!-- /col-lg-8 -->
+
+
+                    <!-- ══════════════════════════════════════════
+             RIGHT COLUMN — Publish + Status
+        ══════════════════════════════════════════ -->
+                    <div class="col-lg-4">
+
+                      <!-- Publish box -->
+                      <div class="card mb-3">
+                        <div class="card-body">
+                          <h4 class="card-title mb-3 pb-3 border-bottom">Publish</h4>
+
+                          <div class="mb-3">
+                            <label class="form-label fw-semibold">Status</label>
+                            <select name="coupon_status" class="form-select">
+                              <option value="publish" <%=(!isEdit || c.coupon_status==='publish' ) ? 'selected' : '' %>
+                                >Published</option>
+                              <option value="draft" <%=(isEdit && c.coupon_status==='draft' ) ? 'selected' : '' %>>Draft
+                              </option>
+                              <option value="trash" <%=(isEdit && c.coupon_status==='trash' ) ? 'selected' : '' %>>Trash
+                              </option>
+                            </select>
+                          </div>
+
+                          <% if (isEdit) { %>
+                            <div class="mb-3">
+                              <label class="form-label fw-semibold text-muted small">Created</label>
+                              <div class="text-muted small">
+                                <%= new Date(c.coupon_date).toLocaleDateString('en-IN', { day:'numeric', month:'long',
+                                  year:'numeric' }) %>
+                              </div>
+                            </div>
+                            <% } %>
+
+                              <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary rounded-pill">
+                                  <div class="d-flex align-items-center justify-content-center gap-1">
+                                    <i data-feather="save" class="feather-sm"></i>
+                                    <%= isEdit ? 'Update Coupon' : 'Publish Coupon' %>
+                                  </div>
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary rounded-pill"
+                                  onclick="document.querySelector('[name=coupon_status]').value='draft'; document.getElementById('couponForm').submit();">
+                                  Save as Draft
+                                </button>
+                                <% if (isEdit) { %>
+                                  <a href="/store/admin/coupons/delete/<%= c.coupon_id %>"
+                                    class="btn btn-outline-danger rounded-pill"
+                                    onclick="return confirm('Permanently delete this coupon?')">
+                                    <div class="d-flex align-items-center justify-content-center gap-1">
+                                      <i data-feather="trash-2" class="feather-sm"></i> Delete Coupon
+                                    </div>
+                                  </a>
+                                  <% } %>
+                              </div>
+                        </div>
+                      </div>
+
+                      <!-- Quick summary card -->
+                      <div class="card mb-3">
+                        <div class="card-body">
+                          <h4 class="card-title mb-3 pb-3 border-bottom">Coupon Summary</h4>
+                          <div class="d-flex flex-column gap-2">
+                            <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                              <span class="small text-muted">Code</span>
+                              <code class="bg-light border rounded px-2 py-1 small" id="summaryCode">
+                    <%= isEdit ? c.coupon_code.toUpperCase() : '—' %>
+                  </code>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                              <span class="small text-muted">Type</span>
+                              <span class="small fw-semibold" id="summaryType">
+                                <%= isEdit ? c.coupon_type : 'Percentage' %>
+                              </span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                              <span class="small text-muted">Amount</span>
+                              <span class="small fw-semibold text-success" id="summaryAmount">
+                                <%= isEdit ? c.coupon_amount : '0' %>
+                              </span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center py-2">
+                              <span class="small text-muted">Expiry</span>
+                              <span class="small" id="summaryExpiry">
+                                <% if (isEdit && c.coupon_expiry_date) { %>
+                                  <%= new Date(c.coupon_expiry_date).toLocaleDateString('en-IN', { day:'numeric',
+                                    month:'short', year:'numeric' }) %>
+                                    <% } else { %>
+                                      No expiry
+                                      <% } %>
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Tips card -->
+                      <div class="card border-0 bg-primary bg-opacity-10">
+                        <div class="card-body">
+                          <div class="d-flex align-items-center gap-2 mb-2">
+                            <i data-feather="info" class="text-primary feather-sm"></i>
+                            <span class="fw-semibold text-primary small">Coupon Tips</span>
+                          </div>
+                          <ul class="mb-0 ps-3">
+                            <li class="small text-muted mb-1">Use uppercase codes like <code>SAVE20</code> for clarity.
+                            </li>
+                            <li class="small text-muted mb-1">Set an expiry date to create urgency.</li>
+                            <li class="small text-muted mb-1">Limit per user to prevent abuse.</li>
+                            <li class="small text-muted">Combine min. spend with percentage for upsells.</li>
+                          </ul>
+                        </div>
+                      </div>
+
+                    </div>
+                    <!-- /col-lg-4 -->
+
+                  </div>
+                </form>
+          </div>
+        </div>
+
+        <%- include('../partials/footer') %>
+          <script>
+            $(document).ready(function () {
+              $('.include_products_select2').select2({
+                placeholder: "Select products",
+                allowClear: true
+              });
+              $('.exclude_products_select2').select2({
+                placeholder: "Select products",
+                allowClear: true
+              });
+              $('.include_categories_select2').select2({
+                placeholder: "Select categories",
+                allowClear: true
+              });
+              $('.exclude_categories_select2').select2({
+                placeholder: "Select categories",
+                allowClear: true
+              });
+            });
+            // Discount type → prefix symbol
+            function onTypeChange(type) {
+              var prefix = document.getElementById('amountPrefix');
+              prefix.textContent = type === 'percent' ? '%' : '₹';
+              var typeLabels = { percent: 'Percentage discount', fixed_cart: 'Fixed cart discount', fixed_product: 'Fixed product discount' };
+              var st = document.getElementById('summaryType');
+              if (st) st.textContent = typeLabels[type] || type;
+            }
+            onTypeChange(document.getElementById('couponType').value);
+
+            // Live update summary
+            document.getElementById('couponCode').addEventListener('input', function () {
+              var sc = document.getElementById('summaryCode');
+              if (sc) sc.textContent = this.value.toUpperCase() || '—';
+              this.value = this.value.toUpperCase();
+            });
+            document.querySelector('[name="coupon_amount"]').addEventListener('input', function () {
+              var sa = document.getElementById('summaryAmount');
+              if (sa) sa.textContent = this.value || '0';
+            });
+            document.querySelector('[name="coupon_expiry_date"]').addEventListener('change', function () {
+              var se = document.getElementById('summaryExpiry');
+              if (se) se.textContent = this.value ? new Date(this.value).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'No expiry';
+            });
+
+            // Generate random coupon code
+            function generateCode() {
+              var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+              var code = '';
+              for (var i = 0; i < 8; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
+              var input = document.getElementById('couponCode');
+              input.value = code;
+              var sc = document.getElementById('summaryCode');
+              if (sc) sc.textContent = code;
+            }
+
+            feather.replace();
+          </script>
