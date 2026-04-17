@@ -183,8 +183,11 @@ const showAddProduct = async (req, res) => {
   try {
     const attributeTypes = await getAttributeTypes();
 
+    const [categories] = await db.query("SELECT * FROM tbl_products_category");
+
     res.render("products/add", {
       title: "Add Product",
+      allCategories: categories,
       product: false,
       variations: [],
       attributeTypes,
@@ -424,17 +427,15 @@ const showEditProduct = async (req, res) => {
 
     // STEP 5: Get attribute types with all their values
     const attributeTypes = await getAttributeTypes();
-    
-   const [categories] = await db.query(
-  "SELECT * FROM tbl_products_category"
-);
 
-const [productCatRows] = await db.query(
-  "SELECT category_id FROM tbl_products_category_link WHERE product_id = ?",
-  [id]
-);
+    const [categories] = await db.query("SELECT * FROM tbl_products_category");
 
-product.categories = productCatRows.map(r => r.category_id);
+    const [productCatRows] = await db.query(
+      "SELECT category_id FROM tbl_products_category_link WHERE product_id = ?",
+      [id],
+    );
+
+    product.categories = productCatRows.map((r) => r.category_id);
 
     // STEP 6: Render
     res.render("products/add", {
@@ -444,7 +445,7 @@ product.categories = productCatRows.map(r => r.category_id);
       variations,
       attributeTypes,
       selectedAttributes,
-  isEdit: true, 
+      isEdit: true,
       errors: null,
     });
   } catch (err) {
@@ -495,6 +496,17 @@ const storeProduct = async (req, res) => {
     );
     const productId = result.insertId;
 
+    // STEP 2: Categories (move here)
+
+    const categories = [].concat(body.categories || []);
+
+    for (let catId of categories) {
+      await conn.query(
+        `INSERT INTO tbl_products_category_link (product_id, category_id) VALUES (?, ?)`,
+        [productId, catId],
+      );
+    }
+
     // ═══════════════════════════════════════════════════════
     // STEP 2: INSERT MAIN PRODUCT META
     // ═══════════════════════════════════════════════════════
@@ -507,7 +519,11 @@ const storeProduct = async (req, res) => {
 
     await insertMeta(productId, "_sku", body.sku);
     await insertMeta(productId, "_regular_price", body.regular_price);
-    await insertMeta(productId, "_sale_price", body.sale_price);
+    await insertMeta(
+      productId,
+      "_price",
+      body.sale_price || body.regular_price,
+    );
     await insertMeta(
       productId,
       "_sale_price_dates_from",
@@ -560,36 +576,48 @@ const storeProduct = async (req, res) => {
       // =========================
       // ✅ MAIN IMAGE
       // =========================
-      const mainImageFile = req.files.find(
+      const mainImageFile = req.files?.find(
         (f) => f.fieldname === "featured_image",
       );
 
-      if (mainImageFile) {
-        const savedPath = "uploads/products/" + mainImageFile.filename;
+      const mainImageUrl = body.featured_image; // ✅ from hidden input
 
-        const title = body.featured_image_title || mainImageFile.originalname;
+      if (mainImageFile || mainImageUrl) {
+        const title =
+          body.featured_image_title || mainImageFile?.originalname || "Image";
+
         const alt = body.featured_image_alt || "";
+
+        const savedPath = mainImageFile
+          ? "uploads/products/" + mainImageFile.filename
+          : mainImageUrl; // ✅ use URL if no file
 
         const [mediaRes] = await conn.query(
           `INSERT INTO tbl_media
-       (author_id, parent_id, media_title, media_path, media_status, media_type, media_mime_type, date_added, date_modified, media_order)
-       VALUES (?, ?, ?, ?, 'inherit', 'product_image', ?, NOW(), NOW(), 0)`,
-          [authorId, productId, title, savedPath, mainImageFile.mimetype],
+     (author_id, parent_id, media_title, media_path, media_status, media_type, media_mime_type, date_added, date_modified, media_order)
+     VALUES (?, ?, ?, ?, 'inherit', 'product_image', ?, NOW(), NOW(), 0)`,
+          [
+            authorId,
+            productId,
+            title,
+            savedPath,
+            mainImageFile?.mimetype || "image/jpeg",
+          ],
         );
 
         const mediaId = mediaRes.insertId;
 
-        // ✅ ALT TEXT
+        // ALT
         await conn.query(
           `INSERT INTO tbl_mediameta (media_id, meta_key, meta_value)
-       VALUES (?, '_wp_attachment_image_alt', ?)`,
+     VALUES (?, '_wp_attachment_image_alt', ?)`,
           [mediaId, alt],
         );
 
-        // ✅ title TEXT
+        // TITLE
         await conn.query(
           `INSERT INTO tbl_mediameta (media_id, meta_key, meta_value)
-       VALUES (?, '_wp_attachment_image_title', ?)`,
+     VALUES (?, '_wp_attachment_image_title', ?)`,
           [mediaId, title],
         );
 
@@ -606,33 +634,36 @@ const storeProduct = async (req, res) => {
       const titles = [].concat(body.gallery_image_titles || []);
       const alts = [].concat(body.gallery_image_alts || []);
 
-      for (let i = 0; i < galleryFiles.length; i++) {
-        const file = galleryFiles[i];
-        const savedPath = "uploads/products/" + file.filename;
+      // 🔥 MEDIA MODAL SUPPORT (like update)
+      const galleryUrls = [].concat(body.gallery_image || []);
+      const galleryTitlesModal = [].concat(body.gallery_image_titles || []);
+      const galleryAltsModal = [].concat(body.gallery_image_alts || []);
 
-        const title = titles[i] || file.originalname;
-        const alt = alts[i] || "";
-
+      for (let i = 0; i < galleryUrls.length; i++) {
         const [mediaRes] = await conn.query(
           `INSERT INTO tbl_media
-       (author_id, parent_id, media_title, media_path, media_status, media_type, media_mime_type, date_added, date_modified, media_order)
-       VALUES (?, ?, ?, ?, 'inherit', 'product_image', ?, NOW(), NOW(), 0)`,
-          [authorId, productId, title, savedPath, file.mimetype],
+            (author_id, parent_id, media_title, media_path, media_status, media_type, media_mime_type, date_added, date_modified, media_order)
+            VALUES (?, ?, ?, ?, 'inherit', 'product_image', 'image/jpeg', NOW(), NOW(), 0)`,
+          [
+            authorId,
+            productId,
+            galleryTitlesModal[i] || "Image",
+            galleryUrls[i],
+          ],
         );
 
         const mediaId = mediaRes.insertId;
 
-        // ✅ ALT TEXT
         await conn.query(
           `INSERT INTO tbl_mediameta (media_id, meta_key, meta_value)
-       VALUES (?, '_wp_attachment_image_alt', ?)`,
-          [mediaId, alt],
+     VALUES (?, '_wp_attachment_image_alt', ?)`,
+          [mediaId, galleryAltsModal[i] || ""],
         );
-        // ✅ title TEXT
+
         await conn.query(
           `INSERT INTO tbl_mediameta (media_id, meta_key, meta_value)
-       VALUES (?, '_wp_attachment_image_title', ?)`,
-          [mediaId, title],
+     VALUES (?, '_wp_attachment_image_title', ?)`,
+          [mediaId, galleryTitlesModal[i] || ""],
         );
       }
     }
@@ -798,11 +829,10 @@ const storeProduct = async (req, res) => {
             const savedPath = "uploads/products/" + varImageFile.filename;
 
             // ✅ GET TITLE + ALT FROM FORM
-            const titleArr = [].concat(body.var_featured_image_titles || []);
-            const altArr = [].concat(body.var_featured_image_alts || []);
-
-            const title = titleArr[i] || varImageFile.originalname;
-            const alt = altArr[i] || "";
+            const title =
+              body["var_featured_image_title_" + varId] ||
+              varImageFile.originalname;
+            const alt = body["var_featured_image_alt_" + varId] || "";
 
             const [mediaRes] = await conn.query(
               `INSERT INTO tbl_media
@@ -839,14 +869,18 @@ const storeProduct = async (req, res) => {
             );
           });
 
-          const galleryTitles = [].concat(
-            body.var_gallery_image_titles_ + varId || [],
-          );
-          const galleryAlts = [].concat(body.var_gallery_alts_ + varId || []);
+          const galleryTitles = body["var_gallery_image_titles_" + varId]
+            ? [].concat(body["var_gallery_image_titles_" + varId])
+            : [];
+
+          const galleryAlts = body["var_gallery_image_alts_" + varId]
+            ? [].concat(body["var_gallery_image_alts_" + varId])
+            : [];
 
           for (let g = 0; g < varGalleryFiles.length; g++) {
             const file = varGalleryFiles[g];
-            const savedPath = varGalleryUrls[g];
+
+            const savedPath = "uploads/products/" + file.filename;
 
             const title = galleryTitles[g] || file.originalname;
             const alt = galleryAlts[g] || "";
@@ -964,6 +998,21 @@ const updateProduct = async (req, res) => {
         id,
       ],
     );
+
+    // STEP 2: Categories (move here)
+    await conn.query(
+      `DELETE FROM tbl_products_category_link WHERE product_id = ?`,
+      [id],
+    );
+
+    const categories = [].concat(body.categories || []);
+
+    for (let catId of categories) {
+      await conn.query(
+        `INSERT INTO tbl_products_category_link (product_id, category_id) VALUES (?, ?)`,
+        [id, catId],
+      );
+    }
 
     // ═══════════════════════════════════════════════════════
     // STEP 2: UPDATE MAIN PRODUCT META
