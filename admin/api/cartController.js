@@ -91,6 +91,25 @@ const addToCart = async (req, res) => {
   const image = toStr(body.image);
 
   try {
+    // ── Stock check ───────────────────────────────────────────────────────────
+    if (variationId && variationId > 0) {
+      const [[varRow]] = await db.query(
+        `SELECT COALESCE((SELECT meta_value FROM tbl_productmeta WHERE product_id = ? AND meta_key = '_stock_status' ORDER BY meta_id DESC LIMIT 1), 'instock') AS stock_status`,
+        [variationId]
+      );
+      if (varRow && varRow.stock_status === 'outofstock') {
+        return res.status(400).json({ success: false, message: 'This variation is out of stock.' });
+      }
+    } else {
+      const [[prodRow]] = await db.query(
+        `SELECT COALESCE((SELECT meta_value FROM tbl_productmeta WHERE product_id = ? AND meta_key = '_stock_status' ORDER BY meta_id DESC LIMIT 1), 'instock') AS stock_status`,
+        [productId]
+      );
+      if (prodRow && prodRow.stock_status === 'outofstock') {
+        return res.status(400).json({ success: false, message: 'This product is out of stock.' });
+      }
+    }
+
     let existing;
     if (key === 'user_id') {
       [existing] = await db.query(

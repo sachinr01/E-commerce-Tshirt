@@ -163,7 +163,7 @@ async function queryProductList(extraWhere = '', orderBy = 'p.menu_order ASC', l
             (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_sku'           LIMIT 1) AS sku,
             (
                 -- For variable products: 'instock' if ANY variation is instock, else 'outofstock'
-                -- For simple products: use the parent's own _stock_status
+                -- For simple products: use the parent's own _stock_status, default 'instock' if missing
                 CASE
                     WHEN EXISTS (
                         SELECT 1 FROM tbl_products v WHERE v.parent_id = p.ID AND v.product_type = 'product_variation'
@@ -176,7 +176,7 @@ async function queryProductList(extraWhere = '', orderBy = 'p.menu_order ASC', l
                               AND pm.meta_value = 'instock'
                         ) THEN 'instock' ELSE 'outofstock' END
                     )
-                    ELSE (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_stock_status' ORDER BY meta_id DESC LIMIT 1)
+                    ELSE COALESCE((SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_stock_status' ORDER BY meta_id DESC LIMIT 1), 'instock')
                 END
             ) AS stock_status,
             (SELECT CAST(meta_value AS UNSIGNED) FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = 'total_sales' LIMIT 1) AS total_sales,
@@ -437,7 +437,7 @@ const getProduct = async (req, res) => {
                 )                     AS thumbnail_url,
                 (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_product_image_gallery' LIMIT 1) AS gallery_ids,
                 (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_sku' ORDER BY meta_id DESC LIMIT 1) AS sku,
-                (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_stock_status' ORDER BY meta_id DESC LIMIT 1) AS stock_status,
+                COALESCE((SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_stock_status' ORDER BY meta_id DESC LIMIT 1), 'instock') AS stock_status,
                 (SELECT CAST(meta_value AS UNSIGNED) FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = 'total_sales' ORDER BY meta_id DESC LIMIT 1) AS total_sales,
                 (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_price' ORDER BY meta_id DESC LIMIT 1) AS price,
                 (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_regular_price' ORDER BY meta_id DESC LIMIT 1) AS regular_price,
@@ -473,7 +473,7 @@ const getProduct = async (req, res) => {
                 (SELECT meta_value FROM tbl_productmeta WHERE product_id = v.ID AND meta_key = '_sale_price' ORDER BY meta_id DESC LIMIT 1) AS sale_price,
                 (SELECT meta_value FROM tbl_productmeta WHERE product_id = v.ID AND meta_key = 'attribute_pa_color' ORDER BY meta_id DESC LIMIT 1) AS color,
                 (SELECT meta_value FROM tbl_productmeta WHERE product_id = v.ID AND meta_key = 'attribute_pa_size' ORDER BY meta_id DESC LIMIT 1) AS size,
-                (SELECT meta_value FROM tbl_productmeta WHERE product_id = v.ID AND meta_key = '_stock_status'     ORDER BY meta_id DESC LIMIT 1) AS stock_status,
+                COALESCE((SELECT meta_value FROM tbl_productmeta WHERE product_id = v.ID AND meta_key = '_stock_status' ORDER BY meta_id DESC LIMIT 1), 'instock') AS stock_status,
                 (SELECT meta_value FROM tbl_productmeta WHERE product_id = v.ID AND meta_key = '_stock'            ORDER BY meta_id DESC LIMIT 1) AS stock_qty,
                 (SELECT meta_value FROM tbl_productmeta WHERE product_id = v.ID AND meta_key = '_thumbnail_id' ORDER BY meta_id DESC LIMIT 1) AS thumbnail_id,
                 (
@@ -822,7 +822,7 @@ const getCategoryProducts = async (req, res) => {
                                 WHERE v.parent_id = p.ID AND v.product_type = 'product_variation' AND pm.meta_value = 'instock'
                             ) THEN 'instock' ELSE 'outofstock' END
                         )
-                        ELSE (SELECT pm.meta_value FROM tbl_productmeta pm WHERE pm.product_id = p.ID AND pm.meta_key = '_stock_status' ORDER BY pm.meta_id DESC LIMIT 1)
+                        ELSE COALESCE((SELECT pm.meta_value FROM tbl_productmeta pm WHERE pm.product_id = p.ID AND pm.meta_key = '_stock_status' ORDER BY pm.meta_id DESC LIMIT 1), 'instock')
                     END
                 ) AS stock_status
              FROM tbl_products p

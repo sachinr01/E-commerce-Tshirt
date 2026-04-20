@@ -440,6 +440,22 @@ const placeOrder = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Cart is empty.' });
     }
 
+    // ── 1b. Stock check for all cart items ────────────────────────────────────
+    for (const item of cartItems) {
+      const checkId = item.variation_id && item.variation_id > 0 ? item.variation_id : item.product_id;
+      const [[stockRow]] = await conn.query(
+        `SELECT COALESCE((SELECT meta_value FROM tbl_productmeta WHERE product_id = ? AND meta_key = '_stock_status' ORDER BY meta_id DESC LIMIT 1), 'instock') AS stock_status`,
+        [checkId]
+      );
+      if (stockRow && stockRow.stock_status === 'outofstock') {
+        await conn.rollback();
+        return res.status(400).json({
+          success: false,
+          message: `"${item.title || 'A product in your cart'}" is out of stock. Please remove it before placing your order.`,
+        });
+      }
+    }
+
     // ── 2. Calculate totals ───────────────────────────────────────────────────
     const subtotal = cartItems.reduce(
       (sum, item) => sum + toAmount(item.price) * Number(item.quantity || 0), 0
