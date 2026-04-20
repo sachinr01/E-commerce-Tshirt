@@ -1,4 +1,4 @@
-﻿﻿import type { NextConfig } from "next";
+﻿import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   basePath: '/store',
@@ -20,6 +20,11 @@ const nextConfig: NextConfig = {
       {
         source: '/uploads/:path*',
         destination: `${apiBase}/uploads/:path*`,
+        basePath: false,
+      },
+      {
+        source: '/images/:path*',
+        destination: `${apiBase}/images/:path*`,
         basePath: false,
       },
     ];

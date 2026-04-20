@@ -50,7 +50,8 @@ async function validateCouponRules(coupon, userId, cartTotal, productIds, conn) 
     const [[userUsage]] = await query(
       `SELECT COUNT(*) AS user_used
        FROM tbl_coupons_usage
-       WHERE coupon_id = ? AND user_id = ? AND order_id > 0`,
+       WHERE coupon_id = ? AND user_id = ? AND order_id > 0
+       FOR UPDATE`,
       [coupon.coupon_id, userId]
     );
     if (userUsage.user_used >= coupon.usage_limit_per_user) {
@@ -104,6 +105,44 @@ async function validateCouponRules(coupon, userId, cartTotal, productIds, conn) 
     }
   }
 
+  // ── 7. include_categories ─────────────────────────────────────────────────
+  const includeCategories = parseIdList(coupon.include_categories);
+  if (includeCategories.length > 0 && productIds.length > 0) {
+    const ph = productIds.map(() => '?').join(',');
+    const [catRows] = await query(
+      `SELECT DISTINCT category_id FROM tbl_products_category_link WHERE product_id IN (${ph})`,
+      productIds
+    );
+    const cartCategoryIds = catRows.map((r) => r.category_id);
+    const hasMatch = cartCategoryIds.some((cid) => includeCategories.includes(cid));
+    if (!hasMatch) {
+      return {
+        ok: false,
+        status: 400,
+        message: 'This coupon is not valid for the product categories in your cart.',
+      };
+    }
+  }
+
+  // ── 8. exclude_categories ─────────────────────────────────────────────────
+  const excludeCategories = parseIdList(coupon.exclude_categories);
+  if (excludeCategories.length > 0 && productIds.length > 0) {
+    const ph = productIds.map(() => '?').join(',');
+    const [catRows] = await query(
+      `SELECT DISTINCT category_id FROM tbl_products_category_link WHERE product_id IN (${ph})`,
+      productIds
+    );
+    const cartCategoryIds = catRows.map((r) => r.category_id);
+    const hasExcluded = cartCategoryIds.some((cid) => excludeCategories.includes(cid));
+    if (hasExcluded) {
+      return {
+        ok: false,
+        status: 400,
+        message: 'Your cart contains products from categories that are excluded from this coupon.',
+      };
+    }
+  }
+
   return { ok: true };
 }
 
@@ -125,7 +164,7 @@ function calculateDiscount(coupon, cartTotal) {
 // GET /store/api/coupon/active
 // ─────────────────────────────────────────────────────────────────────────────
 const active = (req, res) => {
-  const c = req.session?.appliedCoupon;
+  const c = req.sessionData?.appliedCoupon;
   if (!c) return res.json({ success: true, coupon: null });
   return res.json({
     success: true,
@@ -202,12 +241,13 @@ const apply = async (req, res) => {
 
     const discount = calculateDiscount(coupon, cartTotal);
 
-    req.session.appliedCoupon = {
+    req.sessionData.appliedCoupon = {
       coupon_id:     coupon.coupon_id,
       coupon_code:   coupon.coupon_code,
       coupon_type:   coupon.coupon_type,
       coupon_amount: Number(coupon.coupon_amount),
     };
+    req.touchSession();
 
     return res.json({
       success: true,
@@ -229,7 +269,8 @@ const apply = async (req, res) => {
 // POST /store/api/coupon/remove
 // ─────────────────────────────────────────────────────────────────────────────
 const remove = (req, res) => {
-  delete req.session.appliedCoupon;
+  delete req.sessionData.appliedCoupon;
+  req.touchSession();
   return res.json({ success: true, message: 'Coupon removed.' });
 };
 
@@ -247,7 +288,7 @@ async function validateAndLockCoupon(conn, sessionCoupon, userId, cartTotal, pro
      FROM tbl_coupons
      WHERE coupon_id = ?
        AND coupon_status = 'publish'
-       AND (coupon_expiry_date IS NULL OR coupon_expiry_date >= NOW())
+       AND (coupon_expiry_date IS NULL OR coupon_expiry_date = '0000-00-00 00:00:00' OR coupon_expiry_date >= NOW())
      LIMIT 1`,
     [sessionCoupon.coupon_id]
   );

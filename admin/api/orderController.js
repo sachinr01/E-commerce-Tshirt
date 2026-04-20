@@ -401,7 +401,7 @@ const placeOrder = async (req, res) => {
   const paymentMethod = toStr(req.body.payment_method) || 'cod';
   const shippingCost  = toAmount(req.body.shipping_cost || 0);
   const orderNotes    = toStr(req.body.notes) || null;
-  const appliedCoupon = req.session?.appliedCoupon || null;
+  const appliedCoupon = req.sessionData?.appliedCoupon || null;
 
   const billingErrors = validateBilling(billing);
   if (Object.keys(billingErrors).length) {
@@ -467,7 +467,8 @@ const placeOrder = async (req, res) => {
     const couponCheck = await validateAndLockCoupon(conn, appliedCoupon, userId, subtotal, productIds);
     if (!couponCheck.ok) {
       await conn.rollback();
-      delete req.session.appliedCoupon;
+      delete req.sessionData.appliedCoupon;
+      req.touchSession();
       return res.status(400).json({ success: false, coupon_error: true, message: couponCheck.message });
     }
     const discount = couponCheck.discount || 0;
@@ -630,7 +631,10 @@ const placeOrder = async (req, res) => {
     await conn.commit();
 
     // Clear coupon from session after successful order
-    if (appliedCoupon) delete req.session.appliedCoupon;
+    if (appliedCoupon) {
+      delete req.sessionData.appliedCoupon;
+      req.touchSession();
+    }
 
     let emailSent = false;
     try {

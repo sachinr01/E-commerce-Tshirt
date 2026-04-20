@@ -34,12 +34,7 @@ const sanitizeSummary = (value) => String(value || '')
     .trim();
 
 
-const BLOG_IMAGES = [
-    'https://nestasia.in/cdn/shop/articles/467.png?v=1773144465&width=600',
-    'https://nestasia.in/cdn/shop/articles/Blog_Banners_500_x_500_px_25_c53d2c3d-1367-46fc-a922-ae67ccc299c5.png?v=1774874256&width=780',
-    'https://nestasia.in/cdn/shop/articles/What_s_your_dinner_hosting_score_f9aac14d-58ea-4a8c-a08f-215822835ad3.png?v=1774874314&width=780',
-    'https://nestasia.in/cdn/shop/articles/WhatsApp_Image_2026-02-27_at_20.47.07_7b452509-c434-4d10-ad9c-ebb3b212868a.jpg?v=1774871271&width=780',
-];
+
 
 const formatPostDate = (value) => {
     if (!value) return '';
@@ -53,13 +48,15 @@ const normalizePost = (row) => {
     const rawSummary = stripShortcodes(row.post_short_desc || '');
     const safeContent = sanitizeContent(rawContent).trim();
     const safeSummary = sanitizeSummary(rawSummary);
+    // Image comes exclusively from tbl_media where media_type='blog_img' and parent_id=post.ID
+    // Returns null when no image has been uploaded — frontend handles the null gracefully
     return {
         slug:                  row.post_slug,
         title:                 row.post_title,
         content:               safeContent,
         summary:               safeSummary,
         date:                  formatPostDate(row.post_date),
-        image:                 row.post_image || BLOG_IMAGES[0],
+        image:                 row.blog_img_path || null,
         author_name:           row.author_name || 'Admin',
         primary_category_name: row.primary_category_name || null,
         primary_category_id:   row.primary_category_id   || null,
@@ -861,7 +858,10 @@ const getProductBySlug = async (req, res) => {
     }
 };
 
-// Shared SQL fragment: fetch post with its primary category in one query
+// Shared SQL fragment: fetch post with its primary category in one query.
+// Image source: tbl_media where media_type = 'blog_img' AND parent_id = post ID.
+// When admin saves a blog with an image, it inserts a row into tbl_media with
+// media_type='blog_img' and parent_id = the post's ID — this query picks it up automatically.
 const POST_WITH_CATEGORY_SQL = `
     SELECT
         p.ID,
@@ -874,13 +874,13 @@ const POST_WITH_CATEGORY_SQL = `
         pc.category_name        AS primary_category_name,
         pc.category_id          AS primary_category_id,
         (
-            SELECT m2.media_path
-            FROM tbl_postmeta pm
-            JOIN tbl_media m2 ON m2.media_id = CAST(pm.meta_value AS UNSIGNED)
-            WHERE pm.post_id = p.ID AND pm.meta_key = '_thumbnail_id'
-            ORDER BY pm.meta_id DESC
+            SELECT bm.media_path
+            FROM tbl_media bm
+            WHERE bm.parent_id  = p.ID
+              AND bm.media_type = 'blog_image'
+            ORDER BY bm.media_id ASC
             LIMIT 1
-        ) AS post_image
+        ) AS blog_img_path
     FROM tbl_posts p
     LEFT JOIN tbl_users u
         ON u.ID = p.user_id
@@ -911,18 +911,23 @@ const getBlogs = async (req, res) => {
 
         let rows;
         if (categorySlug) {
-            const params = [categorySlug, categorySlug, ...(Number.isFinite(limit) ? [limit] : [])];
+            // Resolve slug to category_id using the same toSlug() logic as getBlogCategories,
+            // so ALL special characters are handled consistently.
+            const [allCats] = await db.query(
+                'SELECT category_id, category_name FROM tbl_posts_category'
+            );
+            const matchedCat = allCats.find((c) => toSlug(c.category_name) === categorySlug);
+            if (!matchedCat) {
+                return res.json({ success: true, count: 0, data: [] });
+            }
+            const params = [matchedCat.category_id, ...(Number.isFinite(limit) ? [limit] : [])];
             [rows] = await withRetry(() => db.query(`
                 ${POST_WITH_CATEGORY_SQL}
                 WHERE p.post_type = 'post' AND p.post_status = 'publish'
                   AND EXISTS (
                       SELECT 1
                       FROM tbl_posts_category_link fl
-                      INNER JOIN tbl_posts_category fc ON fc.category_id = fl.category_id
-                      WHERE fl.post_id = p.ID
-                        AND (LOWER(fc.category_name) = LOWER(?)
-                          OR LOWER(REPLACE(REPLACE(REPLACE(fc.category_name, ' ', '-'), '&', ''), '--', '-')) = LOWER(?)
-                        )
+                      WHERE fl.post_id = p.ID AND fl.category_id = ?
                   )
                 ORDER BY p.post_date DESC
                 ${limitClause}

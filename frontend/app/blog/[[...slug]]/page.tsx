@@ -7,9 +7,8 @@ import BlogDetailView from '../components/BlogDetailView';
 import { getBlogBySlug } from '../utils/getBlogBySlug';
 import { BLOG_FEATURED_LIMIT } from '../utils/config';
 import { getBlogDetailHref } from '../utils/links';
-import { getBlogCategories, getBlogs, getLatestBlogs, mergeUniqueBlogs, getBlogsByCategory } from '../utils/getBlogs';
-import { staticBlogs, getStaticBlogBySlug } from '../../blog/staticblog';
-import type { BlogSidebarFeaturedItem, BlogBreadcrumbItem } from '../types';
+import { getBlogCategories, getBlogs, getLatestBlogs, getBlogsByCategory } from '../utils/getBlogs';
+import type { BlogSidebarFeaturedItem } from '../types';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,7 +23,7 @@ export async function generateMetadata({
 
   const slug = segments[0].toLowerCase();
   const blogResult = await getBlogBySlug(slug);
-  const blog = blogResult.blog ?? getStaticBlogBySlug(slug);
+  const blog = blogResult.blog;
   if (!blog) return {};
 
   return {
@@ -57,9 +56,7 @@ export default async function BlogRoutePage({
       getBlogCategories(),
     ]);
 
-    const mergedBlogs = mergeUniqueBlogs(apiBlogs, staticBlogs);
-    const latestPosts = mergeUniqueBlogs(latestFromApi, staticBlogs).slice(0, BLOG_FEATURED_LIMIT);
-    const featuredItems: BlogSidebarFeaturedItem[] = latestPosts.map((post) => ({
+    const featuredItems: BlogSidebarFeaturedItem[] = latestFromApi.slice(0, BLOG_FEATURED_LIMIT).map((post) => ({
       href: getBlogDetailHref(post),
       title: post.title,
       meta: `Posted by ${post.author_name || 'Admin'} / ${post.date}`,
@@ -72,7 +69,7 @@ export default async function BlogRoutePage({
           pageClassName="blog-list-page"
           title="From The Blog"
           subtitle="Latest updates, stories, and inspirations."
-          posts={mergedBlogs}
+          posts={apiBlogs}
           emptyMessage="No blogs available right now."
           featuredTitle="Latest Posts"
           featuredItems={featuredItems}
@@ -98,8 +95,7 @@ export default async function BlogRoutePage({
 
   if (matchedCategory) {
     const [categoryBlogs] = await Promise.all([getBlogsByCategory(slug)]);
-    const latestPosts = mergeUniqueBlogs(latestFromApi, staticBlogs).slice(0, BLOG_FEATURED_LIMIT);
-    const featuredItems: BlogSidebarFeaturedItem[] = latestPosts.map((post) => ({
+    const featuredItems: BlogSidebarFeaturedItem[] = latestFromApi.slice(0, BLOG_FEATURED_LIMIT).map((post) => ({
       href: getBlogDetailHref(post),
       title: post.title,
       meta: `Posted by ${post.author_name || 'Admin'} / ${post.date}`,
@@ -126,10 +122,10 @@ export default async function BlogRoutePage({
     );
   }
 
-  const blog = blogResult.blog ?? getStaticBlogBySlug(slug);
+  const blog = blogResult.blog;
   if (!blog) notFound();
 
-  const latestPosts = mergeUniqueBlogs(latestFromApi, staticBlogs).slice(0, BLOG_FEATURED_LIMIT);
+  const latestPosts = latestFromApi.slice(0, BLOG_FEATURED_LIMIT);
 
   const categoryName = blog.primary_category_name || null;
   const categoryCrumb = categoryName

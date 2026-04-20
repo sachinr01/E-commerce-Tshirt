@@ -1,6 +1,6 @@
 export type Blog = {
   slug: string;
-  image: string;
+  image: string | null;
   date: string;
   title: string;
   summary: string;
