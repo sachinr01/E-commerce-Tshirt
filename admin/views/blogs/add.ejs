@@ -41,187 +41,258 @@
               <div class="alert alert-danger alert-dismissible fade show">
                 <i data-feather="alert-circle" class="feather-sm me-1"></i>
                 <%= locals.errors %>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
               </div>
-            <% } %>
+              <% } %>
 
-            <form action="<%= isEdit ? '/store/admin/blogs/update/' + b.ID : '/store/admin/blogs/store' %>"
-              method="POST">
+                <form action="<%= isEdit ? '/store/admin/blogs/update/' + b.ID : '/store/admin/blogs/store' %>"
+                  method="POST">
 
-              <div class="row">
+                  <div class="row">
 
-                <!-- LEFT COLUMN -->
-                <div class="col-lg-8">
+                    <!-- LEFT COLUMN -->
+                    <div class="col-lg-8">
 
-                  <div class="card mb-3">
-                    <div class="card-body">
-                      <h4 class="card-title mb-3 pb-3 border-bottom">Blog Content</h4>
+                      <div class="card mb-3">
+                        <div class="card-body">
+                          <h4 class="card-title mb-3 pb-3 border-bottom">Blog Content</h4>
 
-                      <div class="mb-3">
-                        <label class="form-label fw-semibold">Blog Title <span class="text-danger">*</span></label>
-                        <input type="text" name="post_title" class="form-control form-control-lg"
-                          placeholder="Enter blog title..." value="<%= isEdit ? b.post_title : '' %>"
-                          required />
-                      </div>
+                          <div class="mb-3">
+                            <label class="form-label fw-semibold">Blog Title <span class="text-danger">*</span></label>
+                            <input type="text" name="post_title" class="form-control form-control-lg"
+                              placeholder="Enter blog title..." value="<%= isEdit ? b.post_title : '' %>" required />
+                          </div>
 
-                      <div class="mb-3">
-                        <label class="form-label fw-semibold">Blog URL (Slug)</label>
-                        <div class="input-group">
-                          <span class="input-group-text text-muted">/store/blog/</span>
-                          <input type="text" name="post_slug" id="postSlug" class="form-control"
-                            placeholder="auto-generated-slug"
-                            value="<%= isEdit ? b.post_slug : '' %>" />
+                          <div class="mb-3">
+                            <label class="form-label fw-semibold">Blog URL (Slug)</label>
+                            <div class="input-group">
+                              <span class="input-group-text text-muted">/store/blog/</span>
+                              <input type="text" name="post_slug" id="postSlug" class="form-control"
+                                placeholder="auto-generated-slug" value="<%= isEdit ? b.post_slug : '' %>" />
+                            </div>
+                            <small class="text-muted">Auto-generated from title if left empty</small>
+                          </div>
+
+                          <div class="mb-3">
+                            <label class="form-label fw-semibold">Short Description</label>
+                            <textarea name="post_short_desc" id="post_short_desc" class="form-control" rows="3"
+                              placeholder="Brief blog description..."><%= isEdit ? (b.post_short_desc || '') : '' %></textarea>
+                          </div>
+
+                          <div class="mb-3">
+                            <label class="form-label fw-semibold">Full Content</label>
+                            <textarea name="post_content" class="form-control" rows="10"
+                              placeholder="Detailed blog content..."
+                              id="editor"><%= isEdit ? (b.post_content || '') : '' %></textarea>
+                          </div>
                         </div>
-                        <small class="text-muted">Auto-generated from title if left empty</small>
                       </div>
 
-                      <div class="mb-3">
-                        <label class="form-label fw-semibold">Short Description</label>
-                        <textarea name="post_short_desc" id="post_short_desc" class="form-control" rows="3"
-                          placeholder="Brief blog description..."><%= isEdit ? (b.post_short_desc || '') : '' %></textarea>
+                    </div><!-- /col-lg-8 -->
+
+                    <!-- RIGHT COLUMN -->
+                    <div class="col-lg-4">
+
+                      <!-- PUBLISH CARD -->
+                      <div class="card mb-3">
+                        <div class="card-body">
+                          <h4 class="card-title mb-3 pb-3 border-bottom">Publish</h4>
+
+                          <div class="mb-3">
+                            <label class="form-label fw-semibold">Status</label>
+                            <select name="post_status" class="form-select">
+                              <option value="publish" <%=(!isEdit || b.post_status==='publish' ) ? 'selected' : '' %>
+                                >Published</option>
+                              <option value="draft" <%=(isEdit && b.post_status==='draft' ) ? 'selected' : '' %>>Draft
+                              </option>
+                            </select>
+                          </div>
+
+                          <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary rounded-pill">
+                              <%= isEdit ? 'Update Blog' : 'Publish Blog' %>
+                            </button>
+                            <a href="/store/admin/blogs" class="btn btn-outline-secondary rounded-pill">
+                              Cancel
+                            </a>
+                          </div>
+                        </div>
                       </div>
 
-                      <div class="mb-3">
-                        <label class="form-label fw-semibold">Full Content</label>
-                        <textarea name="post_content" class="form-control" rows="10"
-                          placeholder="Detailed blog content..."
-                          id="editor"><%= isEdit ? (b.post_content || '') : '' %></textarea>
-                      </div>
-                    </div>
-                  </div>
+                      <!-- blog IMAGE CARD -->
+                      <div class="card mb-3">
+                        <div class="card-body">
+                          <h4 class="card-title mb-3 pb-3 border-bottom">Blog Image</h4>
 
-                </div><!-- /col-lg-8 -->
+                          <div class="mb-3">
+                            <div class="border rounded p-3 text-center" id="blogImagePreview"
+                              style="min-height:150px;cursor:pointer;" onclick="openMedia({
+                                urlInput:   'blog_image',
+                                titleInput: 'blog_image_title',
+                                altInput:   'blog_image_alt',
+                                preview:    'blogImagePreview',
+                                multiple:   false
+                              })">
+                              <% if (isEdit && b.thumbnail) { %>
+                                <img src="<%= b.thumbnail %>" class="img-fluid rounded" style="max-height:150px;" />
+                                <% } else { %>
+                                  <div>
+                                    <i data-feather="image" style="width:48px;height:48px;"
+                                      class="text-muted mb-2 d-block mx-auto"></i>
+                                    <p class="text-muted small mb-0">Click to select blog image</p>
+                                  </div>
+                                  <% } %>
+                            </div>
 
-                <!-- RIGHT COLUMN -->
-                <div class="col-lg-4">
+                            <% if (isEdit && b.thumbnail && b.thumbnailId) { %>
 
-                  <!-- PUBLISH CARD -->
-                  <div class="card mb-3">
-                    <div class="card-body">
-                      <h4 class="card-title mb-3 pb-3 border-bottom">Publish</h4>
+                              <button type="button" id="removeBlogImagebtn" class="btn btn-link btn-sm text-danger p-0">
+                                <i data-feather="trash-2" class="feather-sm me-1"></i> Remove blog image
+                              </button>
 
-                      <div class="mb-3">
-                        <label class="form-label fw-semibold">Status</label>
-                        <select name="post_status" class="form-select">
-                          <option value="publish" <%= (!isEdit || b.post_status === 'publish') ? 'selected' : '' %>>Published</option>
-                          <option value="draft" <%= (isEdit && b.post_status === 'draft') ? 'selected' : '' %>>Draft</option>
-                        </select>
-                      </div>
+                              <% } %>
 
-                      <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-primary rounded-pill">
-                          <%= isEdit ? 'Update Blog' : 'Publish Blog' %>
-                        </button>
-                        <a href="/store/admin/blogs" class="btn btn-outline-secondary rounded-pill">
-                          Cancel
-                        </a>
-                      </div>
-                    </div>
-                  </div>
+                                <input type="hidden" id="blog_image" name="blog_image" value="<%= blog.thumbnail %>">
 
-                  <!-- CATEGORIES CARD -->
-                  <div class="card mb-3">
-                    <div class="card-body">
-                      <h4 class="card-title mb-3 pb-3 border-bottom">Blog Categories</h4>
+                                <input type="hidden" id="blog_image_title" name="blog_image_title"
+                                  value="<%= blog.title || '' %>">
 
-                      <div style="max-height:300px; overflow-y:auto;">
-                        <ul class="list-unstyled mb-0">
+                                <input type="hidden" id="blog_image_alt" name="blog_image_alt"
+                                  value="<%= blog.alt || '' %>">
+                          </div>
 
-                          <% function renderCategories(categories, parent = 0) { %>
-                            <% categories.filter(c => c.parent_id == parent).forEach(cat => { %>
 
-                              <li class="mb-2">
-                                <label class="form-check">
-                                  <input type="checkbox" name="categories[]"
-                                    value="<%= cat.category_id %>" class="form-check-input"
-                                    <%= selectedCategoryIds && selectedCategoryIds.includes(cat.category_id) ? 'checked' : '' %>>
-                                  <span class="form-check-label">
-                                    <%= cat.category_name %>
-                                  </span>
-                                </label>
-
-                                <ul class="ms-3 list-unstyled">
-                                  <% renderCategories(categories, cat.category_id); %>
-                                </ul>
-
-                              </li>
-
-                            <% }) %>
-                          <% } %>
-
-                          <%= renderCategories(allCategories) %>
-
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- POST SETTINGS CARD -->
-                  <div class="card mb-3">
-                    <div class="card-body">
-                      <h4 class="card-title mb-3 pb-3 border-bottom">Post Settings</h4>
-
-                      <div class="mb-3">
-                        <label class="form-label fw-semibold">Post Type</label>
-                        <select name="post_type" class="form-select">
-                          <option value="post" <%= (!isEdit || b.post_type === 'post') ? 'selected' : '' %>>Post</option>
-                          <option value="page" <%= (isEdit && b.post_type === 'page') ? 'selected' : '' %>>Page</option>
-                        </select>
+                        </div>
                       </div>
 
-                      <div class="mb-3">
-                        <label class="form-label fw-semibold">Menu Order</label>
-                        <input type="number" name="menu_order" class="form-control"
-                          placeholder="0"
-                          value="<%= isEdit ? (b.menu_order || 0) : 0 %>"
-                          min="0" />
-                        <small class="text-muted">Lower number = shown first</small>
+                      <!-- CATEGORIES CARD -->
+                      <div class="card mb-3">
+                        <div class="card-body">
+                          <h4 class="card-title mb-3 pb-3 border-bottom">Blog Categories</h4>
+
+                          <div style="max-height:300px; overflow-y:auto;">
+                            <ul class="list-unstyled mb-0">
+
+                              <% function renderCategories(categories, parent=0) { %>
+                                <% categories.filter(c=> c.parent_id == parent).forEach(cat => { %>
+
+                                  <li class="mb-2">
+                                    <label class="form-check">
+                                      <input type="checkbox" name="categories[]" value="<%= cat.category_id %>"
+                                        class="form-check-input" <%=selectedCategoryIds &&
+                                        selectedCategoryIds.includes(cat.category_id) ? 'checked' : '' %>>
+                                      <span class="form-check-label">
+                                        <%= cat.category_name %>
+                                      </span>
+                                    </label>
+
+                                    <ul class="ms-3 list-unstyled">
+                                      <% renderCategories(categories, cat.category_id); %>
+                                    </ul>
+
+                                  </li>
+
+                                  <% }) %>
+                                    <% } %>
+
+                                      <%= renderCategories(allCategories) %>
+
+                            </ul>
+                          </div>
+                        </div>
                       </div>
 
-                      <div class="mb-3">
-                        <label class="form-label fw-semibold">Published Date</label>
-                        <input type="datetime-local" name="post_date" class="form-control"
-                          value="<%= isEdit && b.post_date ? b.post_date.toISOString().slice(0,16) : new Date().toISOString().slice(0,16) %>" />
+                      <!-- POST SETTINGS CARD -->
+                      <div class="card mb-3">
+                        <div class="card-body">
+                          <h4 class="card-title mb-3 pb-3 border-bottom">Post Settings</h4>
+
+                          <div class="mb-3">
+                            <label class="form-label fw-semibold">Post Type</label>
+                            <select name="post_type" class="form-select">
+                              <option value="post" <%=(!isEdit || b.post_type==='post' ) ? 'selected' : '' %>>Post
+                              </option>
+                              <option value="page" <%=(isEdit && b.post_type==='page' ) ? 'selected' : '' %>>Page
+                              </option>
+                            </select>
+                          </div>
+
+                          <div class="mb-3">
+                            <label class="form-label fw-semibold">Menu Order</label>
+                            <input type="number" name="menu_order" class="form-control" placeholder="0"
+                              value="<%= isEdit ? (b.menu_order || 0) : 0 %>" min="0" />
+                            <small class="text-muted">Lower number = shown first</small>
+                          </div>
+
+                          <div class="mb-3">
+                            <label class="form-label fw-semibold">Published Date</label>
+                            <input type="datetime-local" name="post_date" class="form-control"
+                              value="<%= isEdit && b.post_date ? b.post_date.toISOString().slice(0,16) : new Date().toISOString().slice(0,16) %>" />
+                          </div>
+
+                          <div class="mb-3">
+                            <label class="form-label fw-semibold">Modified Date</label>
+                            <input type="datetime-local" name="post_modified" class="form-control"
+                              value="<%= isEdit && b.post_modified ? b.post_modified.toISOString().slice(0,16) : new Date().toISOString().slice(0,16) %>"
+                              disabled />
+                            <small class="text-muted">Auto-updated on save</small>
+                          </div>
+                        </div>
                       </div>
 
-                      <div class="mb-3">
-                        <label class="form-label fw-semibold">Modified Date</label>
-                        <input type="datetime-local" name="post_modified" class="form-control"
-                          value="<%= isEdit && b.post_modified ? b.post_modified.toISOString().slice(0,16) : new Date().toISOString().slice(0,16) %>"
-                          disabled />
-                        <small class="text-muted">Auto-updated on save</small>
-                      </div>
-                    </div>
-                  </div>
+                    </div><!-- /col-lg-4 -->
 
-                </div><!-- /col-lg-4 -->
-
-              </div><!-- /row -->
-            </form>
+                  </div><!-- /row -->
+                </form>
 
           </div>
         </div>
-            
+
 
 
         <%- include('../partials/footer') %>
 
-        <script>
-          ClassicEditor.create(document.querySelector('#editor')).catch(error => console.error(error));
-          ClassicEditor.create(document.querySelector('#post_short_desc')).catch(error => console.error(error));
+          <script>
+            ClassicEditor.create(document.querySelector('#editor')).catch(error => console.error(error));
+            ClassicEditor.create(document.querySelector('#post_short_desc')).catch(error => console.error(error));
 
-          // Auto-generate slug from title
-          document.querySelector('[name="post_title"]').addEventListener('input', function () {
-            var urlField = document.getElementById('postSlug');
-            if (!urlField.dataset.manual) {
-              urlField.value = this.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-            }
-          });
+            // Auto-generate slug from title
+            document.querySelector('[name="post_title"]').addEventListener('input', function () {
+              var urlField = document.getElementById('postSlug');
+              if (!urlField.dataset.manual) {
+                urlField.value = this.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+              }
+            });
 
-          // Mark slug as manually edited
-          document.getElementById('postSlug').addEventListener('input', function () {
-            this.dataset.manual = '1';
-          });
+            // Mark slug as manually edited
+            document.getElementById('postSlug').addEventListener('input', function () {
+              this.dataset.manual = '1';
+            });
 
-          feather.replace();
-        </script>
+            feather.replace();
+
+            document.addEventListener("click", function (e) {
+              if (e.target.closest("#removeBlogImagebtn")) {
+
+                // 🔥 Clear preview
+                const preview = document.getElementById("blogImagePreview");
+                preview.innerHTML = `
+                  <div>
+                    <i data-feather="image" style="width:48px;height:48px;" class="text-muted mb-2 d-block mx-auto"></i>
+                    <p class="text-muted small mb-0">Click to select blog image</p>
+                  </div>
+                `;
+
+                // 🔥 Clear inputs
+                document.getElementById("blog_image").value = "";
+                document.getElementById("blog_image_title").value = "";
+                document.getElementById("blog_image_alt").value = "";
+
+                // 🔥 Hide remove button
+                e.target.closest("button").style.display = "none";
+
+                // re-render feather icon
+                if (window.feather) feather.replace();
+              }
+            });
+          </script>

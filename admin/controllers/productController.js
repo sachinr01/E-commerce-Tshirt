@@ -242,7 +242,7 @@ const showEditProduct = async (req, res) => {
     product.product_more_info = mainMeta["_product_more_info"] || "";
 
     // ── Main product thumbnail ──────────────────────────────
-    // Read media_path directly from tbl_media (no _wp_attached_file in mediameta)
+    // Read media_path directly from tbl_media(no _wp_attached_file in mediameta)
     product.thumbnail = "";
     product.thumbnailId = mainMeta["_thumbnail_id"] || "";
 
@@ -256,7 +256,8 @@ const showEditProduct = async (req, res) => {
       LEFT JOIN tbl_mediameta alt 
         ON alt.media_id = m.media_id 
         AND alt.meta_key = '_wp_attachment_image_alt'
-      WHERE m.media_id = ?`,
+      WHERE m.media_id = ?
+       AND m.media_type = 'product_image'`,
         [product.thumbnailId],
       );
       if (thumbMedia && thumbMedia.media_path) {
@@ -359,7 +360,7 @@ const showEditProduct = async (req, res) => {
         }
       }
 
-      // ── Variation thumbnail: read media_path from tbl_media ──
+      // ── Variation thumbnail: read media_path from tbl_media──
       if (v.thumbnailId) {
         const [[vThumb]] = await db.query(
           `SELECT 
@@ -370,7 +371,8 @@ const showEditProduct = async (req, res) => {
       LEFT JOIN tbl_mediameta alt 
         ON alt.media_id = m.media_id 
         AND alt.meta_key = '_wp_attachment_image_alt'
-      WHERE m.media_id = ?`,
+      WHERE m.media_id = ?
+       AND m.media_type = 'product_image'`,
           [v.thumbnailId],
         );
 
@@ -519,6 +521,7 @@ const storeProduct = async (req, res) => {
 
     await insertMeta(productId, "_sku", body.sku);
     await insertMeta(productId, "_regular_price", body.regular_price);
+    await insertMeta(productId, "_sale_price", body.sale_price);
     await insertMeta(
       productId,
       "_price",
@@ -570,7 +573,7 @@ const storeProduct = async (req, res) => {
     // ═══════════════════════════════════════════════════════
     // STEP 3: MAIN FEATURED IMAGE
     // field: featured_image
-    // save to tbl_media + tbl_mediameta, store media_id in _thumbnail_id
+    // save to tbl_media+ tbl_mediameta, store media_id in _thumbnail_id
     // ═══════════════════════════════════════════════════════
     if (req.files) {
       // =========================
@@ -1036,7 +1039,7 @@ const updateProduct = async (req, res) => {
     // ✅ DELETE OLD MEDIA (FIXED - ALWAYS RUN)
     // ─────────────────────────────────────────
     const [oldMediaRows] = await conn.query(
-      "SELECT media_id FROM tbl_media WHERE parent_id = ?",
+      "SELECT media_id FROM tbl_media WHERE parent_id = ? AND media_type = 'product_image'",
       [id],
     );
 
@@ -1063,7 +1066,7 @@ const updateProduct = async (req, res) => {
     // ═══════════════════════════════════════════════════════
     // STEP 3: MAIN IMAGE
     // file field name: "featured_image"
-    // save original filename to tbl_media + tbl_mediameta
+    // save original filename to tbl_media+ tbl_mediameta
     // ═══════════════════════════════════════════════════════
     if (req.files) {
       // =========================
@@ -1378,7 +1381,7 @@ const updateProduct = async (req, res) => {
         // ✅ DELETE OLD VARIATION MEDIA (MAIN + GALLERY)
 
         const [oldVarMediaRows] = await conn.query(
-          "SELECT media_id FROM tbl_media WHERE parent_id = ?",
+          "SELECT media_id FROM tbl_media WHERE parent_id = ? AND media_type = 'product_image'",
           [vid],
         );
 
