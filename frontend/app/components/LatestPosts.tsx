@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import Link from 'next/link';
 import Image from 'next/image';
@@ -134,19 +134,15 @@ export default function LatestPosts({ posts }: { posts: Blog[] }) {
             {visiblePosts.map((post) => (
               <Link key={post.slug} href={getBlogDetailHref(post)} className="blog-card">
                 <div className="blog-card-img-wrap">
-                  <Image
-                    src={post.image}
-                    alt={post.title}
-                    fill
-                    unoptimized
-                    sizes="(max-width: 560px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                    onError={(event) => {
-                      const target = event.currentTarget;
-                      if (target.dataset.fallbackApplied === '1') return;
-                      target.dataset.fallbackApplied = '1';
-                      target.src = '/store/images/dummy.jpg';
-                    }}
-                  />
+                  {post.image ? (
+                    <Image
+                      src={post.image}
+                      alt={post.title}
+                      fill
+                      unoptimized
+                      sizes="(max-width: 560px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                    />
+                  ) : null}
                 </div>
                 <div className="blog-card-body">
                   <span className="blog-card-date">{post.date}</span>

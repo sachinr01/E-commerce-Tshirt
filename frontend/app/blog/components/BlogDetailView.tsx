@@ -237,6 +237,12 @@ export default function BlogDetailView({
             )}
 
             {/* ── Sanitized HTML — safe to render ── */}
+            {blog.image ? (
+              <div className="blog-hero-image">
+                <BlogHeroImage src={blog.image} alt={blog.title} />
+              </div>
+            ) : null}
+
             <div className="blog-content" dangerouslySetInnerHTML={{ __html: htmlContent }} />
           </div>
 

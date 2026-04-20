@@ -308,9 +308,11 @@ function ProductDetailsInner({ id, slug }: { id?: string; slug?: string }) {
     ? product.variations.some(isVariationInStock)
     : (product.stock_status === 'instock' || product.stock_status === 'onbackorder');
 
-  const inStock = hasFullSelection
-    ? (bestMatch ? isVariationInStock(bestMatch) : false)
-    : anyInStock;
+  const inStock = product.variations.length === 0
+    ? anyInStock  // simple product — use parent stock_status directly
+    : hasFullSelection
+      ? (bestMatch ? isVariationInStock(bestMatch) : false)  // variation selected — check that variation
+      : anyInStock;  // no full selection yet — show overall availability
 
   const canAddToCart = isAddToCartEnabled && inStock;
 
@@ -459,8 +461,16 @@ function ProductDetailsInner({ id, slug }: { id?: string; slug?: string }) {
 
           <div className="cpd-heading-row">
             <h1 className="cpd-title">{product.title}</h1>
-            <span className={`cpd-stock-badge${inStock ? ' in' : ' out'}`}>
-              {inStock ? '✓ In Stock' : '✗ Out of Stock'}
+            <span className={`cpd-stock-badge${
+              !inStock ? ' out'
+              : (bestMatch?.stock_status === 'onbackorder' || (!product.variations.length && product.stock_status === 'onbackorder')) ? ' backorder'
+              : ' in'
+            }`}>
+              {!inStock
+                ? '✗ Out of Stock'
+                : (bestMatch?.stock_status === 'onbackorder' || (!product.variations.length && product.stock_status === 'onbackorder'))
+                  ? '⏳ Available on Backorder'
+                  : '✓ In Stock'}
             </span>
           </div>
 
@@ -507,15 +517,15 @@ function ProductDetailsInner({ id, slug }: { id?: string; slug?: string }) {
               <div className="cpd-color-row">
                 {product.attributes.colors.map(c => {
                   const swatch = getSwatchStyle(c);
-                  const colorInStock = product.variations.length
+                  const colorInStock = product.variations.length > 0
                     ? colorHasStock(c.attr_slug)
-                    : (c.in_stock !== 0);
+                    : true; // simple product — stock is on the parent, not per-attribute
                   return (
                     <button
                       key={c.attr_id}
-                      title={c.attr_name}
-                      onClick={() => setSelectedColor(selectedColor === c.attr_slug ? '' : c.attr_slug)}
-                      className={`cpd-color-swatch${selectedColor === c.attr_slug ? ' active' : ''}${swatch.isLight ? ' light' : ''}`}
+                      title={!colorInStock ? `${c.attr_name} — Out of Stock` : c.attr_name}
+                      onClick={() => { if (colorInStock) setSelectedColor(selectedColor === c.attr_slug ? '' : c.attr_slug); }}
+                      className={`cpd-color-swatch${selectedColor === c.attr_slug ? ' active' : ''}${swatch.isLight ? ' light' : ''}${!colorInStock ? ' oos' : ''}`}
                       style={swatch.style}>
                       {selectedColor === c.attr_slug && (
                         <svg className="cpd-swatch-check" viewBox="0 0 24 24" fill="none"
@@ -550,8 +560,8 @@ function ProductDetailsInner({ id, slug }: { id?: string; slug?: string }) {
                     <button
                       key={s.attr_id}
                       title={!sizeInStock ? `${s.attr_name} — Out of Stock` : s.attr_name}
-                      onClick={() => setSelectedSize(selectedSize === s.attr_slug ? '' : s.attr_slug)}
-                      className={`cpd-size-pill${selectedSize === s.attr_slug ? ' active' : ''}`}>
+                      onClick={() => { if (sizeInStock) setSelectedSize(selectedSize === s.attr_slug ? '' : s.attr_slug); }}
+                      className={`cpd-size-pill${selectedSize === s.attr_slug ? ' active' : ''}${!sizeInStock ? ' oos' : ''}`}>
                       {s.attr_name}
                     </button>
                   );
@@ -868,6 +878,7 @@ const baseCss = `
 }
 .cpd-stock-badge.in  { background: var(--cpd-brand-light); color: var(--cpd-brand); }
 .cpd-stock-badge.out { background: #fdecea; color: var(--cpd-sale); }
+.cpd-stock-badge.backorder { background: #fff8e1; color: #b45309; }
 
 /* Price */
 .cpd-price-block {
@@ -977,6 +988,24 @@ const baseCss = `
 .cpd-color-swatch.active { border-color: var(--cpd-brand); transform: scale(1.08); }
 .cpd-color-swatch.light { border-color: #e2e2e2; }
 .cpd-color-swatch.light.active { border-color: var(--cpd-brand); }
+.cpd-color-swatch.oos {
+  opacity: 0.35;
+  cursor: not-allowed;
+  position: relative;
+}
+.cpd-color-swatch.oos::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 3px,
+    rgba(0,0,0,0.25) 3px,
+    rgba(0,0,0,0.25) 4px
+  );
+}
 .cpd-swatch-check { width: 15px; height: 15px; pointer-events: none; }
 
 /* Size pills */
@@ -990,6 +1019,13 @@ const baseCss = `
 }
 .cpd-size-pill:hover { border-color: var(--cpd-brand); color: var(--cpd-brand); }
 .cpd-size-pill.active { background: var(--cpd-brand); color: #fff; border-color: var(--cpd-brand); font-weight: 600; }
+.cpd-size-pill.oos {
+  opacity: 0.4;
+  cursor: not-allowed;
+  text-decoration: line-through;
+  text-decoration-color: #aaa;
+}
+.cpd-size-pill.oos:hover { border-color: var(--cpd-border); color: var(--cpd-muted); }
 
 /* Variation info */
 .cpd-variation-info {

@@ -401,7 +401,7 @@ const placeOrder = async (req, res) => {
   const paymentMethod = toStr(req.body.payment_method) || 'cod';
   const shippingCost  = toAmount(req.body.shipping_cost || 0);
   const orderNotes    = toStr(req.body.notes) || null;
-  const appliedCoupon = req.session?.appliedCoupon || null;
+  const appliedCoupon = req.sessionData?.appliedCoupon || null;
 
   const billingErrors = validateBilling(billing);
   if (Object.keys(billingErrors).length) {
@@ -440,6 +440,22 @@ const placeOrder = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Cart is empty.' });
     }
 
+    // ── 1b. Stock check for all cart items ────────────────────────────────────
+    for (const item of cartItems) {
+      const checkId = item.variation_id && item.variation_id > 0 ? item.variation_id : item.product_id;
+      const [[stockRow]] = await conn.query(
+        `SELECT COALESCE((SELECT meta_value FROM tbl_productmeta WHERE product_id = ? AND meta_key = '_stock_status' ORDER BY meta_id DESC LIMIT 1), 'instock') AS stock_status`,
+        [checkId]
+      );
+      if (stockRow && stockRow.stock_status === 'outofstock') {
+        await conn.rollback();
+        return res.status(400).json({
+          success: false,
+          message: `"${item.title || 'A product in your cart'}" is out of stock. Please remove it before placing your order.`,
+        });
+      }
+    }
+
     // ── 2. Calculate totals ───────────────────────────────────────────────────
     const subtotal = cartItems.reduce(
       (sum, item) => sum + toAmount(item.price) * Number(item.quantity || 0), 0
@@ -451,7 +467,8 @@ const placeOrder = async (req, res) => {
     const couponCheck = await validateAndLockCoupon(conn, appliedCoupon, userId, subtotal, productIds);
     if (!couponCheck.ok) {
       await conn.rollback();
-      delete req.session.appliedCoupon;
+      delete req.sessionData.appliedCoupon;
+      req.touchSession();
       return res.status(400).json({ success: false, coupon_error: true, message: couponCheck.message });
     }
     const discount = couponCheck.discount || 0;
@@ -614,7 +631,10 @@ const placeOrder = async (req, res) => {
     await conn.commit();
 
     // Clear coupon from session after successful order
-    if (appliedCoupon) delete req.session.appliedCoupon;
+    if (appliedCoupon) {
+      delete req.sessionData.appliedCoupon;
+      req.touchSession();
+    }
 
     let emailSent = false;
     try {
