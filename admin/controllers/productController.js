@@ -145,19 +145,34 @@ const showProducts = async (req, res) => {
 
     const [products] = await db.query(
       `
-            SELECT p.*,
-                MAX(CASE WHEN pm.meta_key = '_regular_price' THEN pm.meta_value END) AS regular_price,
-                MAX(CASE WHEN pm.meta_key = '_sale_price'    THEN pm.meta_value END) AS sale_price,
-                MAX(CASE WHEN pm.meta_key = '_sku'           THEN pm.meta_value END) AS sku,
-                MAX(CASE WHEN pm.meta_key = '_stock'         THEN pm.meta_value END) AS stock,
-                MAX(CASE WHEN pm.meta_key = '_stock_status'  THEN pm.meta_value END) AS stock_status,
-                MAX(CASE WHEN pm.meta_key = '_thumbnail_url' THEN pm.meta_value END) AS thumbnail
-            FROM tbl_products p
-            LEFT JOIN tbl_productmeta pm ON pm.product_id = p.ID
-            ${where}
-            GROUP BY p.ID
-            ORDER BY p.product_date_added DESC
-            LIMIT ? OFFSET ?
+        SELECT 
+        p.*,
+
+        MAX(CASE WHEN pm.meta_key = '_regular_price' THEN pm.meta_value END) AS regular_price,
+        MAX(CASE WHEN pm.meta_key = '_sale_price'    THEN pm.meta_value END) AS sale_price,
+        MAX(CASE WHEN pm.meta_key = '_sku'           THEN pm.meta_value END) AS sku,
+        MAX(CASE WHEN pm.meta_key = '_stock'         THEN pm.meta_value END) AS stock,
+        MAX(CASE WHEN pm.meta_key = '_stock_status'  THEN pm.meta_value END) AS stock_status,
+
+        (
+          SELECT m2.media_path
+          FROM tbl_media m2
+          WHERE m2.parent_id = p.ID 
+            AND m2.media_type = 'product_image'
+          ORDER BY m2.media_id ASC
+          LIMIT 1
+        ) AS thumbnail
+
+      FROM tbl_products p
+
+      LEFT JOIN tbl_productmeta pm 
+        ON pm.product_id = p.ID
+
+      WHERE p.parent_id = 0
+
+      GROUP BY p.ID
+      ORDER BY p.product_date_added DESC
+      LIMIT ? OFFSET ?
         `,
       [...params, limit, offset],
     );
