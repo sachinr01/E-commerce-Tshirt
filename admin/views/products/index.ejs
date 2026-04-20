@@ -295,3 +295,32 @@
       </script>
 
       <%- include('../partials/footer') %>
+
+      
+<script>
+  $(document).ready(function() {
+    $('#productsTable').DataTable({
+      "responsive": true,
+      "autoWidth": false,
+      "order": [[0, "desc"]],
+      "pageLength": 25,
+      "columnDefs": [
+        { "orderable": false, "targets": 6 }
+      ],
+      "language": {
+        "emptyTable": "No products found",
+        "info": "Showing _START_ to _END_ of _TOTAL_ products",
+        "infoEmpty": "Showing 0 to 0 of 0 Products",
+        "search": "Search products:",
+        "paginate": {
+          "first": "First",
+          "last": "Last",
+          "next": "Next",
+          "previous": "Previous"
+        }
+      }
+    });
+  });
+
+  feather.replace();
+</script>
