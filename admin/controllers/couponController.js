@@ -23,7 +23,7 @@ exports.index = async (req, res) => {
 
 // ── GET ADD FORM
 exports.create = async (req, res) => {
-  const [categories] = await db.query("SELECT id, name FROM tbl_products_category ORDER BY name ASC");
+  const [categories] = await db.query("SELECT category_id, category_name FROM tbl_products_category ORDER BY category_name ASC");
     const [products] = await db.query(`
   SELECT ID, product_title 
   FROM tbl_products 
@@ -100,7 +100,7 @@ exports.edit = async (req, res) => {
 
   if (!coupon) return res.redirect("/store/admin/coupons");
 
-  const [categories] = await db.query("SELECT id, name FROM tbl_products_category ORDER BY name ASC");
+  const [categories] = await db.query("SELECT category_id, category_name FROM tbl_products_category ORDER BY category_name ASC");
  const [products] = await db.query(`
   SELECT ID, product_title 
   FROM tbl_products 
