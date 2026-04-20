@@ -149,15 +149,16 @@ export default function GlasswarePage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // filters
-  const [selectedCats,   setSelectedCats]   = useState<string[]>([]);
-  const [selectedColors, setSelectedColors] = useState<string[]>([]);
-  const [selectedSizes,  setSelectedSizes]  = useState<string[]>([]);
+  const [selectedCats,       setSelectedCats]       = useState<string[]>([]);
+  const [selectedColors,     setSelectedColors]     = useState<string[]>([]);
+  const [selectedSizes,      setSelectedSizes]      = useState<string[]>([]);
+  const [selectedMaterials,  setSelectedMaterials]  = useState<string[]>([]);
   const [sliderMin, setSliderMin] = useState(0);
   const [sliderMax, setSliderMax] = useState(0);
   const [absoluteMax, setAbsoluteMax] = useState(0);
 
   // accordion open state
-  const [openFilters, setOpenFilters] = useState<Record<string, boolean>>({ category: true });
+  const [openFilters, setOpenFilters] = useState<Record<string, boolean>>({});
   const priceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -191,22 +192,26 @@ export default function GlasswarePage() {
     priceTimer.current = setTimeout(() => { setSliderMin(min); setSliderMax(max); }, 200);
   }, []);
 
-  // derive available colors & sizes from loaded products
+  // derive available colors, sizes & materials from loaded products
   const availableColors = useMemo(() =>
     [...new Set(allProducts.flatMap(p => normalizeList(p.color_slugs)))].sort(),
     [allProducts]);
   const availableSizes = useMemo(() =>
     [...new Set(allProducts.flatMap(p => normalizeList(p.size_slugs)))].sort(),
     [allProducts]);
+  const availableMaterials = useMemo(() =>
+    [...new Set(allProducts.flatMap(p => normalizeList(p.material_slugs)))].sort(),
+    [allProducts]);
 
   const isPriceActive = sliderMin > 0 || sliderMax < absoluteMax;
 
-  const totalActive = selectedCats.length + selectedColors.length + selectedSizes.length + (isPriceActive ? 1 : 0);
+  const totalActive = selectedCats.length + selectedColors.length + selectedSizes.length + selectedMaterials.length + (isPriceActive ? 1 : 0);
 
   const clearAll = () => {
     setSelectedCats([]);
     setSelectedColors([]);
     setSelectedSizes([]);
+    setSelectedMaterials([]);
     setSliderMin(0);
     setSliderMax(absoluteMax);
   };
@@ -218,13 +223,14 @@ export default function GlasswarePage() {
     if (selectedCats.length > 0 && !(p.category_slug && selectedCats.includes(p.category_slug))) return false;
     if (selectedColors.length > 0 && !selectedColors.some(c => normalizeList(p.color_slugs).includes(c))) return false;
     if (selectedSizes.length > 0  && !selectedSizes.some(s  => normalizeList(p.size_slugs).includes(s)))  return false;
+    if (selectedMaterials.length > 0 && !selectedMaterials.some(m => normalizeList(p.material_slugs).includes(m))) return false;
     if (isPriceActive) {
       const lo = Number(p.price_min ?? 0);
       const hi = Number(p.price_max ?? p.price_min ?? 0);
       if (hi < sliderMin || lo > sliderMax) return false;
     }
     return true;
-  }), [allProducts, selectedCats, selectedColors, selectedSizes, sliderMin, sliderMax, isPriceActive]);
+  }), [allProducts, selectedCats, selectedColors, selectedSizes, selectedMaterials, sliderMin, sliderMax, isPriceActive]);
 
   const SidebarContent = (
     <>
@@ -233,61 +239,94 @@ export default function GlasswarePage() {
         {totalActive > 0 && <button className="nf-clear-all" onClick={clearAll}>Clear all ({totalActive})</button>}
       </div>
 
-      {/* Category */}
-      {categories.length > 0 && (
-        <FilterSection
-          label={selectedCats.length ? `Category (${selectedCats.length})` : 'Category'}
-          isOpen={!!openFilters.category}
-          onToggle={() => setOpenFilters(p => ({ ...p, category: !p.category }))}>
-          {categories.map(c => (
-            <CheckOption key={c.category_id} label={c.category_name}
-              checked={selectedCats.includes(c.category_slug)}
-              onChange={() => toggleItem(setSelectedCats, c.category_slug)}/>
-          ))}
-        </FilterSection>
-      )}
+      {/* Price Range — always visible */}
+      <FilterSection
+        label={isPriceActive ? 'Price Range (Active)' : 'Price Range'}
+        isOpen={!!openFilters.price}
+        onToggle={() => setOpenFilters(p => ({ ...p, price: !p.price }))}>
+        {loading
+          ? <span className="nf-option-text" style={{ color: 'var(--cs-text-muted)', fontSize: 13 }}>Loading…</span>
+          : absoluteMax === 0
+            ? <span className="nf-option-text" style={{ color: 'var(--cs-text-muted)', fontSize: 13 }}>No price data</span>
+            : <DualRangeSlider
+                min={0} max={absoluteMax}
+                valueMin={sliderMin} valueMax={sliderMax}
+                onChangeMin={v => handlePriceChange(Math.min(v, sliderMax - 1), sliderMax)}
+                onChangeMax={v => handlePriceChange(sliderMin, Math.max(v, sliderMin + 1))}/>
+        }
+      </FilterSection>
 
-      {/* Price Range — only if products have prices */}
-      {absoluteMax > 0 && (
-        <FilterSection
-          label={isPriceActive ? 'Price Range (Active)' : 'Price Range'}
-          isOpen={!!openFilters.price}
-          onToggle={() => setOpenFilters(p => ({ ...p, price: !p.price }))}>
-          <DualRangeSlider
-            min={0} max={absoluteMax}
-            valueMin={sliderMin} valueMax={sliderMax}
-            onChangeMin={v => handlePriceChange(Math.min(v, sliderMax - 1), sliderMax)}
-            onChangeMax={v => handlePriceChange(sliderMin, Math.max(v, sliderMin + 1))}/>
-        </FilterSection>
-      )}
+      {/* Category — commented out
+      <FilterSection
+        label={selectedCats.length ? `Category (${selectedCats.length})` : 'Category'}
+        isOpen={!!openFilters.category}
+        onToggle={() => setOpenFilters(p => ({ ...p, category: !p.category }))}>
+        {loading
+          ? <span className="nf-option-text" style={{ color: 'var(--cs-text-muted)', fontSize: 13 }}>Loading…</span>
+          : categories.length === 0
+            ? <span className="nf-option-text" style={{ color: 'var(--cs-text-muted)', fontSize: 13 }}>No subcategories</span>
+            : categories.map(c => (
+                <CheckOption key={c.category_id} label={c.category_name}
+                  checked={selectedCats.includes(c.category_slug)}
+                  onChange={() => toggleItem(setSelectedCats, c.category_slug)}/>
+              ))
+        }
+      </FilterSection>
+      */}
 
-      {/* Color — only if products have colors */}
-      {availableColors.length > 0 && (
-        <FilterSection
-          label={selectedColors.length ? `Color (${selectedColors.length})` : 'Color'}
-          isOpen={!!openFilters.color}
-          onToggle={() => setOpenFilters(p => ({ ...p, color: !p.color }))}>
-          {availableColors.map(c => (
-            <CheckOption key={c} label={c.charAt(0).toUpperCase() + c.slice(1)}
-              checked={selectedColors.includes(c)}
-              onChange={() => toggleItem(setSelectedColors, c)}/>
-          ))}
-        </FilterSection>
-      )}
+      {/* Color — commented out
+      <FilterSection
+        label={selectedColors.length ? `Color (${selectedColors.length})` : 'Color'}
+        isOpen={!!openFilters.color}
+        onToggle={() => setOpenFilters(p => ({ ...p, color: !p.color }))}>
+        {loading
+          ? <span className="nf-option-text" style={{ color: 'var(--cs-text-muted)', fontSize: 13 }}>Loading…</span>
+          : availableColors.length === 0
+            ? <span className="nf-option-text" style={{ color: 'var(--cs-text-muted)', fontSize: 13 }}>No options</span>
+            : availableColors.map(c => (
+                <CheckOption key={c} label={c.charAt(0).toUpperCase() + c.slice(1)}
+                  checked={selectedColors.includes(c)}
+                  onChange={() => toggleItem(setSelectedColors, c)}/>
+              ))
+        }
+      </FilterSection>
+      */}
 
-      {/* Size — only if products have sizes */}
-      {availableSizes.length > 0 && (
-        <FilterSection
-          label={selectedSizes.length ? `Size (${selectedSizes.length})` : 'Size'}
-          isOpen={!!openFilters.size}
-          onToggle={() => setOpenFilters(p => ({ ...p, size: !p.size }))}>
-          {availableSizes.map(s => (
-            <CheckOption key={s} label={s.toUpperCase()}
-              checked={selectedSizes.includes(s)}
-              onChange={() => toggleItem(setSelectedSizes, s)}/>
-          ))}
-        </FilterSection>
-      )}
+      {/* Dimensions — commented out
+      <FilterSection
+        label={selectedMaterials.length ? `Dimensions (${selectedMaterials.length})` : 'Dimensions'}
+        isOpen={!!openFilters.dimensions}
+        onToggle={() => setOpenFilters(p => ({ ...p, dimensions: !p.dimensions }))}>
+        {loading
+          ? <span className="nf-option-text" style={{ color: 'var(--cs-text-muted)', fontSize: 13 }}>Loading…</span>
+          : availableMaterials.length === 0
+            ? <span className="nf-option-text" style={{ color: 'var(--cs-text-muted)', fontSize: 13 }}>No options</span>
+            : availableMaterials.map(m => (
+                <CheckOption key={m} label={m.charAt(0).toUpperCase() + m.slice(1)}
+                  checked={selectedMaterials.includes(m)}
+                  onChange={() => toggleItem(setSelectedMaterials, m)}/>
+              ))
+        }
+      </FilterSection>
+      */}
+
+      {/* Size — commented out
+      <FilterSection
+        label={selectedSizes.length ? `Size (${selectedSizes.length})` : 'Size'}
+        isOpen={!!openFilters.size}
+        onToggle={() => setOpenFilters(p => ({ ...p, size: !p.size }))}>
+        {loading
+          ? <span className="nf-option-text" style={{ color: 'var(--cs-text-muted)', fontSize: 13 }}>Loading…</span>
+          : availableSizes.length === 0
+            ? <span className="nf-option-text" style={{ color: 'var(--cs-text-muted)', fontSize: 13 }}>No options</span>
+            : availableSizes.map(s => (
+                <CheckOption key={s} label={s.toUpperCase()}
+                  checked={selectedSizes.includes(s)}
+                  onChange={() => toggleItem(setSelectedSizes, s)}/>
+              ))
+        }
+      </FilterSection>
+      */}
     </>
   );
 
@@ -386,6 +425,11 @@ export default function GlasswarePage() {
               {selectedSizes.map(s => (
                 <span key={s} className="csp-chip">{s.toUpperCase()}
                   <button className="csp-chip-x" onClick={() => toggleItem(setSelectedSizes, s)} aria-label={`Remove ${s}`}>x</button>
+                </span>
+              ))}
+              {selectedMaterials.map(m => (
+                <span key={m} className="csp-chip">{m.charAt(0).toUpperCase() + m.slice(1)}
+                  <button className="csp-chip-x" onClick={() => toggleItem(setSelectedMaterials, m)} aria-label={`Remove ${m}`}>x</button>
                 </span>
               ))}
             </div>

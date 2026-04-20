@@ -2,18 +2,8 @@ const BLOCK_TAG_BREAKS = /<\/(p|div|li|ul|ol|h1|h2|h3|h4|h5|h6|br|section|articl
 const LIST_BLOCK_PATTERN = /<(ul|ol)([^>]*)>([\s\S]*?)<\/\1>/gi;
 const LIST_ITEM_PATTERN = /<li\b[^>]*>([\s\S]*?)<\/li>/gi;
 
-function decodeEntities(value: string): string {
-  return value
-    .replace(/&amp;/g, '&')
-    .replace(/&quot;/g, '"')
-    .replace(/&#039;/g, "'")
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&nbsp;/g, ' ');
-}
-
 function basicSanitize(html: string): string {
-  return decodeEntities(String(html || ''))
+  return String(html || '')
     .replace(/<script[\s\S]*?<\/script>/gi, '')
     .replace(/<style[\s\S]*?<\/style>/gi, '')
     .replace(/<(iframe|object|embed|form|meta|link)[^>]*>[\s\S]*?<\/\1>/gi, '')
@@ -127,7 +117,12 @@ export function sanitizeHtml(
   const parser = new DOMParser();
   const doc = parser.parseFromString(input, 'text/html');
 
-  doc.querySelectorAll('script, style, iframe, object, embed, form, meta, link').forEach((node) => {
+  doc.querySelectorAll('script, style, iframe, object, embed, form, meta, link, oembed').forEach((node) => {
+    node.remove();
+  });
+
+  // Hide media embed figures (CKEditor oembed) — browser can't render them
+  doc.querySelectorAll('figure.media').forEach((node) => {
     node.remove();
   });
 

@@ -240,8 +240,17 @@ function ShopInner({ heading, subheading }: { heading: string; subheading: strin
   const [page, setPage] = useState(1);
   const ITEMS_PER_PAGE = 9;
 
-  // Category filter
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const queryMaxRaw = searchParams.get('max');
+  const queryMax = queryMaxRaw ? Number.parseFloat(queryMaxRaw) : Number.NaN;
+  const searchTerm = (searchParams.get('search') ?? '').trim().toLowerCase();
+  const appliedQueryRef = useRef<number | null>(null);
+
+  // Category filter — initialised from URL ?category=slug1,slug2
+  const urlCategories = (searchParams.get('category') ?? '')
+    .split(',').map(s => s.trim()).filter(Boolean);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(urlCategories);
   // product IDs that belong to selected categories (from tbl_products_category_link)
   const [categoryProductIds, setCategoryProductIds] = useState<Set<number> | null>(null);
 
@@ -252,12 +261,13 @@ function ShopInner({ heading, subheading }: { heading: string; subheading: strin
   const [sliderMax, setSliderMax] = useState(200);
   const absoluteMin = 0;
 
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const queryMaxRaw = searchParams.get('max');
-  const queryMax = queryMaxRaw ? Number.parseFloat(queryMaxRaw) : Number.NaN;
-  const searchTerm = (searchParams.get('search') ?? '').trim().toLowerCase();
-  const appliedQueryRef = useRef<number | null>(null);
+  // Sync selectedCategories → URL
+  const updateCategoryUrl = useCallback((cats: string[]) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (cats.length > 0) params.set('category', cats.join(','));
+    else params.delete('category');
+    router.replace(`/shop?${params.toString()}`, { scroll: false });
+  }, [router, searchParams]);
 
   // Load all attribute groups dynamically in one call
   useEffect(() => {
@@ -416,6 +426,7 @@ function ShopInner({ heading, subheading }: { heading: string; subheading: strin
   const allClear = () => {
     setSelectedAttrs({});
     setSelectedCategories([]);
+    updateCategoryUrl([]);
     setSliderMin(absoluteMin);
     setSliderMax(absoluteMax);
     setPage(1);
@@ -488,11 +499,13 @@ function ShopInner({ heading, subheading }: { heading: string; subheading: strin
                     <input type="checkbox" className="nf-hidden-input" checked={checked}
                       onChange={() => {
                         setOpenFilters(p => ({ ...p, category: true }));
-                        setSelectedCategories(prev =>
-                          prev.includes(cat.category_slug)
+                        setSelectedCategories(prev => {
+                          const next = prev.includes(cat.category_slug)
                             ? prev.filter(c => c !== cat.category_slug)
-                            : [...prev, cat.category_slug]
-                        );
+                            : [...prev, cat.category_slug];
+                          updateCategoryUrl(next);
+                          return next;
+                        });
                       }}
                       aria-label={cat.category_name} />
                     <span className="nf-option-text" style={isChild ? { fontSize: 12, color: '#6b7280' } : undefined}>
@@ -713,7 +726,11 @@ function ShopInner({ heading, subheading }: { heading: string; subheading: strin
                   <span key={slug} className="csp-chip">
                     {cat.category_name}
                     <button className="csp-chip-x"
-                      onClick={() => setSelectedCategories(prev => prev.filter(c => c !== slug))}
+                      onClick={() => {
+                        const next = selectedCategories.filter(c => c !== slug);
+                        setSelectedCategories(next);
+                        updateCategoryUrl(next);
+                      }}
                       aria-label={`Remove ${cat.category_name}`}>x</button>
                   </span>
                 ) : null;

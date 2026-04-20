@@ -151,7 +151,7 @@ function AccordionItem({ label, content }: { label: string; content: string }) {
           <polyline points="6 9 12 15 18 9"/>
         </svg>
       </button>
-      {open && <div className="cpd-acc-body"><p>{content}</p></div>}
+      {open && <div className="cpd-acc-body" dangerouslySetInnerHTML={{ __html: content }} />}
     </div>
   );
 }
@@ -296,13 +296,13 @@ function ProductDetailsInner({ id, slug }: { id?: string; slug?: string }) {
     ? variationDescHtml
     : sanitizeHtml(product.description || product.short_description || '', { normalizeSpecLists: false });
   const accordionItems = [
-    { id: 'acc1', label: 'Features', content: htmlToText(product.product_features || '') },
-    { id: 'acc2', label: 'Material', content: htmlToText(product.product_material || '') },
-    { id: 'acc3', label: 'Collection', content: htmlToText(product.product_collection || '') },
-    { id: 'acc4', label: 'Included', content: htmlToText(product.product_included || '') },
-    { id: 'acc5', label: 'Care', content: htmlToText(product.product_care || '') },
-    { id: 'acc6', label: 'More Info', content: htmlToText(product.product_more_info || '') },
-  ];
+    { id: 'acc1', label: 'Features',   content: sanitizeHtml(product.product_features   || '', { normalizeSpecLists: false }) },
+    { id: 'acc2', label: 'Material',   content: sanitizeHtml(product.product_material   || '', { normalizeSpecLists: false }) },
+    { id: 'acc3', label: 'Collection', content: sanitizeHtml(product.product_collection || '', { normalizeSpecLists: false }) },
+    { id: 'acc4', label: 'Included',   content: sanitizeHtml(product.product_included   || '', { normalizeSpecLists: false }) },
+    { id: 'acc5', label: 'Care',       content: sanitizeHtml(product.product_care       || '', { normalizeSpecLists: false }) },
+    { id: 'acc6', label: 'More Info',  content: sanitizeHtml(product.product_more_info  || '', { normalizeSpecLists: false }) },
+  ].filter(item => item.content.trim());
 
   const anyInStock = product.variations.length
     ? product.variations.some(isVariationInStock)
@@ -1073,21 +1073,174 @@ const baseCss = `
 .cpd-trust-label { font-family: var(--font-body); font-size: 12px; font-weight: 600; color: var(--cpd-text); line-height: 1.3; }
 .cpd-trust-sub   { font-family: var(--font-body); font-size: 11px; color: var(--cpd-muted); }
 
-/* Accordion */
+/* ── Accordion ─────────────────────────────────────────────────────────────── */
 .cpd-accordion { margin-top: 16px; border-top: 1px solid var(--cpd-border); }
 .cpd-acc-item { border-bottom: 1px solid var(--cpd-border); }
 .cpd-acc-header {
   width: 100%; display: flex; align-items: center; justify-content: space-between;
-  padding: 13px 0; background: none; border: none; cursor: pointer; text-align: left;
+  padding: 14px 0; background: none; border: none; cursor: pointer; text-align: left;
+  gap: 12px;
 }
+.cpd-acc-header:hover .cpd-acc-label { color: var(--cpd-brand); }
 .cpd-acc-label {
-  font-family: var(--font-body); font-size: 15px; font-weight: 400;
-  color: var(--cpd-text);
+  font-family: var(--font-body); font-size: 14px; font-weight: 600;
+  color: var(--cpd-text); letter-spacing: 0.01em;
 }
-.cpd-acc-chevron { flex-shrink: 0; color: var(--cpd-muted); transition: transform 0.2s; }
+.cpd-acc-chevron { flex-shrink: 0; color: var(--cpd-muted); transition: transform 0.25s ease; }
 .cpd-acc-item.open .cpd-acc-chevron { transform: rotate(180deg); }
-.cpd-acc-body { padding: 0 0 14px; }
-.cpd-acc-body p { font-family: var(--font-body); font-size: 13.5px; line-height: 1.7; color: #555; margin: 0; }
+
+/* ── Accordion body — all CKEditor output tags ─────────────────────────────── */
+.cpd-acc-body {
+  padding: 0 0 18px;
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  line-height: 1.75;
+  color: #555;
+}
+
+/* Paragraphs */
+.cpd-acc-body p {
+  margin: 0 0 10px;
+  font-size: 13.5px;
+  line-height: 1.75;
+  color: #555;
+}
+.cpd-acc-body p:last-child { margin-bottom: 0; }
+
+/* Bold / Italic — override Meyer reset */
+.cpd-acc-body strong, .cpd-acc-body b { font-weight: 700 !important; color: #333; }
+.cpd-acc-body em, .cpd-acc-body i { font-style: italic !important; }
+
+/* Headings */
+.cpd-acc-body h1, .cpd-acc-body h2,
+.cpd-acc-body h3, .cpd-acc-body h4,
+.cpd-acc-body h5, .cpd-acc-body h6 {
+  font-family: var(--font-head);
+  font-weight: 600;
+  color: var(--cpd-text);
+  line-height: 1.4;
+  margin: 14px 0 8px;
+}
+.cpd-acc-body h1 { font-size: 20px; }
+.cpd-acc-body h2 { font-size: 17px; }
+.cpd-acc-body h3 { font-size: 15px; }
+.cpd-acc-body h4, .cpd-acc-body h5, .cpd-acc-body h6 { font-size: 13.5px; }
+
+/* Lists — override global list-style:none resets */
+.cpd-acc-body ul,
+.cpd-acc-body ol {
+  margin: 0 0 10px !important;
+  padding-left: 22px !important;
+  font-size: 13.5px;
+  line-height: 1.75;
+  color: #555;
+}
+.cpd-acc-body ul { list-style: disc outside !important; }
+.cpd-acc-body ol { list-style: decimal outside !important; }
+.cpd-acc-body ul ul { list-style: circle outside !important; margin: 4px 0 4px !important; }
+.cpd-acc-body ol ol { list-style: lower-alpha outside !important; margin: 4px 0 4px !important; }
+.cpd-acc-body li {
+  display: list-item !important;
+  list-style-type: inherit !important;
+  margin-bottom: 5px;
+  color: #555;
+}
+.cpd-acc-body li:last-child { margin-bottom: 0; }
+.cpd-acc-body li::marker { color: var(--cpd-text); }
+
+/* Links */
+.cpd-acc-body a {
+  color: var(--cpd-brand);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: opacity 0.15s;
+}
+.cpd-acc-body a:hover { opacity: 0.75; }
+
+/* Blockquote */
+.cpd-acc-body blockquote {
+  border-left: 3px solid var(--cpd-brand);
+  margin: 10px 0;
+  padding: 8px 14px;
+  background: #f9f9f9;
+  border-radius: 0 4px 4px 0;
+  color: #666;
+  font-style: italic;
+}
+.cpd-acc-body blockquote p { margin: 0; color: #666; }
+
+/* Images */
+.cpd-acc-body img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 4px;
+  margin: 10px 0;
+}
+.cpd-acc-body figure { margin: 10px 0; }
+.cpd-acc-body figure.media,
+.cpd-acc-body oembed { display: none !important; }
+.cpd-acc-body figcaption {
+  font-size: 12px;
+  color: var(--cpd-muted);
+  text-align: center;
+  margin-top: 4px;
+}
+
+/* Tables */
+.cpd-acc-body table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin: 10px 0;
+  overflow-x: auto;
+  display: block;
+}
+.cpd-acc-body table th,
+.cpd-acc-body table td {
+  border: 1px solid var(--cpd-border);
+  padding: 8px 12px;
+  text-align: left;
+  color: #555;
+  white-space: nowrap;
+}
+.cpd-acc-body table th {
+  background: #f5f5f5;
+  font-weight: 700;
+  color: #333;
+}
+.cpd-acc-body table tr:nth-child(even) td { background: #fafafa; }
+
+/* Code */
+.cpd-acc-body code {
+  font-family: 'Courier New', monospace;
+  font-size: 12.5px;
+  background: #f3f4f6;
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: #c0392b;
+}
+.cpd-acc-body pre {
+  background: #f3f4f6;
+  padding: 12px 14px;
+  border-radius: 4px;
+  overflow-x: auto;
+  font-size: 12.5px;
+  margin: 10px 0;
+}
+
+/* Horizontal rule */
+.cpd-acc-body hr {
+  border: none;
+  border-top: 1px solid var(--cpd-border);
+  margin: 14px 0;
+}
+
+/* ── Also fix bold/italic in description + short description ─────────────── */
+.cpd-desc-text strong, .cpd-desc-text b,
+.cpd-short-desc strong, .cpd-short-desc b { font-weight: 700 !important; }
+.cpd-desc-text em, .cpd-desc-text i,
+.cpd-short-desc em, .cpd-short-desc i { font-style: italic !important; }
 
 /* Sticky bar */
 .cpd-sticky-bar {
