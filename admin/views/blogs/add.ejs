@@ -226,17 +226,21 @@
 
                           <div class="mb-3">
                             <label class="form-label fw-semibold">Published Date</label>
-                            <input type="datetime-local" name="post_date" class="form-control" value="<%= isEdit && b.post_date 
-                            ? new Date(b.post_date).toISOString().slice(0,16) 
-                            : new Date().toISOString().slice(0,16) %>" />
+                            <% let publishValue=new Date(); if (isEdit && b.post_date) { const d=new Date(b.post_date);
+                              if (!isNaN(d.getTime())) { publishValue=d; } } %>
+
+                              <input type="datetime-local" name="post_date" class="form-control"
+                                value="<%= publishValue.toISOString().slice(0,16) %>" />
                           </div>
 
                           <div class="mb-3">
                             <label class="form-label fw-semibold">Modified Date</label>
-                            <input type="datetime-local" name="post_modified" class="form-control"
-                              value="<%= isEdit && b.post_modified ? new Date(b.post_modified).toISOString().slice(0,16) : new Date().toISOString().slice(0,16) %>"
-                              disabled />
-                            <small class="text-muted">Auto-updated on save</small>
+                            <% let modifiedValue=new Date(); if (isEdit && b.post_modified) { const d=new
+                              Date(b.post_modified); if (!isNaN(d.getTime())) { modifiedValue=d; } } %>
+
+                              <input type="datetime-local" name="post_modified" class="form-control"
+                                value="<%= modifiedValue.toISOString().slice(0,16) %>" disabled />
+                              <small class="text-muted">Auto-updated on save</small>
                           </div>
                         </div>
                       </div>
