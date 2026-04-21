@@ -46,12 +46,12 @@ function ShopProductCard({ product, idx }: { product: Product; idx: number }) {
 
   const priceMin = Number(product.price_min ?? 0);
   const priceMax = Number(product.price_max ?? product.price_min ?? 0);
-  const showRange = priceMax > priceMin;
+  const showRange = priceMin > 0 && priceMax > priceMin;
   const salePrice = product._sale_price ? Number(product._sale_price) : null;
   const regularPrice = product._regular_price ? Number(product._regular_price) : null;
-  const displayPrice = salePrice ?? regularPrice ?? priceMin;
-  const isOnSale = !showRange && salePrice !== null;
-  const priceStr = showRange ? formatPriceRange(priceMin, priceMax) : formatPrice(displayPrice);
+  const displayPrice = salePrice ?? regularPrice ?? (priceMin > 0 ? priceMin : null);
+  const isOnSale = !showRange && salePrice !== null && salePrice > 0;
+  const priceStr = showRange ? formatPriceRange(priceMin, priceMax) : (displayPrice ? formatPrice(displayPrice) : '');
   const discountPercent = showRange ? null : getDiscountPercent(salePrice, regularPrice);
 
   return (
@@ -60,8 +60,6 @@ function ShopProductCard({ product, idx }: { product: Product; idx: number }) {
       style={{ animationDelay: `${Math.min(idx * 40, 400)}ms` }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      onTouchStart={() => setHovered(true)}
-      onTouchEnd={() => setTimeout(() => setHovered(false), 600)}
     >
       <div className="csp-img-wrap">
         <Link href={productHref} tabIndex={-1} aria-hidden="true">
@@ -90,7 +88,7 @@ function ShopProductCard({ product, idx }: { product: Product; idx: number }) {
               addItem({
                 id: product.ID,
                 title: product.title,
-                price: displayPrice,
+                price: displayPrice ?? 0,
                 image: getImageUrl(product.thumbnail_url),
                 inStock: product.stock_status === 'instock' || product.stock_status === 'onbackorder',
               });
