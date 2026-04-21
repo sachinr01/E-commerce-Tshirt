@@ -1,13 +1,5 @@
 const db = require('../config/db');
 
-// ─────────────────────────────────────────────────────────────────────────────
-// HELPERS
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Parse a comma-separated varchar list (include_products, exclude_products,
- * include_categories, exclude_categories) into an array of integers.
- */
 function parseIdList(str) {
   if (!str) return [];
   return String(str)
@@ -16,13 +8,7 @@ function parseIdList(str) {
     .filter((n) => Number.isFinite(n) && n > 0);
 }
 
-/**
- * Shared cart-reading helper. Resolves the correct cart rows for both
- * logged-in users (by user_id) and guests (by cookie_id or session_id).
- *
- * Accepts the pool or a transaction connection so it can be reused in both
- * apply/active (pool) and validateAndLockCoupon (transaction conn).
- */
+
 async function readCartItems(req, conn) {
   const { getCartIdentity } = require('./cartController');
   const userId = req.sessionData?.user?.id || 0;
@@ -48,18 +34,7 @@ async function readCartItems(req, conn) {
   return rows || [];
 }
 
-/**
- * Core coupon validation — checks every rule in tbl_coupons against the
- * current context. Called at both apply-time and order-placement time.
- *
- * When called inside a DB transaction pass the transaction `conn`;
- * at apply-time it is fine to pass the pool (`db`).
- *
- * The FOR UPDATE lock on tbl_coupons_usage is only effective inside a
- * transaction — when called at apply-time it still runs the COUNT check
- * (no lock) which is fine for UX feedback; the hard lock happens at
- * order-placement time via validateAndLockCoupon().
- */
+
 async function validateCouponRules(coupon, userId, cartTotal, productIds, conn, cartItems) {
   // Guard: never allow a coupon to be applied to an empty cart
   if (!productIds || productIds.length === 0) {
@@ -97,10 +72,7 @@ async function validateCouponRules(coupon, userId, cartTotal, productIds, conn, 
   }
 
   // ── 3 & 4. minimum_spend / maximum_spend ─────────────────────────────────
-  // NOTE: Intentionally checked AFTER eligibleSubtotal is computed below.
-  // Checking against cartTotal here would allow a user to game the threshold
-  // with ineligible items (e.g. add a ₹95 ineligible item to meet a ₹100
-  // minimum on a category-restricted coupon).
+
   const minSpend          = Number(coupon.minimum_spend)  || 0;
   const maxSpend          = Number(coupon.maximum_spend)  || 0;
   const includeProducts   = parseIdList(coupon.include_products);
@@ -123,10 +95,8 @@ async function validateCouponRules(coupon, userId, cartTotal, productIds, conn, 
   }
 
   // ── 5. include_products — gate check ─────────────────────────────────────
-  // If include_products is set, at least one cart product must be in that list,
-  // otherwise the coupon has no eligible products at all.
-  // (The actual per-product filtering happens in the eligibility block below.)
-  if (includeProducts.length > 0) {
+
+  if (includeProducts.length > 0 && includeCategories.length === 0) {
     const hasMatch = productIds.some((pid) => includeProducts.includes(pid));
     if (!hasMatch) {
       return {
@@ -138,24 +108,7 @@ async function validateCouponRules(coupon, userId, cartTotal, productIds, conn, 
   }
 
   // ── 6–8. Unified per-product eligibility ─────────────────────────────────
-  //
-  // Both product-level and category-level exclusions are treated as FILTERS,
-  // not poison pills. A product is simply skipped from the discount base;
-  // it does NOT block the coupon for other eligible products in the cart.
-  //
-  // Priority order per product:
-  //   (a) In include_products                              → ALWAYS eligible
-  //   (b) In exclude_products                              → NOT eligible (skipped)
-  //   (c) Category in exclude_categories                   → NOT eligible (skipped)
-  //   (d) include_categories set, category not in list     → NOT eligible (skipped)
-  //   (e) No restrictions apply                            → ELIGIBLE
-  //
-  // The coupon is only blocked entirely when ZERO products pass eligibility.
-  // Otherwise, the discount is calculated on the eligible subtotal only.
-  //
-  // IMPORTANT: cartItems is REQUIRED whenever any eligibility rule is active.
-  // We never guess eligible subtotal via proportional math — that would give
-  // wrong discounts when item prices differ (e.g. a ₹5000 mug + ₹200 coaster).
+
 
   const hasAnyProductRule =
     includeProducts.length   > 0 ||
@@ -194,7 +147,12 @@ async function validateCouponRules(coupon, userId, cartTotal, productIds, conn, 
         return cats.some((cid) => includeCategories.includes(cid));
       }
 
-      // (e) No restrictions → eligible
+      
+      if (includeProducts.length > 0) {
+        return false;
+      }
+
+      // (f) No restrictions at all → eligible
       return true;
     });
 
@@ -212,9 +170,7 @@ async function validateCouponRules(coupon, userId, cartTotal, productIds, conn, 
       .reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0), 0);
   }
 
-  // ── 3 & 4. minimum_spend / maximum_spend — checked against eligibleSubtotal
-  // Both thresholds are evaluated against the eligible subtotal only, so
-  // ineligible items in the cart cannot be used to satisfy the minimum.
+
   if (minSpend > 0 && eligibleSubtotal < minSpend) {
     return {
       ok: false,
@@ -233,12 +189,7 @@ async function validateCouponRules(coupon, userId, cartTotal, productIds, conn, 
   return { ok: true, eligibleSubtotal };
 }
 
-/**
- * Compute the discount rupee amount for a coupon.
- *
- * Discount is computed on the eligible subtotal (category/product-filtered
- * items only). Falls back to full cartTotal when no filter is in effect.
- */
+
 function calculateDiscount(coupon, cartTotal, eligibleSubtotal) {
   const base   = (eligibleSubtotal !== undefined && eligibleSubtotal !== null)
     ? eligibleSubtotal
@@ -259,17 +210,6 @@ function calculateDiscount(coupon, cartTotal, eligibleSubtotal) {
   return 0;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Shared SQL fragment for coupon validity.
-//
-// Expiry is checked entirely in SQL to avoid JavaScript's Invalid Date bug
-// with MySQL's '0000-00-00 00:00:00' sentinel value (which new Date() would
-// parse as Invalid Date, causing JS comparisons to silently pass and letting
-// expired coupons through).
-//
-// Column is NOT NULL in our schema so the IS NULL guard is intentionally
-// omitted; the zero-date sentinel handles "no expiry" rows.
-// ─────────────────────────────────────────────────────────────────────────────
 const COUPON_VALID_SQL = `
   coupon_status = 'publish'
   AND (coupon_expiry_date = '0000-00-00 00:00:00' OR coupon_expiry_date >= NOW())
@@ -350,9 +290,7 @@ const active = async (req, res) => {
   }
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// POST /store/api/coupon/apply
-// ─────────────────────────────────────────────────────────────────────────────
+
 const apply = async (req, res) => {
   const rawCode = String(req.body.coupon_code || '').trim();
   if (!rawCode) {
@@ -360,9 +298,7 @@ const apply = async (req, res) => {
   }
 
   try {
-    // Expiry check is done entirely in SQL — avoids the Invalid Date JS bug
-    // with '0000-00-00 00:00:00'. An expired coupon returns no row, giving
-    // a single clean "Invalid or expired coupon code." message.
+   
     const [[coupon]] = await db.query(
       `SELECT *
        FROM tbl_coupons
@@ -383,10 +319,7 @@ const apply = async (req, res) => {
     try {
       cartItems = await readCartItems(req, db);
     } catch (_) {
-      // Cart unreadable — cartItems stays []. If this coupon has any product
-      // or category rules, validateCouponRules will return a 400 ("Unable to
-      // verify coupon eligibility") rather than guessing. This is intentional:
-      // we never grant a discount when cart state is unknown.
+     
     }
 
     const cartTotal  = cartItems.reduce((sum, i) => sum + Number(i.price || 0) * Number(i.quantity || 0), 0);
@@ -425,21 +358,15 @@ const apply = async (req, res) => {
   }
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// POST /store/api/coupon/remove
-// ─────────────────────────────────────────────────────────────────────────────
 const remove = (req, res) => {
   delete req.sessionData.appliedCoupon;
   req.touchSession();
   return res.json({ success: true, message: 'Coupon removed.' });
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+
 // validateAndLockCoupon  (used inside a DB transaction in orderController.js)
-//
-// Re-validates all rules with FOR UPDATE locking to prevent race conditions.
-// Must be called BEFORE inserting the order row, inside the same transaction.
-// ─────────────────────────────────────────────────────────────────────────────
+
 async function validateAndLockCoupon(conn, sessionCoupon, userId, cartTotal, productIds, cartItems) {
   if (!sessionCoupon) return { ok: true, discount: 0 };
 
