@@ -114,8 +114,12 @@ async function queryProductList(extraWhere = '', orderBy = 'p.menu_order ASC', l
                     LIMIT 1
                 ) AS DECIMAL(10,2)))
                 FROM tbl_products p2
-                WHERE (p2.parent_id = p.ID AND p2.product_type = 'product_variation')
-                   OR (p2.ID = p.ID AND p2.product_type = 'product')
+                WHERE
+                    CASE
+                        WHEN EXISTS (SELECT 1 FROM tbl_products v WHERE v.parent_id = p.ID AND v.product_type = 'product_variation')
+                        THEN p2.parent_id = p.ID AND p2.product_type = 'product_variation'
+                        ELSE p2.ID = p.ID AND p2.product_type = 'product'
+                    END
             ) AS price_min,
             (
                 SELECT MAX(CAST((
@@ -128,8 +132,12 @@ async function queryProductList(extraWhere = '', orderBy = 'p.menu_order ASC', l
                     LIMIT 1
                 ) AS DECIMAL(10,2)))
                 FROM tbl_products p2
-                WHERE (p2.parent_id = p.ID AND p2.product_type = 'product_variation')
-                   OR (p2.ID = p.ID AND p2.product_type = 'product')
+                WHERE
+                    CASE
+                        WHEN EXISTS (SELECT 1 FROM tbl_products v WHERE v.parent_id = p.ID AND v.product_type = 'product_variation')
+                        THEN p2.parent_id = p.ID AND p2.product_type = 'product_variation'
+                        ELSE p2.ID = p.ID AND p2.product_type = 'product'
+                    END
             ) AS price_max,
             (
                 SELECT pm.meta_value
@@ -798,16 +806,32 @@ const getCategoryProducts = async (req, res) => {
                 (SELECT pm.meta_value FROM tbl_productmeta pm WHERE pm.product_id = p.ID AND pm.meta_key = '_sale_price'    ORDER BY pm.meta_id DESC LIMIT 1) AS _sale_price,
                 (SELECT pm.meta_value FROM tbl_productmeta pm WHERE pm.product_id = p.ID AND pm.meta_key = '_sku'           ORDER BY pm.meta_id DESC LIMIT 1) AS sku,
                 (
-                    SELECT MIN(CAST(pm2.meta_value AS DECIMAL(10,2)))
+                    SELECT MIN(CAST((
+                        SELECT pm2.meta_value FROM tbl_productmeta pm2
+                        WHERE pm2.product_id = p2.ID AND pm2.meta_key = '_price' AND pm2.meta_value != ''
+                        ORDER BY pm2.meta_id DESC LIMIT 1
+                    ) AS DECIMAL(10,2)))
                     FROM tbl_products p2
-                    JOIN tbl_productmeta pm2 ON pm2.product_id = p2.ID AND pm2.meta_key = '_price' AND pm2.meta_value != ''
-                    WHERE p2.ID = p.ID OR (p2.parent_id = p.ID AND p2.product_type = 'product_variation')
+                    WHERE
+                        CASE
+                            WHEN EXISTS (SELECT 1 FROM tbl_products v WHERE v.parent_id = p.ID AND v.product_type = 'product_variation')
+                            THEN p2.parent_id = p.ID AND p2.product_type = 'product_variation'
+                            ELSE p2.ID = p.ID AND p2.product_type = 'product'
+                        END
                 ) AS price_min,
                 (
-                    SELECT MAX(CAST(pm2.meta_value AS DECIMAL(10,2)))
+                    SELECT MAX(CAST((
+                        SELECT pm2.meta_value FROM tbl_productmeta pm2
+                        WHERE pm2.product_id = p2.ID AND pm2.meta_key = '_price' AND pm2.meta_value != ''
+                        ORDER BY pm2.meta_id DESC LIMIT 1
+                    ) AS DECIMAL(10,2)))
                     FROM tbl_products p2
-                    JOIN tbl_productmeta pm2 ON pm2.product_id = p2.ID AND pm2.meta_key = '_price' AND pm2.meta_value != ''
-                    WHERE p2.ID = p.ID OR (p2.parent_id = p.ID AND p2.product_type = 'product_variation')
+                    WHERE
+                        CASE
+                            WHEN EXISTS (SELECT 1 FROM tbl_products v WHERE v.parent_id = p.ID AND v.product_type = 'product_variation')
+                            THEN p2.parent_id = p.ID AND p2.product_type = 'product_variation'
+                            ELSE p2.ID = p.ID AND p2.product_type = 'product'
+                        END
                 ) AS price_max,
                 (
                     CASE

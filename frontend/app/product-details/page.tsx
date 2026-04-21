@@ -482,9 +482,9 @@ function ProductDetailsInner({ id, slug }: { id?: string; slug?: string }) {
               <>
                 <span className="cpd-old-price">{formatPrice(displayMRP)}</span>
                 <span className="cpd-price sale">{formatPrice(displayPrice)}</span>
-                {displayMRP && displayPrice && (
+                {displayMRP != null && displayMRP > 0 && displayPrice != null && displayPrice > 0 && (
                   <span className="cpd-save-badge">
-                    {getDiscountPercent(Number(displayPrice), displayMRP)}% off
+                    {(() => { const d = getDiscountPercent(displayPrice, displayMRP); return d ? `${d}% off` : null; })()}
                   </span>
                 )}
               </>

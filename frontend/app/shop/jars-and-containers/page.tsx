@@ -92,12 +92,12 @@ function ProductCard({ product, idx }: { product: Product; idx: number }) {
   const href = `/shop/product/${toSlug(product.slug || product.title)}`;
   const priceMin = Number(product.price_min ?? 0);
   const priceMax = Number(product.price_max ?? product.price_min ?? 0);
-  const showRange = priceMax > priceMin;
+  const showRange = priceMin > 0 && priceMax > priceMin;
   const salePrice    = product._sale_price    ? Number(product._sale_price)    : null;
   const regularPrice = product._regular_price ? Number(product._regular_price) : null;
-  const displayPrice = salePrice ?? regularPrice ?? priceMin;
-  const isOnSale  = !showRange && salePrice !== null;
-  const priceStr  = showRange ? formatPriceRange(priceMin, priceMax) : formatPrice(displayPrice);
+  const displayPrice = salePrice ?? regularPrice ?? (priceMin > 0 ? priceMin : null);
+  const isOnSale  = !showRange && salePrice !== null && salePrice > 0;
+  const priceStr  = showRange ? formatPriceRange(priceMin, priceMax) : (displayPrice ? formatPrice(displayPrice) : '');
   const discount  = showRange ? null : getDiscountPercent(salePrice, regularPrice);
 
   return (
@@ -117,7 +117,7 @@ function ProductCard({ product, idx }: { product: Product; idx: number }) {
         </div>
         <button className={`csp-wishlist${inWishlist ? ' active' : ''}`}
           aria-label={inWishlist ? `Remove ${product.title} from wishlist` : `Add ${product.title} to wishlist`}
-          onClick={e => { e.preventDefault(); inWishlist ? removeItem(product.ID) : addItem({ id: product.ID, title: product.title, price: displayPrice, image: getImageUrl(product.thumbnail_url), inStock: product.stock_status === 'instock' || product.stock_status === 'onbackorder' }); }}>
+          onClick={e => { e.preventDefault(); inWishlist ? removeItem(product.ID) : addItem({ id: product.ID, title: product.title, price: displayPrice ?? 0, image: getImageUrl(product.thumbnail_url), inStock: product.stock_status === 'instock' || product.stock_status === 'onbackorder' }); }}>
           <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"
             fill={inWishlist ? '#e74c3c' : 'none'} stroke={inWishlist ? '#e74c3c' : 'currentColor'} strokeWidth="1.8">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
