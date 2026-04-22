@@ -159,10 +159,17 @@
                                           is set.</small>
                                       </div>
                                       <div class="settings-field">
+
                                         <div class="mb-3">
-                                          <div class="border rounded p-3 text-center" id="mainImagePreview"
-                                            style="min-height:150px;cursor:pointer;"
-                                            onclick="document.getElementById('PlaceholderImage').click()">
+                                          <div class="border rounded p-3 text-center" id="placeholderImagePreview"
+                                            style="min-height:150px;cursor:pointer;" onclick="openMedia({
+                                              urlInput: 'placeholder_image',
+                                              titleInput: 'placeholder_image_title',
+                                              altInput: 'placeholder_image_alt',
+                                              preview: 'placeholderImagePreview',
+                                              multiple: false
+                                            })">
+
                                             <% if (o.placeholder_image) { %>
                                               <img src="<%= o.placeholder_image %>" class="img-fluid rounded"
                                                 style="max-height:150px;" />
@@ -170,13 +177,31 @@
                                                 <div>
                                                   <i data-feather="image" style="width:48px;height:48px;"
                                                     class="text-muted mb-2 d-block mx-auto"></i>
-                                                  <p class="text-muted small mb-0">Click to upload Placeholder image</p>
+                                                  <p class="text-muted small mb-0">Click to select placeholder image</p>
                                                 </div>
                                                 <% } %>
                                           </div>
-                                          <input type="file" name="placeholder_image" id="PlaceholderImage"
-                                            class="d-none" accept="image/*" onchange="previewMainImage(this)" />
+
+                                          <% if (o.placeholder_image) { %>
+                                            <button type="button" id="removePlaceholderImagebtn"
+                                              class="btn btn-link btn-sm text-danger p-0">
+                                              <i data-feather="trash-2" class="feather-sm me-1"></i>
+                                              Remove placeholder image
+                                            </button>
+                                            <% } %>
+
+                                              <input type="hidden" id="placeholder_image" name="placeholder_image"
+                                                value="<%= o.placeholder_image || '' %>">
+
+                                              <input type="hidden" id="placeholder_image_title"
+                                                name="placeholder_image_title"
+                                                value="<%= o.placeholder_image_title || '' %>">
+
+                                              <input type="hidden" id="placeholder_image_alt"
+                                                name="placeholder_image_alt"
+                                                value="<%= o.placeholder_image_alt || '' %>">
                                         </div>
+
                                       </div>
                                     </div>
 
@@ -809,6 +834,26 @@
                 };
                 reader.readAsDataURL(input.files[0]);
               }
+
+              document.addEventListener('click', function (e) {
+                if (e.target.closest('#removePlaceholderImagebtn')) {
+                  document.getElementById('placeholder_image').value = '';
+                  document.getElementById('placeholder_image_title').value = '';
+                  document.getElementById('placeholder_image_alt').value = '';
+
+                  document.getElementById('placeholderImagePreview').innerHTML = `
+                    <div>
+                      <i data-feather="image"
+                        style="width:48px;height:48px;"
+                        class="text-muted mb-2 d-block mx-auto"></i>
+                      <p class="text-muted small mb-0">Click to select placeholder image</p>
+                    </div>
+                  `;
+
+                  feather.replace();
+                  e.target.closest('button').remove();
+                }
+              });
             </script>
 
             <%- include('../partials/footer') %>
