@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import PdfDownloadButton from './PdfDownloadButton';
 
 type StaticPage = {
   slug: string;
@@ -13,11 +14,41 @@ type StaticPage = {
 
 type PageResult = { page?: StaticPage; error?: 'api' | 'not-found' };
 type PageListItem = { slug: string; title: string; date: string };
+type SidebarCategory = { label: string; count: string };
+
+const normalizeText = (value: string) =>
+  String(value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+
+const STATIC_CATEGORIES: SidebarCategory[] = [
+  { label: 'General', count: '08' },
+  { label: 'Updates', count: '04' },
+  { label: 'Stories', count: '06' },
+  { label: 'Guides', count: '03' },
+];
 
 const BASE_URL =
   process.env.SITE_URL ||
   process.env.NEXT_PUBLIC_SITE_URL ||
   'http://localhost:3001';
+
+const toTime = (value: string) => {
+  const time = new Date(value || '').getTime();
+  return Number.isFinite(time) ? time : 0;
+};
+
+const isDownloadablePolicyPage = (page: StaticPage | undefined, slug: string) => {
+  const haystack = normalizeText(`${page?.slug || ''} ${page?.title || ''} ${slug}`);
+  return (
+    haystack.includes('privacy policy') ||
+    haystack.includes('shipping policy') ||
+    haystack.includes('refund') ||
+    haystack.includes('return') ||
+    (haystack.includes('terms') && haystack.includes('conditions'))
+  );
+};
 
 const fetchPage = async (slug: string): Promise<PageResult> => {
   try {
@@ -36,7 +67,7 @@ const fetchPage = async (slug: string): Promise<PageResult> => {
 
 const fetchPageList = async (): Promise<PageListItem[]> => {
   try {
-    const res = await fetch(`${BASE_URL}/store/api/pages?limit=6`, {
+    const res = await fetch(`${BASE_URL}/store/api/pages?limit=10`, {
       cache: 'no-store',
     });
     if (!res.ok) return [];
@@ -63,7 +94,7 @@ export async function renderStaticPage(slug: string) {
           <p style={{ color: '#666', marginBottom: 22 }}>
             Please try again in a few minutes.
           </p>
-          <Link href="/" className="button fill uppercase">Back to Home</Link>
+          
         </div>
         <Footer />
       </>
@@ -76,16 +107,27 @@ export async function renderStaticPage(slug: string) {
 
   const page = result.page;
   const html = page?.content || '';
-  const showSidebar = slug === 'about-us' || slug === 'contact-us';
+  const featuredPages = pageList
+    .filter((p) => p.slug && p.slug !== slug)
+    .sort((a, b) => {
+      const aTime = toTime(a.date);
+      const bTime = toTime(b.date);
+      return bTime - aTime;
+    })
+    .slice(0, 4);
+  const showContactInfo = (page?.title || '').toLowerCase().includes('contact');
+  const showDownload = page ? isDownloadablePolicyPage(page, slug) : false;
 
   return (
     <>
       <style>{`
         .static-page { background: #f7f5f2; min-height: 70vh; }
         .static-body {
-          max-width: 1160px;
+          width: 100%;
+          max-width: 1318px;
           margin: 0 auto;
           padding: 40px 24px 72px;
+          box-sizing: border-box;
           display: grid;
           grid-template-columns: minmax(0, 1fr) 300px;
           gap: 36px;
@@ -121,6 +163,34 @@ export async function renderStaticPage(slug: string) {
         .static-content td { border: 1px solid #e6dfd6; padding: 8px 10px; text-align: left; }
         .static-content th { background: #f2ece4; font-weight: 700; }
         .static-back { display: inline-flex; gap: 8px; align-items: center; font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: #1a1a1a; text-decoration: none; border-bottom: 1.5px solid #1a1a1a; padding-bottom: 2px; margin-top: 16px; }
+        .static-actions {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 12px;
+          align-items: center;
+          justify-content: center;
+          margin: 14px 0 20px;
+        }
+        .static-download-btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 38px;
+          padding: 0 16px;
+          border-radius: 999px;
+          border: 1px solid #1a1a1a;
+          background: #1a1a1a;
+          color: #fff;
+          text-decoration: none;
+          font-size: 12px;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+        .static-download-btn:hover {
+          background: #fff;
+          color: #1a1a1a;
+        }
 
         .static-sidebar {
           display: flex;
@@ -218,7 +288,7 @@ export async function renderStaticPage(slug: string) {
 
       <Header />
       <div className="dima-main static-page">
-        <div className={`static-body ${showSidebar ? '' : 'no-sidebar'}`}>
+        <div className="static-body">
           <div>
             <nav className="static-breadcrumb">
               <Link href="/">Home</Link>
@@ -228,28 +298,39 @@ export async function renderStaticPage(slug: string) {
 
             <h1 className="static-title">{page?.title || 'Page'}</h1>
             {page?.date && <div className="static-date">{page.date}</div>}
-
             {page?.summary && (
               <div className="static-summary">{page.summary}</div>
             )}
 
             <div className="static-content" dangerouslySetInnerHTML={{ __html: html }} />
 
-            <Link href="/" className="static-back">Back to Home</Link>
+            {showDownload && (
+              <div className="static-actions">
+                <PdfDownloadButton page={page} />
+              </div>
+            )}
           </div>
 
           <aside className="static-sidebar">
             <div className="sidebar-box">
-              <h4 className="sidebar-title">Categories</h4>
-              <ul className="sidebar-list">
-                <li className="sidebar-item"><span>General</span><span>08</span></li>
-                <li className="sidebar-item"><span>Updates</span><span>04</span></li>
-                <li className="sidebar-item"><span>Stories</span><span>06</span></li>
-                <li className="sidebar-item"><span>Guides</span><span>03</span></li>
+              <h4 className="sidebar-title">Featured Posts</h4>
+              <ul className="featured-list">
+                {featuredPages.length > 0 ? (
+                  featuredPages.map((p) => (
+                    <li key={p.slug} className="featured-item">
+                      <Link href={`/${p.slug}`} className="featured-title">{p.title}</Link>
+                      <span className="featured-meta">
+                        By Admin <span>/</span> {p.date || '-'}
+                      </span>
+                    </li>
+                  ))
+                ) : (
+                  <li style={{ fontSize: 13, color: '#777' }}>No featured posts yet.</li>
+                )}
               </ul>
             </div>
 
-            {slug === 'contact-us' && (
+            {showContactInfo && (
               <div className="sidebar-box">
                 <h4 className="sidebar-title">Contact Info</h4>
                 <ul className="contact-info-list">
@@ -272,36 +353,14 @@ export async function renderStaticPage(slug: string) {
             )}
 
             <div className="sidebar-box">
-              <h4 className="sidebar-title">Featured Posts</h4>
-              <ul className="featured-list">
-                {pageList.length > 0 ? (
-                  pageList
-                    .filter((p) =>
-                      p.slug && p.slug !== slug && (p.slug === 'about-us' || p.slug === 'contact-us')
-                    )
-                    .sort((a, b) => {
-                      if (slug === 'contact-us') {
-                        if (a.slug === 'about-us') return -1;
-                        if (b.slug === 'about-us') return 1;
-                      }
-                      if (slug === 'about-us') {
-                        if (a.slug === 'contact-us') return -1;
-                        if (b.slug === 'contact-us') return 1;
-                      }
-                      return 0;
-                    })
-                    .slice(0, 4)
-                    .map((p) => (
-                    <li key={p.slug} className="featured-item">
-                      <Link href={`/${p.slug}`} className="featured-title">{p.title}</Link>
-                      <span className="featured-meta">
-                        By Admin <span>/</span> {p.date || '-'}
-                      </span>
-                    </li>
-                  ))
-                ) : (
-                  <li style={{ fontSize: 13, color: '#777' }}>No featured posts yet.</li>
-                )}
+              <h4 className="sidebar-title">Categories</h4>
+              <ul className="sidebar-list">
+                {STATIC_CATEGORIES.map((category) => (
+                  <li key={category.label} className="sidebar-item">
+                    <span>{category.label}</span>
+                    <span>{category.count}</span>
+                  </li>
+                ))}
               </ul>
             </div>
           </aside>
@@ -311,4 +370,3 @@ export async function renderStaticPage(slug: string) {
     </>
   );
 }
-

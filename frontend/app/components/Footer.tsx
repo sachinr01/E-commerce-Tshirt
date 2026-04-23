@@ -1,7 +1,68 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import TrustBar from "./TrustBar";
 
+type FooterPage = {
+  slug: string;
+  title: string;
+};
+
+const normalize = (value: string) =>
+  String(value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+
+const fetchFooterPages = async (): Promise<FooterPage[]> => {
+  try {
+    const res = await fetch('/store/api/pages?limit=25', {
+      cache: 'no-store',
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    if (!data?.success || !Array.isArray(data.data)) return [];
+    return data.data;
+  } catch {
+    return [];
+  }
+};
+
+const resolvePageHref = (
+  pages: FooterPage[],
+  matchers: string[],
+  fallback: string
+) => {
+  const page = pages.find((item) => {
+    const title = normalize(item.title);
+    return matchers.some((matcher) => title.includes(normalize(matcher)));
+  });
+
+  return `/${page?.slug || fallback}`;
+};
+
 export default function Footer() {
+  const [pages, setPages] = useState<FooterPage[]>([]);
+
+  useEffect(() => {
+    let active = true;
+
+    fetchFooterPages().then((nextPages) => {
+      if (active) setPages(nextPages);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const aboutHref = resolvePageHref(pages, ['about us', 'our story'], 'about-us');
+  const contactHref = resolvePageHref(pages, ['contact us', 'contact'], 'contact-us');
+  const returnsHref = resolvePageHref(pages, ['refund', 'return'], 'refund_returns');
+  const privacyHref = resolvePageHref(pages, ['privacy'], 'privacy-policy');
+  const termsHref = resolvePageHref(pages, ['terms', 'conditions'], 'terms-conditions');
+
   return (
     <footer className="okab-footer">
       <TrustBar />
@@ -13,14 +74,14 @@ export default function Footer() {
             <h4>About Us</h4>
             <ul className="footer-nav-list" role="list">
               <li><a href="#" className="link-faded">B2B Connect</a></li>
-              <li><Link href="/about-us" className="link-faded">Our Story</Link></li>
+              <li><Link href={aboutHref} className="link-faded">Our Story</Link></li>
               <li><a href="#" className="link-faded">FAQs</a></li>
             </ul>
           </div>
           <div>
             <h4>Need Help</h4>
             <ul className="footer-nav-list" role="list">
-              <li><Link href="/contact-us" className="link-faded">Contact Us</Link></li>
+              <li><Link href={contactHref} className="link-faded">Contact Us</Link></li>
               <li><Link href="/orders" className="link-faded">Track Order</Link></li>
               <li><a href="#" className="link-faded">Site Map</a></li>
             </ul>
@@ -28,9 +89,9 @@ export default function Footer() {
           <div>
             <h4>Company</h4>
             <ul className="footer-nav-list" role="list">
-              <li><Link href="/refund_returns" className="link-faded">Return &amp; Exchange</Link></li>
-              <li><Link href="/privacy-policy" className="link-faded">Privacy Policy</Link></li>
-              <li><Link href="/terms-conditions" className="link-faded">Terms Of Use</Link></li>
+              <li><Link href={returnsHref} className="link-faded">Return &amp; Exchange</Link></li>
+              <li><Link href={privacyHref} className="link-faded">Privacy Policy</Link></li>
+              <li><Link href={termsHref} className="link-faded">Terms Of Use</Link></li>
             </ul>
           </div>
           <div>
