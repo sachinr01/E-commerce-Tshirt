@@ -116,7 +116,7 @@ const STYLES = (
     .na-outer { max-width: 1360px; margin: 0 auto; padding: 60px 24px; }
     .na-section { margin-bottom: 56px; }
     .na-section-title { font-size: 22px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #111; margin: 0 0 28px; text-align: center; }
-    .na-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
+    .na-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 24px; }
     .na-card { display: flex; flex-direction: column; background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; color: inherit; cursor: pointer; transition: box-shadow 240ms ease, transform 240ms ease; animation: naFadeIn 0.4s ease both; will-change: transform; }
     .na-card:hover { box-shadow: 0 8px 28px rgba(0,0,0,0.10); transform: translateY(-3px); }
     @keyframes naFadeIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
@@ -149,7 +149,7 @@ const STYLES = (
     .na-view-all-wrap { text-align: center; margin-top: 8px; }
     .na-view-all-btn { display: inline-block; padding: 12px 36px; border: 2px solid #111; color: #111; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; text-decoration: none; transition: background 0.2s, color 0.2s; }
     .na-view-all-btn:hover { background: #111; color: #fff; }
-    @media (max-width: 1024px) { .na-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 1024px) { .na-grid { grid-template-columns: repeat(4, 1fr); } }
     @media (max-width: 768px) { .na-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; } .na-outer { padding: 40px 16px; } .na-section-title { font-size: 18px; } }
     @media (max-width: 480px) { .na-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; } .na-price { font-size: 13.5px; } .na-overlay { display: none; } .na-wishlist { opacity: 1; } .na-card:hover { transform: none; box-shadow: none; } }
   `}</style>
@@ -164,7 +164,7 @@ export default function NewArrivals() {
       .then(all => {
         const newest = [...all]
           .sort((a, b) => new Date(b.date_added).getTime() - new Date(a.date_added).getTime())
-          .slice(0, 4);
+          .slice(0, 5);
         setProducts(newest);
       })
       .catch(() => {})
@@ -189,8 +189,8 @@ export function BestSellers() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getProducts(new URLSearchParams({ sort_by: 'best-selling', limit: '4' }))
-      .then(all => setProducts(all.slice(0, 4)))
+    getProducts(new URLSearchParams({ sort_by: 'best-selling', limit: '5' }))
+      .then(all => setProducts(all.slice(0, 5)))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
