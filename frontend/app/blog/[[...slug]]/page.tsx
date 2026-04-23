@@ -127,9 +127,19 @@ export default async function BlogRoutePage({
 
   const latestPosts = latestFromApi.slice(0, BLOG_FEATURED_LIMIT);
 
-  const categoryName = blog.primary_category_name || null;
+  const primaryCategory = blog.categories?.find((category) => category.is_primary_category) || blog.categories?.[0];
+  const categoryName = blog.primary_category_name || primaryCategory?.category_name || null;
+  const categorySlug =
+    primaryCategory?.category_slug ||
+    (categoryName
+      ? categories.find(
+          (category) =>
+            category.category_name.toLowerCase() === categoryName.toLowerCase() ||
+            category.category_slug.toLowerCase().replace(/[^a-z0-9]+/g, '-') === categoryName.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+        )?.category_slug
+      : null);
   const categoryCrumb = categoryName
-    ? { label: categoryName }
+    ? { label: categoryName, ...(categorySlug ? { href: `/blog/${categorySlug}` } : {}) }
     : undefined;
 
   return (
@@ -138,8 +148,6 @@ export default async function BlogRoutePage({
       <BlogDetailView
         blog={blog}
         latestPosts={latestPosts}
-        backHref="/blog"
-        backLabel="Back to Blogs"
         categoryCrumb={categoryCrumb}
         categories={categories}
       />
