@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -11,6 +12,13 @@ type StaticPage = {
   content: string;
   summary: string;
   date: string;
+  // Page image — from tbl_media where media_type='blog_image' AND parent_id=page.ID
+  image?: string | null;
+  // SEO fields — dynamically stored in tbl_postmeta by admin
+  seo_meta_title?:       string | null;
+  seo_meta_description?: string | null;
+  seo_canonical_tag?:    string | null;
+  seo_meta_index?:       string | null; // 'yes' | 'no'  (default: 'yes')
 };
 
 type PageResult = { page?: StaticPage; error?: 'api' | 'not-found' };
@@ -66,6 +74,12 @@ const fetchPage = async (slug: string): Promise<PageResult> => {
   }
 };
 
+// Lightweight fetch used only by generateMetadata in [slug]/page.tsx
+export const fetchPageForMeta = async (slug: string): Promise<StaticPage | null> => {
+  const result = await fetchPage(slug);
+  return result.page ?? null;
+};
+
 const fetchPageList = async (): Promise<PageListItem[]> => {
   try {
     const res = await fetch(`${BASE_URL}/store/api/pages?limit=10`, {
@@ -90,9 +104,9 @@ export async function renderStaticPage(slug: string) {
     return (
       <>
         <Header />
-        <div className="dima-main" style={{ padding: '80px 20px', textAlign: 'center' }}>
-          <h2 style={{ marginBottom: 10 }}>We&apos;re having trouble loading this page.</h2>
-          <p style={{ color: '#666', marginBottom: 22 }}>
+        <div className="dima-main static-error-wrap">
+          <h2>We&apos;re having trouble loading this page.</h2>
+          <p>
             Please try again in a few minutes.
           </p>
           
@@ -128,11 +142,25 @@ export async function renderStaticPage(slug: string) {
             <nav className="static-breadcrumb">
               <Link href="/">Home</Link>
               <span>{'>'}</span>
-              <span style={{ color: '#555' }}>{page?.title || 'Page'}</span>
+              <span className="static-breadcrumb-current">{page?.title || 'Page'}</span>
             </nav>
 
             <h1 className="static-title">{page?.title || 'Page'}</h1>
             {page?.date && <div className="static-date">{page.date}</div>}
+
+            {/* Page image — uploaded via admin Page Image section, stored in tbl_media */}
+            {page?.image && (
+              <div className="static-page-image">
+                <Image
+                  src={page.image}
+                  alt={page.title || 'Page image'}
+                  width={860}
+                  height={450}
+                  priority
+                />
+              </div>
+            )}
+
             {page?.summary && (
               <div className="static-summary">{page.summary}</div>
             )}
@@ -160,7 +188,7 @@ export async function renderStaticPage(slug: string) {
                     </li>
                   ))
                 ) : (
-                  <li style={{ fontSize: 13, color: '#777' }}>No featured posts yet.</li>
+                  <li className="featured-empty">No featured posts yet.</li>
                 )}
               </ul>
             </div>
