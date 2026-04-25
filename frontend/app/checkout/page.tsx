@@ -9,6 +9,7 @@ import { useCart } from '../lib/cartContext';
 import { getRecentOrderAddresses, getActiveCoupon, applyCoupon, removeCoupon, type RecentOrderAddress, type AppliedCoupon } from '../lib/api';
 import { useAuth } from '../lib/authContext';
 import { formatPrice } from '../lib/price';
+import Script from 'next/script';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -172,7 +173,7 @@ export default function CheckoutPage() {
         // Server said coupon is no longer valid for the current cart — clear it
         setAppliedCoupon(null);
       }
-    }).catch(() => {});
+    }).catch(() => { });
   }, [items]); // <-- re-run on every cart change
 
   const handleApplyCoupon = async () => {
@@ -293,27 +294,27 @@ export default function CheckoutPage() {
     try {
       const shipping = {
         first_name: resolvedShipping.firstName,
-        last_name:  resolvedShipping.lastName,
-        phone:      resolvedShipping.phone,
-        address:    resolvedShipping.address1,
-        address_2:  resolvedShipping.address2,
-        city:       resolvedShipping.city,
-        state:      resolvedShipping.state,
-        postcode:   resolvedShipping.postcode,
-        company:    resolvedShipping.company,
+        last_name: resolvedShipping.lastName,
+        phone: resolvedShipping.phone,
+        address: resolvedShipping.address1,
+        address_2: resolvedShipping.address2,
+        city: resolvedShipping.city,
+        state: resolvedShipping.state,
+        postcode: resolvedShipping.postcode,
+        company: resolvedShipping.company,
       };
 
       const billing = {
         first_name: resolvedBilling.firstName,
-        last_name:  resolvedBilling.lastName,
-        email:      resolvedBilling.email,
-        phone:      resolvedBilling.phone,
-        address:    resolvedBilling.address1,
-        address_2:  resolvedBilling.address2,
-        city:       resolvedBilling.city,
-        state:      resolvedBilling.state,
-        postcode:   resolvedBilling.postcode,
-        company:    resolvedBilling.company,
+        last_name: resolvedBilling.lastName,
+        email: resolvedBilling.email,
+        phone: resolvedBilling.phone,
+        address: resolvedBilling.address1,
+        address_2: resolvedBilling.address2,
+        city: resolvedBilling.city,
+        state: resolvedBilling.state,
+        postcode: resolvedBilling.postcode,
+        company: resolvedBilling.company,
       };
 
       const res = await fetch('/store/api/orders/place', {
@@ -328,7 +329,54 @@ export default function CheckoutPage() {
           notes,
         }),
       });
+
       const data = await res.json();
+
+      if (data.razorpay) {
+
+        const options = {
+          key: data.key,
+          amount: data.amount,
+          currency: data.currency,
+          order_id: data.razorpayOrderId,
+
+          handler: async function (response) {
+
+            const verifyRes = await fetch('/store/api/orders/place', {
+              method: 'POST',
+              credentials: 'include',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                billing,
+                shipping,
+                payment_method: 'razorpay',
+                shipping_cost: 0,
+                notes,
+
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_signature: response.razorpay_signature
+              })
+            });
+
+            const verifyData = await verifyRes.json();
+
+            if (verifyData.success) {
+              router.push(`/checkout/success?order=${verifyData.data.orderId}`);
+            }
+          }
+        };
+
+        const razor = new window.Razorpay(options);
+        razor.open();
+
+        setPlacing(false);
+        return;
+      }
+
+
       if (!res.ok || !data.success) {
         // Coupon was invalidated server-side — show error in coupon box, not near Place Order
         if (data.coupon_error) {
@@ -345,7 +393,7 @@ export default function CheckoutPage() {
         throw new Error(data.message || 'Order placement failed.');
       }
 
-      try { await clearCart(); } catch {}
+      try { await clearCart(); } catch { }
       const orderId = data?.data?.orderId;
       router.push(orderId ? `/checkout/success?order=${orderId}` : '/checkout/success');
     } catch (err) {
@@ -434,14 +482,18 @@ export default function CheckoutPage() {
         @media (max-width: 480px) { .checkout-page .page-section { padding-top: 28px; padding-bottom: 28px; } .checkout-section-title { font-size: 20px; } .checkout-subsection-title { font-size: 18px; } .checkout-login-actions > * { width: 100%; text-align: center; } .checkout-terms label { align-items: flex-start !important; } }
       `}</style>
 
+      <Script
+        src="https://checkout.razorpay.com/v1/checkout.js"
+        strategy="afterInteractive"
+      />
       <Header />
       <div className="dima-main checkout-page">
-        <nav style={{ padding:'13px 48px', fontSize:13, color:'#888', display:'flex', gap:6, alignItems:'center', borderBottom:'1px solid #ececec', background:'#fff', flexWrap:'wrap' as const }}>
-          <Link href="/" style={{ color:'#888', textDecoration:'none' }}>Home</Link>
+        <nav style={{ padding: '13px 48px', fontSize: 13, color: '#888', display: 'flex', gap: 6, alignItems: 'center', borderBottom: '1px solid #ececec', background: '#fff', flexWrap: 'wrap' as const }}>
+          <Link href="/" style={{ color: '#888', textDecoration: 'none' }}>Home</Link>
           <span className="csp-bsep" aria-hidden="true">&gt;</span>
-          <Link href="/shop" style={{ color:'#888', textDecoration:'none' }}>Shop</Link>
+          <Link href="/shop" style={{ color: '#888', textDecoration: 'none' }}>Shop</Link>
           <span className="csp-bsep" aria-hidden="true">&gt;</span>
-          <span style={{ color:'#1c1c1c', fontWeight:500 }}>Checkout</span>
+          <span style={{ color: '#1c1c1c', fontWeight: 500 }}>Checkout</span>
         </nav>
 
         <section className="section">
@@ -505,7 +557,7 @@ export default function CheckoutPage() {
                         type="button"
                         className="button small fill uppercase"
                         style={{ minHeight: 46, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
-                      onClick={() => void handleApplyCoupon()}
+                        onClick={() => void handleApplyCoupon()}
                         disabled={couponLoading}
                       >
                         {couponLoading ? '...' : 'Apply'}
@@ -843,6 +895,18 @@ export default function CheckoutPage() {
                                 <span><strong>Credit/Debit Card</strong></span>
                               </label>
                             </div>
+                            <div className={`checkout-payment-item ${paymentMethod === 'razorpay' ? 'selected' : ''}`}>
+                              <label className="checkout-payment-label">
+                                <input
+                                  type="radio"
+                                  name="payment"
+                                  value="razorpay"
+                                  checked={paymentMethod === 'razorpay'}
+                                  onChange={(e) => setPaymentMethod(e.target.value)}
+                                />
+                                <span><strong>Razorpay</strong></span>
+                              </label>
+                            </div>
                           </div>
 
                           {showCardDetails && (
@@ -869,7 +933,7 @@ export default function CheckoutPage() {
                             </div>
                           )}
 
-                          <button type="submit" className="button fill uppercase checkout-submit" disabled={placing}>
+                          <button type="submit" style={{ marginTop: 20 }} className="button fill uppercase checkout-submit" disabled={placing}>
                             {placing ? 'Placing Order...' : 'Place Order'}
                           </button>
 

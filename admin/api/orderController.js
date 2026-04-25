@@ -1,13 +1,16 @@
-const db = require('../config/db');
-const https = require('https');
-const fs = require('fs');
-const path = require('path');
-const { getSessionUser } = require('./session');
-const { getCartIdentity } = require('./cartController');
-const { validateAndLockCoupon, recordCouponUsage } = require('./couponController');
+const db = require("../config/db");
+const https = require("https");
+const fs = require("fs");
+const path = require("path");
+const { getSessionUser } = require("./session");
+const { getCartIdentity } = require("./cartController");
+const {
+  validateAndLockCoupon,
+  recordCouponUsage,
+} = require("./couponController");
 
 const toStr = (val) => {
-  if (val === undefined || val === null) return '';
+  if (val === undefined || val === null) return "";
   return String(val).trim();
 };
 
@@ -21,47 +24,58 @@ const toInt = (val, fallback = 0) => {
   return Number.isFinite(n) ? n : fallback;
 };
 
-const BREVO_API_KEY = process.env.BREVO_API_KEY || process.env.SENDINBLUE_API_KEY || '';
-const BREVO_SENDER_EMAIL = process.env.BREVO_SENDER_EMAIL || 'rupeshmutkule2005@gmail.com';
-const BREVO_SENDER_NAME = process.env.BREVO_SENDER_NAME || 'COFFR';
-const BREVO_LOGO_URL = process.env.BREVO_LOGO_URL || '';
-const DEFAULT_LOGO_PATH = path.join(__dirname, '..', '..', 'frontend', 'public', 'images', 'logo-white.png');
-const DEFAULT_COUNTRY = process.env.DEFAULT_COUNTRY || 'India';
+const BREVO_API_KEY =
+  process.env.BREVO_API_KEY || process.env.SENDINBLUE_API_KEY || "";
+const BREVO_SENDER_EMAIL =
+  process.env.BREVO_SENDER_EMAIL || "rupeshmutkule2005@gmail.com";
+const BREVO_SENDER_NAME = process.env.BREVO_SENDER_NAME || "COFFR";
+const BREVO_LOGO_URL = process.env.BREVO_LOGO_URL || "";
+const DEFAULT_LOGO_PATH = path.join(
+  __dirname,
+  "..",
+  "..",
+  "frontend",
+  "public",
+  "images",
+  "logo-white.png",
+);
+const DEFAULT_COUNTRY = process.env.DEFAULT_COUNTRY || "India";
 
-let cachedLogoDataUri = '';
+let cachedLogoDataUri = "";
 
 function formatMoney(amount) {
   const value = Number(amount);
-  if (!Number.isFinite(value)) return '0.00';
+  if (!Number.isFinite(value)) return "0.00";
   return value.toFixed(2);
 }
 
 function escapeHtml(value) {
-  return String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 function getLogoDataUri() {
   if (cachedLogoDataUri) return cachedLogoDataUri;
-  const logoPath = process.env.BREVO_LOGO_PATH || process.env.LOGO_PATH || DEFAULT_LOGO_PATH;
+  const logoPath =
+    process.env.BREVO_LOGO_PATH || process.env.LOGO_PATH || DEFAULT_LOGO_PATH;
   try {
-    if (!fs.existsSync(logoPath)) return '';
+    if (!fs.existsSync(logoPath)) return "";
     const buffer = fs.readFileSync(logoPath);
-    cachedLogoDataUri = `data:image/png;base64,${buffer.toString('base64')}`;
+    cachedLogoDataUri = `data:image/png;base64,${buffer.toString("base64")}`;
     return cachedLogoDataUri;
   } catch (err) {
-    console.error('Failed to load logo for email:', err);
-    return '';
+    console.error("Failed to load logo for email:", err);
+    return "";
   }
 }
 
 async function sendBrevoEmail({ toEmail, toName, subject, html }) {
   if (!BREVO_API_KEY) {
-    console.warn('Brevo API key missing. Set BREVO_API_KEY in environment.');
+    console.warn("Brevo API key missing. Set BREVO_API_KEY in environment.");
     return false;
   }
 
@@ -75,31 +89,33 @@ async function sendBrevoEmail({ toEmail, toName, subject, html }) {
   return new Promise((resolve) => {
     const req = https.request(
       {
-        method: 'POST',
-        hostname: 'api.brevo.com',
-        path: '/v3/smtp/email',
+        method: "POST",
+        hostname: "api.brevo.com",
+        path: "/v3/smtp/email",
         headers: {
-          'api-key': BREVO_API_KEY,
-          'content-type': 'application/json',
-          'content-length': Buffer.byteLength(payload),
+          "api-key": BREVO_API_KEY,
+          "content-type": "application/json",
+          "content-length": Buffer.byteLength(payload),
         },
       },
       (res) => {
-        let body = '';
-        res.on('data', (chunk) => { body += chunk; });
-        res.on('end', () => {
+        let body = "";
+        res.on("data", (chunk) => {
+          body += chunk;
+        });
+        res.on("end", () => {
           if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
             resolve(true);
           } else {
-            console.error('Brevo send failed:', res.statusCode, body);
+            console.error("Brevo send failed:", res.statusCode, body);
             resolve(false);
           }
         });
-      }
+      },
     );
 
-    req.on('error', (err) => {
-      console.error('Brevo send error:', err);
+    req.on("error", (err) => {
+      console.error("Brevo send error:", err);
       resolve(false);
     });
 
@@ -110,7 +126,7 @@ async function sendBrevoEmail({ toEmail, toName, subject, html }) {
 
 function buildOrderName() {
   const now = new Date();
-  const stamp = now.toISOString().slice(0, 19).replace(/[:T]/g, '-');
+  const stamp = now.toISOString().slice(0, 19).replace(/[:T]/g, "-");
   return `order-${stamp}`;
 }
 
@@ -118,16 +134,16 @@ function sanitizeBilling(billing) {
   const b = billing || {};
   return {
     first_name: toStr(b.first_name),
-    last_name:  toStr(b.last_name),
-    email:      toStr(b.email),
-    phone:      toStr(b.phone),
-    address:    toStr(b.address),
-    address_2:  toStr(b.address_2),
-    city:       toStr(b.city),
-    state:      toStr(b.state),
-    postcode:   toStr(b.postcode),
-    country:    DEFAULT_COUNTRY,
-    company:    toStr(b.company),
+    last_name: toStr(b.last_name),
+    email: toStr(b.email),
+    phone: toStr(b.phone),
+    address: toStr(b.address),
+    address_2: toStr(b.address_2),
+    city: toStr(b.city),
+    state: toStr(b.state),
+    postcode: toStr(b.postcode),
+    country: DEFAULT_COUNTRY,
+    company: toStr(b.company),
   };
 }
 
@@ -136,53 +152,53 @@ function sanitizeShipping(shipping, billing) {
   const b = billing || {};
   return {
     first_name: toStr(s.first_name || b.first_name),
-    last_name:  toStr(s.last_name || b.last_name),
-    phone:      toStr(s.phone || b.phone),
-    address:    toStr(s.address   || b.address),
-    address_2:  toStr(s.address_2 || b.address_2),
-    city:       toStr(s.city      || b.city),
-    state:      toStr(s.state     || b.state),
-    postcode:   toStr(s.postcode  || b.postcode),
-    country:    DEFAULT_COUNTRY,
+    last_name: toStr(s.last_name || b.last_name),
+    phone: toStr(s.phone || b.phone),
+    address: toStr(s.address || b.address),
+    address_2: toStr(s.address_2 || b.address_2),
+    city: toStr(s.city || b.city),
+    state: toStr(s.state || b.state),
+    postcode: toStr(s.postcode || b.postcode),
+    country: DEFAULT_COUNTRY,
   };
 }
 
 function validateBilling(billing) {
   const errors = {};
-  if (!billing.first_name) errors.first_name = 'First name required';
-  if (!billing.last_name)  errors.last_name  = 'Last name required';
-  if (!billing.email)      errors.email      = 'Email required';
-  if (!billing.phone)      errors.phone      = 'Phone required';
-  if (!billing.address)    errors.address    = 'Address required';
-  if (!billing.city)       errors.city       = 'City required';
-  if (!billing.state)      errors.state      = 'State required';
-  if (!billing.postcode)   errors.postcode   = 'Postcode required';
+  if (!billing.first_name) errors.first_name = "First name required";
+  if (!billing.last_name) errors.last_name = "Last name required";
+  if (!billing.email) errors.email = "Email required";
+  if (!billing.phone) errors.phone = "Phone required";
+  if (!billing.address) errors.address = "Address required";
+  if (!billing.city) errors.city = "City required";
+  if (!billing.state) errors.state = "State required";
+  if (!billing.postcode) errors.postcode = "Postcode required";
   return errors;
 }
 
 const PROFILE_META_KEYS = [
-  'first_name',
-  'last_name',
-  'billing_first_name',
-  'billing_last_name',
-  'billing_address_1',
-  'billing_address_2',
-  'billing_city',
-  'billing_state',
-  'billing_postcode',
-  'billing_country',
-  'billing_company',
-  'billing_phone',
-  'shipping_first_name',
-  'shipping_last_name',
-  'shipping_address_1',
-  'shipping_address_2',
-  'shipping_city',
-  'shipping_state',
-  'shipping_postcode',
-  'shipping_country',
-  'shipping_company',
-  'shipping_phone',
+  "first_name",
+  "last_name",
+  "billing_first_name",
+  "billing_last_name",
+  "billing_address_1",
+  "billing_address_2",
+  "billing_city",
+  "billing_state",
+  "billing_postcode",
+  "billing_country",
+  "billing_company",
+  "billing_phone",
+  "shipping_first_name",
+  "shipping_last_name",
+  "shipping_address_1",
+  "shipping_address_2",
+  "shipping_city",
+  "shipping_state",
+  "shipping_postcode",
+  "shipping_country",
+  "shipping_company",
+  "shipping_phone",
 ];
 
 async function getUserMetaMap(userId) {
@@ -190,7 +206,7 @@ async function getUserMetaMap(userId) {
     `SELECT meta_key, meta_value
      FROM tbl_usermeta
      WHERE user_id = ? AND meta_key IN (?)`,
-    [userId, PROFILE_META_KEYS]
+    [userId, PROFILE_META_KEYS],
   );
 
   return rows.reduce((acc, row) => {
@@ -204,12 +220,12 @@ async function upsertUserMeta(conn, userId, metaKey, metaValue) {
     `INSERT INTO tbl_usermeta (user_id, meta_key, meta_value)
      VALUES (?, ?, ?)
      ON DUPLICATE KEY UPDATE meta_value = VALUES(meta_value)`,
-    [userId, metaKey, toStr(metaValue)]
+    [userId, metaKey, toStr(metaValue)],
   );
 }
 
 function normalizeProfileAddressInput(payload, kind) {
-  const prefix = kind === 'billing' ? 'billing' : 'shipping';
+  const prefix = kind === "billing" ? "billing" : "shipping";
 
   return {
     firstName: toStr(payload.firstName),
@@ -240,12 +256,12 @@ function normalizeProfileAddressInput(payload, kind) {
 
 function validateProfileAddress(address) {
   const errors = {};
-  if (!address.firstName) errors.firstName = 'First name required';
-  if (!address.lastName) errors.lastName = 'Last name required';
-  if (!address.address1) errors.address1 = 'Address required';
-  if (!address.city) errors.city = 'City required';
-  if (!address.state) errors.state = 'State required';
-  if (!address.postcode) errors.postcode = 'Postcode required';
+  if (!address.firstName) errors.firstName = "First name required";
+  if (!address.lastName) errors.lastName = "Last name required";
+  if (!address.address1) errors.address1 = "Address required";
+  if (!address.city) errors.city = "City required";
+  if (!address.state) errors.state = "State required";
+  if (!address.postcode) errors.postcode = "Postcode required";
   return errors;
 }
 
@@ -259,7 +275,9 @@ function buildProfileAddressResponseWithFallback(userRow, meta, fallback) {
 
   return {
     billing: {
-      firstName: toStr(meta.billing_first_name || meta.first_name || userRow.display_name),
+      firstName: toStr(
+        meta.billing_first_name || meta.first_name || userRow.display_name,
+      ),
       lastName: toStr(meta.billing_last_name || meta.last_name),
       email: toStr(userRow.user_email),
       phone: toStr(meta.billing_phone),
@@ -272,7 +290,9 @@ function buildProfileAddressResponseWithFallback(userRow, meta, fallback) {
       country: DEFAULT_COUNTRY,
     },
     shipping: {
-      firstName: toStr(meta.shipping_first_name || meta.first_name || userRow.display_name),
+      firstName: toStr(
+        meta.shipping_first_name || meta.first_name || userRow.display_name,
+      ),
       lastName: toStr(meta.shipping_last_name || meta.last_name),
       email: toStr(userRow.user_email),
       phone: toStr(meta.shipping_phone),
@@ -301,12 +321,12 @@ async function getLatestOrderAddressFallback(userId) {
        AND ua.order_id IS NOT NULL
        AND o.order_type = 'shop_order'
      ORDER BY o.order_date DESC, ua.address_id DESC`,
-    [userId]
+    [userId],
   );
 
   const fallback = { billing: {}, shipping: {} };
   for (const row of rows) {
-    if (row.address_billing === 'yes' && !fallback.billing.address1) {
+    if (row.address_billing === "yes" && !fallback.billing.address1) {
       fallback.billing = {
         address1: toStr(row.address_line1),
         address2: toStr(row.address_line2),
@@ -316,7 +336,7 @@ async function getLatestOrderAddressFallback(userId) {
       };
     }
 
-    if (row.address_billing !== 'yes' && !fallback.shipping.address1) {
+    if (row.address_billing !== "yes" && !fallback.shipping.address1) {
       fallback.shipping = {
         address1: toStr(row.address_line1),
         address2: toStr(row.address_line2),
@@ -348,14 +368,10 @@ async function getLatestOrderAddressFallback(userId) {
 //   ORDER rows        → order_id = real ID, address_primary = 'no'
 //   SAVED ADDR rows   → order_id = NULL,    address_primary = 'yes'/'no'
 // ─────────────────────────────────────────────────────────────────────────────
-async function insertAddress(conn, {
-  userId,
-  orderId,
-  address,
-  isBilling,
-  createdAt,
-  notes = null,
-}) {
+async function insertAddress(
+  conn,
+  { userId, orderId, address, isBilling, createdAt, notes = null },
+) {
   await conn.query(
     `INSERT INTO tbl_user_address
      (user_id, order_id, address_type, address_primary,
@@ -370,21 +386,21 @@ async function insertAddress(conn, {
       0, NULL, 226, ?,
       ?, '', '', ?, ?, 'no')`,
     [
-      userId,                    // user_id
-      orderId,                   // order_id  (always a real ID for order rows)
-      address.firstName || '',   // first_name
-      address.lastName || '',    // last_name
-      address.phone || '',       // phone
-      address.line1 || '',       // address_line1
-      address.line2 || '',       // address_line2
-      address.city  || '',       // city
-      address.zip   || '',       // zipcode
-      address.state || '',       // state_name
-      notes,                     // address_notes
-      isBilling ? 'yes' : 'no', // address_billing ? 'yes'=billing, 'no'=shipping
-      createdAt,                 // created_at
-      createdAt,                 // updated_at
-    ]
+      userId, // user_id
+      orderId, // order_id  (always a real ID for order rows)
+      address.firstName || "", // first_name
+      address.lastName || "", // last_name
+      address.phone || "", // phone
+      address.line1 || "", // address_line1
+      address.line2 || "", // address_line2
+      address.city || "", // city
+      address.zip || "", // zipcode
+      address.state || "", // state_name
+      notes, // address_notes
+      isBilling ? "yes" : "no", // address_billing ? 'yes'=billing, 'no'=shipping
+      createdAt, // created_at
+      createdAt, // updated_at
+    ],
   );
 }
 
@@ -392,22 +408,26 @@ async function insertAddress(conn, {
 // placeOrder
 // ─────────────────────────────────────────────────────────────────────────────
 const placeOrder = async (req, res) => {
-  const user          = getSessionUser(req);
-  const userId        = user ? user.id : 0;
+  const user = getSessionUser(req);
+  const userId = user ? user.id : 0;
   const { key, value, cookieId, sessionId } = getCartIdentity(req);
 
-  const billing       = sanitizeBilling(req.body.billing);
-  const shipping      = sanitizeShipping(req.body.shipping, billing);
-  const paymentMethod = toStr(req.body.payment_method) || 'cod';
-  const shippingCost  = toAmount(req.body.shipping_cost || 0);
-  const orderNotes    = toStr(req.body.notes) || null;
+  const billing = sanitizeBilling(req.body.billing);
+  const shipping = sanitizeShipping(req.body.shipping, billing);
+  const paymentMethod = toStr(req.body.payment_method) || "cod";
+  const shippingCost = toAmount(req.body.shipping_cost || 0);
+  const orderNotes = toStr(req.body.notes) || null;
   const appliedCoupon = req.sessionData?.appliedCoupon || null;
+
+  const razorpayPaymentId = req.body.razorpay_payment_id || null;
+  const razorpayOrderId = req.body.razorpay_order_id || null;
+  const razorpaySignature = req.body.razorpay_signature || null;
 
   const billingErrors = validateBilling(billing);
   if (Object.keys(billingErrors).length) {
     return res.status(400).json({
       success: false,
-      message: 'Invalid billing details.',
+      message: "Invalid billing details.",
       errors: billingErrors,
     });
   }
@@ -420,64 +440,126 @@ const placeOrder = async (req, res) => {
     let cartItems;
     if (userId) {
       [cartItems] = await conn.query(
-        'SELECT * FROM cart_items WHERE user_id = ? ORDER BY created_at DESC',
-        [userId]
+        "SELECT * FROM cart_items WHERE user_id = ? ORDER BY created_at DESC",
+        [userId],
       );
-    } else if (key === 'cookie_id') {
+    } else if (key === "cookie_id") {
       [cartItems] = await conn.query(
-        'SELECT * FROM cart_items WHERE cookie_id = ? AND user_id IS NULL ORDER BY created_at DESC',
-        [value]
+        "SELECT * FROM cart_items WHERE cookie_id = ? AND user_id IS NULL ORDER BY created_at DESC",
+        [value],
       );
     } else {
       [cartItems] = await conn.query(
-        'SELECT * FROM cart_items WHERE session_id = ? AND user_id IS NULL ORDER BY created_at DESC',
-        [value]
+        "SELECT * FROM cart_items WHERE session_id = ? AND user_id IS NULL ORDER BY created_at DESC",
+        [value],
       );
     }
 
     if (!cartItems.length) {
       await conn.rollback();
-      return res.status(400).json({ success: false, message: 'Cart is empty.' });
+      return res
+        .status(400)
+        .json({ success: false, message: "Cart is empty." });
     }
 
     // ── 1b. Stock check for all cart items ────────────────────────────────────
     for (const item of cartItems) {
-      const checkId = item.variation_id && item.variation_id > 0 ? item.variation_id : item.product_id;
+      const checkId =
+        item.variation_id && item.variation_id > 0
+          ? item.variation_id
+          : item.product_id;
       const [[stockRow]] = await conn.query(
         `SELECT COALESCE((SELECT meta_value FROM tbl_productmeta WHERE product_id = ? AND meta_key = '_stock_status' ORDER BY meta_id DESC LIMIT 1), 'instock') AS stock_status`,
-        [checkId]
+        [checkId],
       );
-      if (stockRow && stockRow.stock_status === 'outofstock') {
+      if (stockRow && stockRow.stock_status === "outofstock") {
         await conn.rollback();
         return res.status(400).json({
           success: false,
-          message: `"${item.title || 'A product in your cart'}" is out of stock. Please remove it before placing your order.`,
+          message: `"${item.title || "A product in your cart"}" is out of stock. Please remove it before placing your order.`,
         });
       }
     }
 
     // ── 2. Calculate totals ───────────────────────────────────────────────────
     const subtotal = cartItems.reduce(
-      (sum, item) => sum + toAmount(item.price) * Number(item.quantity || 0), 0
+      (sum, item) => sum + toAmount(item.price) * Number(item.quantity || 0),
+      0,
     );
 
     // Re-validate coupon inside the transaction with FOR UPDATE locking
     // This prevents race conditions (two users using the last coupon slot).
-    const productIds = cartItems.map((i) => Number(i.product_id)).filter(Boolean);
-    const couponCheck = await validateAndLockCoupon(conn, appliedCoupon, userId, subtotal, productIds, cartItems);
+    const productIds = cartItems
+      .map((i) => Number(i.product_id))
+      .filter(Boolean);
+    const couponCheck = await validateAndLockCoupon(
+      conn,
+      appliedCoupon,
+      userId,
+      subtotal,
+      productIds,
+      cartItems,
+    );
     if (!couponCheck.ok) {
       await conn.rollback();
       delete req.sessionData.appliedCoupon;
       req.touchSession();
-      return res.status(400).json({ success: false, coupon_error: true, message: couponCheck.message });
+      return res
+        .status(400)
+        .json({
+          success: false,
+          coupon_error: true,
+          message: couponCheck.message,
+        });
     }
     const discount = couponCheck.discount || 0;
 
-    const total    = Math.max(0, subtotal - discount) + shippingCost;
-    const currency = process.env.ORDER_CURRENCY || process.env.CURRENCY || 'INR';
+    const total = Math.max(0, subtotal - discount) + shippingCost;
+
+    if (paymentMethod === "razorpay" && !razorpayPaymentId) {
+      const razorpay = require("../config/razorpay");
+
+      const razorpayOrder = await razorpay.orders.create({
+        amount: Math.round(total * 100),
+        currency: "INR",
+        receipt: `receipt_${Date.now()}`,
+      });
+
+      await conn.rollback();
+
+      return res.json({
+        success: true,
+        razorpay: true,
+        razorpayOrderId: razorpayOrder.id,
+        amount: razorpayOrder.amount,
+        currency: razorpayOrder.currency,
+        key: process.env.RAZORPAY_KEY_ID,
+      });
+    }
+
+    if (paymentMethod === "razorpay" && razorpayPaymentId) {
+      const crypto = require("crypto");
+
+      const generatedSignature = crypto
+        .createHmac("sha256", process.env.RAZORPAY_SECRET)
+        .update(razorpayOrderId + "|" + razorpayPaymentId)
+        .digest("hex");
+
+      if (generatedSignature !== razorpaySignature) {
+        await conn.rollback();
+
+        return res.status(400).json({
+          success: false,
+          message: "Payment verification failed",
+        });
+      }
+    }
+
+    const currency =
+      process.env.ORDER_CURRENCY || process.env.CURRENCY || "INR";
 
     // ── 3. Insert into tbl_orders ─────────────────────────────────────────────
-    const orderName  = buildOrderName();
+    const orderName = buildOrderName();
     const orderTitle = `Order - ${new Date().toLocaleString()}`;
 
     const [orderResult] = await conn.query(
@@ -485,7 +567,7 @@ const placeOrder = async (req, res) => {
        (parent_id, user_id, order_name, order_title, order_content,
         order_status, order_type, order_date, order_modified)
        VALUES (0, ?, ?, ?, '', 'wc-pending', 'shop_order', NOW(), NOW())`,
-      [userId, orderName, orderTitle]
+      [userId, orderName, orderTitle],
     );
     const orderId = orderResult.insertId;
 
@@ -494,25 +576,30 @@ const placeOrder = async (req, res) => {
     //    name/email  → tbl_users via user_id
     //    address     → tbl_user_address via order_id
     const metaEntries = [
-      ['_customer_user',  userId],
-      ['_payment_method', paymentMethod],
-      ['_order_currency', currency],
-      ['_order_total',    total.toFixed(2)],
-      ['_order_subtotal', subtotal.toFixed(2)],
-      ['_order_shipping', shippingCost.toFixed(2)],
-      ['_session_id',     sessionId],
-      ['_cookie_id',      cookieId || ''],
+      ["_customer_user", userId],
+      ["_payment_method", paymentMethod],
+      ["_order_currency", currency],
+      ["_order_total", total.toFixed(2)],
+      ["_order_subtotal", subtotal.toFixed(2)],
+      ["_order_shipping", shippingCost.toFixed(2)],
+      ["_session_id", sessionId],
+      ["_cookie_id", cookieId || ""],
     ];
 
     if (appliedCoupon) {
-      metaEntries.push(['_coupon_code',     appliedCoupon.coupon_code]);
-      metaEntries.push(['_coupon_discount', discount.toFixed(2)]);
+      metaEntries.push(["_coupon_code", appliedCoupon.coupon_code]);
+      metaEntries.push(["_coupon_discount", discount.toFixed(2)]);
+    }
+
+    if (paymentMethod === "razorpay") {
+      metaEntries.push(["_razorpay_payment_id", razorpayPaymentId]);
+      metaEntries.push(["_razorpay_order_id", razorpayOrderId]);
     }
 
     for (const [metaKey, metaValue] of metaEntries) {
       await conn.query(
-        'INSERT INTO tbl_ordermeta (order_id, meta_key, meta_value) VALUES (?, ?, ?)',
-        [orderId, metaKey, metaValue]
+        "INSERT INTO tbl_ordermeta (order_id, meta_key, meta_value) VALUES (?, ?, ?)",
+        [orderId, metaKey, metaValue],
       );
     }
 
@@ -525,42 +612,42 @@ const placeOrder = async (req, res) => {
     //    address_billing = 'yes' → billing row
     //    address_billing = 'no'  → shipping row
     const addressUserId = userId > 0 ? userId : null;
-    const createdAt     = new Date().toISOString().slice(0, 19).replace('T', ' ');
+    const createdAt = new Date().toISOString().slice(0, 19).replace("T", " ");
 
     // Billing address row
     await insertAddress(conn, {
-      userId:    addressUserId,
+      userId: addressUserId,
       orderId,
       isBilling: true,
       createdAt,
-      notes:     orderNotes,
+      notes: orderNotes,
       address: {
         firstName: billing.first_name,
         lastName: billing.last_name,
         phone: billing.phone,
         line1: billing.address,
         line2: billing.address_2,
-        city:  billing.city,
-        zip:   billing.postcode,
+        city: billing.city,
+        zip: billing.postcode,
         state: billing.state,
       },
     });
 
     // Shipping address row
     await insertAddress(conn, {
-      userId:    addressUserId,
+      userId: addressUserId,
       orderId,
       isBilling: false,
       createdAt,
-      notes:     null,
+      notes: null,
       address: {
         firstName: shipping.first_name,
         lastName: shipping.last_name,
         phone: shipping.phone,
         line1: shipping.address,
         line2: shipping.address_2,
-        city:  shipping.city,
-        zip:   shipping.postcode,
+        city: shipping.city,
+        zip: shipping.postcode,
         state: shipping.state,
       },
     });
@@ -570,33 +657,36 @@ const placeOrder = async (req, res) => {
       const [itemResult] = await conn.query(
         `INSERT INTO tbl_order_items (order_item_name, order_item_type, order_id, product_id)
          VALUES (?, 'line_item', ?, ?)`,
-        [item.title || 'Item', orderId, item.product_id]
+        [item.title || "Item", orderId, item.product_id],
       );
       const orderItemId = itemResult.insertId;
 
-      const variationId = item.variation_id && Number(item.variation_id) > 0
-        ? item.variation_id : 0;
+      const variationId =
+        item.variation_id && Number(item.variation_id) > 0
+          ? item.variation_id
+          : 0;
       const lineTotal = toAmount(item.price) * Number(item.quantity || 0);
 
       const itemMeta = [
-        ['_product_id',        item.product_id],
-        ['_variation_id',      variationId],
-        ['_qty',               item.quantity],
-        ['_line_subtotal',     lineTotal.toFixed(2)],
-        ['_line_total',        lineTotal.toFixed(2)],
-        ['_line_tax',          '0'],
-        ['_line_subtotal_tax', '0'],
+        ["_product_id", item.product_id],
+        ["_variation_id", variationId],
+        ["_qty", item.quantity],
+        ["_line_subtotal", lineTotal.toFixed(2)],
+        ["_line_total", lineTotal.toFixed(2)],
+        ["_line_tax", "0"],
+        ["_line_subtotal_tax", "0"],
       ];
 
-      if (item.color) itemMeta.push(['pa_color', item.color]);
-      if (item.size)  itemMeta.push(['pa_size',  item.size]);
+      if (item.color) itemMeta.push(["pa_color", item.color]);
+      if (item.size) itemMeta.push(["pa_size", item.size]);
       // Save image at order time — Amazon/Flipkart pattern
-      if (item.image && !item.image.includes('dummy')) itemMeta.push(['_item_image', item.image]);
+      if (item.image && !item.image.includes("dummy"))
+        itemMeta.push(["_item_image", item.image]);
 
       for (const [metaKey, metaValue] of itemMeta) {
         await conn.query(
-          'INSERT INTO tbl_order_itemmeta (order_item_id, meta_key, meta_value) VALUES (?, ?, ?)',
-          [orderItemId, metaKey, metaValue]
+          "INSERT INTO tbl_order_itemmeta (order_item_id, meta_key, meta_value) VALUES (?, ?, ?)",
+          [orderItemId, metaKey, metaValue],
         );
       }
     }
@@ -606,21 +696,27 @@ const placeOrder = async (req, res) => {
       const [shipResult] = await conn.query(
         `INSERT INTO tbl_order_items (order_item_name, order_item_type, order_id, product_id)
          VALUES ('Shipping', 'shipping', ?, 0)`,
-        [orderId]
+        [orderId],
       );
       await conn.query(
-        'INSERT INTO tbl_order_itemmeta (order_item_id, meta_key, meta_value) VALUES (?, ?, ?)',
-        [shipResult.insertId, 'cost', shippingCost.toFixed(2)]
+        "INSERT INTO tbl_order_itemmeta (order_item_id, meta_key, meta_value) VALUES (?, ?, ?)",
+        [shipResult.insertId, "cost", shippingCost.toFixed(2)],
       );
     }
 
     // ── 8. Clear cart ─────────────────────────────────────────────────────────
     if (userId) {
-      await conn.query('DELETE FROM cart_items WHERE user_id = ?', [userId]);
-    } else if (key === 'cookie_id') {
-      await conn.query('DELETE FROM cart_items WHERE cookie_id = ? AND user_id IS NULL', [value]);
+      await conn.query("DELETE FROM cart_items WHERE user_id = ?", [userId]);
+    } else if (key === "cookie_id") {
+      await conn.query(
+        "DELETE FROM cart_items WHERE cookie_id = ? AND user_id IS NULL",
+        [value],
+      );
     } else {
-      await conn.query('DELETE FROM cart_items WHERE session_id = ? AND user_id IS NULL', [value]);
+      await conn.query(
+        "DELETE FROM cart_items WHERE session_id = ? AND user_id IS NULL",
+        [value],
+      );
     }
 
     // ── 9. Record coupon usage ────────────────────────────────────────────────
@@ -640,9 +736,9 @@ const placeOrder = async (req, res) => {
     try {
       const toEmail = billing.email;
       const toName = `${billing.first_name} ${billing.last_name}`.trim();
-      const frontendBase = (process.env.FRONTEND_URL || '').replace(/\/+$/, '');
+      const frontendBase = (process.env.FRONTEND_URL || "").replace(/\/+$/, "");
       const isLocalHost = /localhost|127\.0\.0\.1/.test(frontendBase);
-      let logoSrc = '';
+      let logoSrc = "";
       if (BREVO_LOGO_URL) {
         logoSrc = BREVO_LOGO_URL;
       } else if (frontendBase && !isLocalHost) {
@@ -650,12 +746,13 @@ const placeOrder = async (req, res) => {
       } else {
         logoSrc = getLogoDataUri();
       }
-      const itemRows = cartItems.map(item => {
-        const title = escapeHtml(item.title || 'Item');
-        const qty = Number(item.quantity || 0);
-        const price = toAmount(item.price);
-        const lineTotal = price * qty;
-        return `
+      const itemRows = cartItems
+        .map((item) => {
+          const title = escapeHtml(item.title || "Item");
+          const qty = Number(item.quantity || 0);
+          const price = toAmount(item.price);
+          const lineTotal = price * qty;
+          return `
           <tr>
             <td style="padding:10px 12px; border-bottom:1px solid #f0ece6; font-size:14px;">${title}</td>
             <td style="padding:10px 12px; border-bottom:1px solid #f0ece6; text-align:center; font-size:14px;">${qty}</td>
@@ -663,10 +760,11 @@ const placeOrder = async (req, res) => {
             <td style="padding:10px 12px; border-bottom:1px solid #f0ece6; text-align:right; font-size:14px;">₹${formatMoney(lineTotal)}</td>
           </tr>
         `;
-      }).join('');
+        })
+        .join("");
 
-      const billingBlock = `${escapeHtml(billing.address)}${billing.address_2 ? `, ${escapeHtml(billing.address_2)}` : ''}, ${escapeHtml(billing.city)}, ${escapeHtml(billing.state)} ${escapeHtml(billing.postcode)}, ${escapeHtml(billing.country)}`;
-      const shippingBlock = `${escapeHtml(shipping.address)}${shipping.address_2 ? `, ${escapeHtml(shipping.address_2)}` : ''}, ${escapeHtml(shipping.city)}, ${escapeHtml(shipping.state)} ${escapeHtml(shipping.postcode)}, ${escapeHtml(shipping.country)}`;
+      const billingBlock = `${escapeHtml(billing.address)}${billing.address_2 ? `, ${escapeHtml(billing.address_2)}` : ""}, ${escapeHtml(billing.city)}, ${escapeHtml(billing.state)} ${escapeHtml(billing.postcode)}, ${escapeHtml(billing.country)}`;
+      const shippingBlock = `${escapeHtml(shipping.address)}${shipping.address_2 ? `, ${escapeHtml(shipping.address_2)}` : ""}, ${escapeHtml(shipping.city)}, ${escapeHtml(shipping.state)} ${escapeHtml(shipping.postcode)}, ${escapeHtml(shipping.country)}`;
       const orderDate = new Date().toLocaleString();
 
       const emailHtml = `
@@ -694,7 +792,7 @@ const placeOrder = async (req, res) => {
                   <tr>
                     <td style="padding:24px 28px; font-family: Arial, sans-serif; color:#1b1b1b;">
                       <h2 style="margin:0 0 8px; font-size:22px; color:#1b1b1b;">Thank you for your order!</h2>
-                      <p style="margin:0 0 6px; color:#4c4c4c;">Hi ${escapeHtml(toName || 'there')},</p>
+                      <p style="margin:0 0 6px; color:#4c4c4c;">Hi ${escapeHtml(toName || "there")},</p>
                       <p style="margin:0 0 18px; color:#4c4c4c;">We’ve received your order and it’s now being processed.</p>
 
                       <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 18px;">
@@ -736,11 +834,15 @@ const placeOrder = async (req, res) => {
                                 <td style="font-size:13px; opacity:0.8;">Subtotal</td>
                                 <td style="font-size:13px; text-align:right; opacity:0.8;">₹${formatMoney(subtotal)}</td>
                               </tr>
-                              ${discount > 0 ? `
+                              ${
+                                discount > 0
+                                  ? `
                               <tr>
                                 <td style="font-size:13px; opacity:0.8;">Discount (${escapeHtml(appliedCoupon.coupon_code)})</td>
                                 <td style="font-size:13px; text-align:right; opacity:0.8; color:#4caf50;">−₹${formatMoney(discount)}</td>
-                              </tr>` : ''}
+                              </tr>`
+                                  : ""
+                              }
                               <tr>
                                 <td style="font-size:13px; opacity:0.8;">Shipping</td>
                                 <td style="font-size:13px; text-align:right; opacity:0.8;">₹${formatMoney(shippingCost)}</td>
@@ -793,15 +895,24 @@ const placeOrder = async (req, res) => {
         html: emailHtml,
       });
     } catch (emailErr) {
-      console.error('Order email error:', emailErr);
+      console.error("Order email error:", emailErr);
     }
 
-    res.json({ success: true, data: { orderId, total: total.toFixed(2), discount: discount.toFixed(2), emailSent } });
-
+    res.json({
+      success: true,
+      data: {
+        orderId,
+        total: total.toFixed(2),
+        discount: discount.toFixed(2),
+        emailSent,
+      },
+    });
   } catch (err) {
     await conn.rollback();
-    console.error('placeOrder error:', err);
-    res.status(500).json({ success: false, message: 'Order placement failed.' });
+    console.error("placeOrder error:", err);
+    res
+      .status(500)
+      .json({ success: false, message: "Order placement failed." });
   } finally {
     conn.release();
   }
@@ -816,19 +927,21 @@ const placeOrder = async (req, res) => {
 const getDefaultAddress = async (req, res) => {
   const user = getSessionUser(req);
   if (!user) {
-    return res.status(401).json({ success: false, message: 'Login required.' });
+    return res.status(401).json({ success: false, message: "Login required." });
   }
   try {
     const [[address]] = await db.query(
       `SELECT * FROM tbl_user_address
        WHERE user_id = ? AND order_id IS NULL AND address_primary = 'yes'
        ORDER BY address_id DESC LIMIT 1`,
-      [user.id]
+      [user.id],
     );
     res.json({ success: true, data: address || null });
   } catch (err) {
-    console.error('getDefaultAddress error:', err);
-    res.status(500).json({ success: false, message: 'Failed to load default address.' });
+    console.error("getDefaultAddress error:", err);
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to load default address." });
   }
 };
 
@@ -842,11 +955,13 @@ const getDefaultAddress = async (req, res) => {
 const setDefaultAddress = async (req, res) => {
   const user = getSessionUser(req);
   if (!user) {
-    return res.status(401).json({ success: false, message: 'Login required.' });
+    return res.status(401).json({ success: false, message: "Login required." });
   }
   const addressId = Number.parseInt(req.params.addressId, 10);
   if (!addressId) {
-    return res.status(400).json({ success: false, message: 'Invalid address id.' });
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid address id." });
   }
   try {
     // Step 1: Remove default from all saved addresses only (NOT order rows)
@@ -854,19 +969,21 @@ const setDefaultAddress = async (req, res) => {
       `UPDATE tbl_user_address
        SET address_primary = 'no'
        WHERE user_id = ? AND order_id IS NULL`,
-      [user.id]
+      [user.id],
     );
     // Step 2: Set selected saved address as default
     await db.query(
       `UPDATE tbl_user_address
        SET address_primary = 'yes'
        WHERE address_id = ? AND user_id = ? AND order_id IS NULL`,
-      [addressId, user.id]
+      [addressId, user.id],
     );
-    res.json({ success: true, message: 'Default address updated.' });
+    res.json({ success: true, message: "Default address updated." });
   } catch (err) {
-    console.error('setDefaultAddress error:', err);
-    res.status(500).json({ success: false, message: 'Failed to update default address.' });
+    console.error("setDefaultAddress error:", err);
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to update default address." });
   }
 };
 
@@ -874,7 +991,7 @@ const setDefaultAddress = async (req, res) => {
 const getRecentOrderAddresses = async (req, res) => {
   const user = getSessionUser(req);
   if (!user) {
-    return res.status(401).json({ success: false, message: 'Login required.' });
+    return res.status(401).json({ success: false, message: "Login required." });
   }
 
   try {
@@ -886,12 +1003,14 @@ const getRecentOrderAddresses = async (req, res) => {
        WHERE user_id = ? AND order_id IS NOT NULL
        ORDER BY order_id DESC, address_id DESC
        LIMIT 20`,
-      [user.id]
+      [user.id],
     );
     res.json({ success: true, data: rows });
   } catch (err) {
-    console.error('getRecentOrderAddresses error:', err);
-    res.status(500).json({ success: false, message: 'Failed to load recent addresses.' });
+    console.error("getRecentOrderAddresses error:", err);
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to load recent addresses." });
   }
 };
 // getSavedAddresses
@@ -902,7 +1021,7 @@ const getRecentOrderAddresses = async (req, res) => {
 const getSavedAddresses = async (req, res) => {
   const user = getSessionUser(req);
   if (!user) {
-    return res.status(401).json({ success: false, message: 'Login required.' });
+    return res.status(401).json({ success: false, message: "Login required." });
   }
   try {
     const [addresses] = await db.query(
@@ -912,19 +1031,21 @@ const getSavedAddresses = async (req, res) => {
        FROM tbl_user_address
        WHERE user_id = ? AND order_id IS NULL
        ORDER BY address_primary DESC, address_id DESC`,
-      [user.id]
+      [user.id],
     );
     res.json({ success: true, data: addresses });
   } catch (err) {
-    console.error('getSavedAddresses error:', err);
-    res.status(500).json({ success: false, message: 'Failed to load addresses.' });
+    console.error("getSavedAddresses error:", err);
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to load addresses." });
   }
 };
 
 const getProfileAddresses = async (req, res) => {
   const user = getSessionUser(req);
   if (!user) {
-    return res.status(401).json({ success: false, message: 'Login required.' });
+    return res.status(401).json({ success: false, message: "Login required." });
   }
 
   try {
@@ -933,33 +1054,51 @@ const getProfileAddresses = async (req, res) => {
        FROM tbl_users
        WHERE ID = ?
        LIMIT 1`,
-      [user.id]
+      [user.id],
     );
 
     if (!userRow) {
-      return res.status(404).json({ success: false, message: 'User not found.' });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found." });
     }
 
     const [meta, orderFallback] = await Promise.all([
       getUserMetaMap(user.id),
       getLatestOrderAddressFallback(user.id),
     ]);
-    res.json({ success: true, data: buildProfileAddressResponseWithFallback(userRow, meta, orderFallback) });
+    res.json({
+      success: true,
+      data: buildProfileAddressResponseWithFallback(
+        userRow,
+        meta,
+        orderFallback,
+      ),
+    });
   } catch (err) {
-    console.error('getProfileAddresses error:', err);
-    res.status(500).json({ success: false, message: 'Failed to load profile addresses.' });
+    console.error("getProfileAddresses error:", err);
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to load profile addresses." });
   }
 };
 
 const updateProfileAddress = async (req, res) => {
   const user = getSessionUser(req);
   if (!user) {
-    return res.status(401).json({ success: false, message: 'Login required.' });
+    return res.status(401).json({ success: false, message: "Login required." });
   }
 
-  const kind = req.params.kind === 'billing' ? 'billing' : req.params.kind === 'shipping' ? 'shipping' : '';
+  const kind =
+    req.params.kind === "billing"
+      ? "billing"
+      : req.params.kind === "shipping"
+        ? "shipping"
+        : "";
   if (!kind) {
-    return res.status(400).json({ success: false, message: 'Invalid address type.' });
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid address type." });
   }
 
   const address = normalizeProfileAddressInput(req.body || {}, kind);
@@ -967,7 +1106,7 @@ const updateProfileAddress = async (req, res) => {
   if (Object.keys(errors).length > 0) {
     return res.status(400).json({
       success: false,
-      message: 'Please fill all required address fields.',
+      message: "Please fill all required address fields.",
       errors,
     });
   }
@@ -993,7 +1132,7 @@ const updateProfileAddress = async (req, res) => {
         address.lastName,
         address.lastName,
         user.id,
-      ]
+      ],
     );
 
     for (const [metaKey, metaValue] of Object.entries(address.meta)) {
@@ -1007,19 +1146,21 @@ const updateProfileAddress = async (req, res) => {
        FROM tbl_users
        WHERE ID = ?
        LIMIT 1`,
-      [user.id]
+      [user.id],
     );
     const meta = await getUserMetaMap(user.id);
 
     res.json({
       success: true,
-      message: `${kind === 'billing' ? 'Billing' : 'Shipping'} address updated successfully.`,
+      message: `${kind === "billing" ? "Billing" : "Shipping"} address updated successfully.`,
       data: buildProfileAddressResponse(userRow, meta),
     });
   } catch (err) {
     await conn.rollback();
-    console.error('updateProfileAddress error:', err);
-    res.status(500).json({ success: false, message: 'Failed to update profile address.' });
+    console.error("updateProfileAddress error:", err);
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to update profile address." });
   } finally {
     conn.release();
   }
@@ -1032,7 +1173,7 @@ const updateProfileAddress = async (req, res) => {
 const getMyOrders = async (req, res) => {
   const user = getSessionUser(req);
   if (!user) {
-    return res.status(401).json({ success: false, message: 'Login required.' });
+    return res.status(401).json({ success: false, message: "Login required." });
   }
   try {
     const [orders] = await db.query(
@@ -1049,12 +1190,12 @@ const getMyOrders = async (req, res) => {
        WHERE o.user_id = ? AND o.order_type = 'shop_order'
        GROUP BY o.order_id
        ORDER BY MAX(o.order_date) DESC`,
-      [user.id]
+      [user.id],
     );
     res.json({ success: true, data: orders });
   } catch (err) {
-    console.error('getMyOrders error:', err);
-    res.status(500).json({ success: false, message: 'Failed to load orders.' });
+    console.error("getMyOrders error:", err);
+    res.status(500).json({ success: false, message: "Failed to load orders." });
   }
 };
 
@@ -1080,12 +1221,12 @@ const getAllOrders = async (_req, res) => {
          ON o.order_id = oi.order_id AND oi.order_item_type = 'line_item'
        WHERE o.order_type = 'shop_order'
        GROUP BY o.order_id
-       ORDER BY MAX(o.order_date) DESC`
+       ORDER BY MAX(o.order_date) DESC`,
     );
     res.json({ success: true, data: orders });
   } catch (err) {
-    console.error('getAllOrders error:', err);
-    res.status(500).json({ success: false, message: 'Failed to load orders.' });
+    console.error("getAllOrders error:", err);
+    res.status(500).json({ success: false, message: "Failed to load orders." });
   }
 };
 
@@ -1099,11 +1240,13 @@ const getAllOrders = async (_req, res) => {
 const getMyOrderById = async (req, res) => {
   const user = getSessionUser(req);
   if (!user) {
-    return res.status(401).json({ success: false, message: 'Login required.' });
+    return res.status(401).json({ success: false, message: "Login required." });
   }
   const orderId = Number.parseInt(req.params.orderId, 10);
   if (!orderId) {
-    return res.status(400).json({ success: false, message: 'Invalid order id.' });
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid order id." });
   }
 
   try {
@@ -1175,11 +1318,13 @@ const getMyOrderById = async (req, res) => {
          ON o.order_id = om_pay.order_id AND om_pay.meta_key = '_payment_method'
        WHERE o.order_id = ? AND o.user_id = ? AND o.order_type = 'shop_order'
        GROUP BY o.order_id`,
-      [orderId, user.id]
+      [orderId, user.id],
     );
 
     if (!orderRows.length) {
-      return res.status(404).json({ success: false, message: 'Order not found.' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found." });
     }
 
     const order = orderRows[0];
@@ -1218,13 +1363,13 @@ const getMyOrderById = async (req, res) => {
        LEFT JOIN tbl_order_itemmeta oim ON oim.order_item_id = oi.order_item_id
        WHERE oi.order_id = ? AND oi.order_item_type = 'line_item'
        GROUP BY oi.order_item_id, oi.order_item_name, oi.product_id`,
-      [orderId]
+      [orderId],
     );
 
     res.json({ success: true, data: { order, items } });
   } catch (err) {
-    console.error('getMyOrderById error:', err);
-    res.status(500).json({ success: false, message: 'Failed to load order.' });
+    console.error("getMyOrderById error:", err);
+    res.status(500).json({ success: false, message: "Failed to load order." });
   }
 };
 
@@ -1234,19 +1379,23 @@ const getMyOrderById = async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 const updateOrderStatus = async (req, res) => {
   const orderId = Number.parseInt(req.params.orderId, 10);
-  const status  = toStr(req.body.status);
+  const status = toStr(req.body.status);
   if (!orderId || !status) {
-    return res.status(400).json({ success: false, message: 'orderId and status required.' });
+    return res
+      .status(400)
+      .json({ success: false, message: "orderId and status required." });
   }
   try {
     await db.query(
-      'UPDATE tbl_orders SET order_status = ?, order_modified = NOW() WHERE order_id = ?',
-      [status, orderId]
+      "UPDATE tbl_orders SET order_status = ?, order_modified = NOW() WHERE order_id = ?",
+      [status, orderId],
     );
     res.json({ success: true });
   } catch (err) {
-    console.error('updateOrderStatus error:', err);
-    res.status(500).json({ success: false, message: 'Failed to update order status.' });
+    console.error("updateOrderStatus error:", err);
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to update order status." });
   }
 };
 
@@ -1263,4 +1412,3 @@ module.exports = {
   getProfileAddresses,
   updateProfileAddress,
 };
-
