@@ -80,6 +80,9 @@ function ProductCard({ p, idx }: { p: Product; idx: number }) {
           </span>
           {discountPercent !== null && <span className="na-save-badge">{discountPercent}% off</span>}
         </div>
+        {p.stock_status !== 'instock' && p.stock_status !== 'onbackorder' && (
+          <span className="na-stock-label out">Out of Stock</span>
+        )}
       </div>
     </div>
   );

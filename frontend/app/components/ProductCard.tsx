@@ -12,6 +12,7 @@ interface ProductCardProps {
   onSale?: boolean;
   delay?: number;
   category?: string;
+  stockStatus?: string | null;
 }
 
 const iconActions = [
@@ -29,7 +30,9 @@ export default function ProductCard({
   onSale,
   delay,
   category,
+  stockStatus,
 }: ProductCardProps) {
+  const isOutOfStock = stockStatus != null && stockStatus !== 'instock' && stockStatus !== 'onbackorder';
   const [hovered, setHovered] = useState(false);
   const [hoveredIcon, setHoveredIcon] = useState<number | null>(null);
 
@@ -74,6 +77,8 @@ export default function ProductCard({
 
           {/* ── SALE badge ── */}
           {onSale && <span className="onsale"><span>SALE</span></span>}
+          {/* ── OUT OF STOCK badge ── */}
+          {isOutOfStock && <span className="pc-oos-badge">Sold Out</span>}
         </div>
       </div>
 
