@@ -185,66 +185,39 @@
         <script>
 
 
+          $(document).ready(function () {
+            $('#productsTable').DataTable({
+              "responsive": true,
+              "autoWidth": false,
+              "order": [[0, "desc"]],
+              "pageLength": 10,
+              "columnDefs": [
+                { "orderable": false, "targets": 6 }
+              ],
+              "language": {
+                "emptyTable": "No pages found",
+                "info": "Showing _START_ to _END_ of _TOTAL_ pages",
+                "infoEmpty": "Showing 0 to 0 of 0 pages",
+                "search": "Search pages:",
+                "paginate": {
+                  "first": "First",
+                  "last": "Last",
+                  "next": "Next",
+                  "previous": "Previous"
+                }
+              }
+            });
+          });
+
+
           // Select all checkbox
           document.getElementById('selectAll').addEventListener('change', function () {
             document.querySelectorAll('.product-checkbox').forEach(cb => cb.checked = this.checked);
           });
 
-          // Status filter
-          document.getElementById('statusFilter').addEventListener('change', function () {
-            const params = new URLSearchParams(window.location.search);
-            if (this.value) params.set('status', this.value); else params.delete('status');
-            params.delete('page');
-            window.location.search = params.toString();
-          });
 
-          // Type filter
-          document.getElementById('typeFilter').addEventListener('change', function () {
-            const params = new URLSearchParams(window.location.search);
-            if (this.value) params.set('type', this.value); else params.delete('type');
-            params.delete('page');
-            window.location.search = params.toString();
-          });
+          feather.replace();
 
-          // Set filter values from URL
-          const urlParams = new URLSearchParams(window.location.search);
-          if (urlParams.get('status')) document.getElementById('statusFilter').value = urlParams.get('status');
-          if (urlParams.get('type')) document.getElementById('typeFilter').value = urlParams.get('type');
         </script>
 
         <%- include('../partials/footer') %>
-
-
-          <script>
-            $(document).ready(function () {
-              if ($.fn.DataTable.isDataTable('#productsTable')) {
-                $('#productsTable').DataTable().clear().destroy();
-              }
-              $('#productsTable').DataTable({
-                "responsive": true,
-                "autoWidth": false,
-                "order": [[0, "desc"]],
-                "pageLength": 10,
-                "columnDefs": [
-                  { "orderable": false, "targets": 6 }
-                ],
-                "language": {
-                  "emptyTable": "No products found",
-                  "info": "Showing _START_ to _END_ of _TOTAL_ products",
-                  "infoEmpty": "Showing 0 to 0 of 0 Products",
-                  "search": "Search products:",
-                  "paginate": {
-                    "first": "First",
-                    "last": "Last",
-                    "next": "Next",
-                    "previous": "Previous"
-                  }
-                }
-              });
-            });
-
-            feather.replace();
-          </script>
-
-
-          <%- include('../partials/footer') %>

@@ -26,9 +26,17 @@
                 </div>
               </div>
               <div class="col-5 align-self-center text-end">
-                <a href="/store/admin/pages" class="btn btn-secondary rounded-pill px-4">
-                  <div class="d-flex align-items-center">
+                <a href="/store/admin/pages" class="btn btn-sm btn-secondary text-white" title="Back to Pages">
+                  <div class=" align-items-center">
                     <i data-feather="arrow-left" class="feather-sm me-1"></i> Back to Pages
+                  </div>
+                </a>
+
+                <!-- View page -->
+                <a href="http://localhost:3001/store/<%= page.post_slug %>" target="_blank"
+                  class="btn btn-sm btn-light-success text-success" title="View Page">
+                  <div class="align-items-center">
+                    View Page <i data-feather="external-link" class=" feather-sm"></i>
                   </div>
                 </a>
               </div>
@@ -172,51 +180,6 @@
                         </div>
                       </div>
 
-                      <!-- page IMAGE CARD -->
-                      <div class="card mb-3">
-                        <div class="card-body">
-                          <h4 class="card-title mb-3 pb-3 border-bottom">Page Image</h4>
-
-                          <div class="mb-3">
-                            <div class="border rounded p-3 text-center" id="blogImagePreview"
-                              style="min-height:150px;cursor:pointer;" onclick="openMedia({
-                                urlInput:   'blog_image',
-                                titleInput: 'blog_image_title',
-                                altInput:   'blog_image_alt',
-                                preview:    'blogImagePreview',
-                                multiple:   false
-                              })">
-                              <% if (isEdit && b.thumbnail) { %>
-                                <img src="<%= b.thumbnail %>" class="img-fluid rounded" style="max-height:150px;" />
-                                <% } else { %>
-                                  <div>
-                                    <i data-feather="image" style="width:48px;height:48px;"
-                                      class="text-muted mb-2 d-block mx-auto"></i>
-                                    <p class="text-muted small mb-0">Click to select page image</p>
-                                  </div>
-                                  <% } %>
-                            </div>
-
-                            <% if (isEdit && b.thumbnail && b.thumbnailId) { %>
-
-                              <button type="button" id="removeBlogImagebtn" class="btn btn-link btn-sm text-danger p-0">
-                                <i data-feather="trash-2" class="feather-sm me-1"></i> Remove page image
-                              </button>
-
-                              <% } %>
-
-                                <input type="hidden" id="blog_image" name="blog_image" value="<%= page.thumbnail %>">
-
-                                <input type="hidden" id="blog_image_title" name="blog_image_title"
-                                  value="<%= page.title || '' %>">
-
-                                <input type="hidden" id="blog_image_alt" name="blog_image_alt"
-                                  value="<%= page.alt || '' %>">
-                          </div>
-
-
-                        </div>
-                      </div>
 
 
 

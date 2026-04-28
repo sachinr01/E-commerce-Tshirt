@@ -27,9 +27,17 @@
                 </div>
               </div>
               <div class="col-5 align-self-center text-end">
-                <a href="/store/admin/products" class="btn btn-secondary rounded-pill px-4">
-                  <div class="d-flex align-items-center">
+                <a href="/store/admin/products" class="btn btn-sm btn-secondary text-white" title="Back to Products">
+                  <div class=" align-items-center">
                     <i data-feather="arrow-left" class="feather-sm me-1"></i> Back to Products
+                  </div>
+                </a>
+
+                <!-- View Product -->
+                <a href="http://localhost:3001/store/shop/product/<%= product.product_url %>" target="_blank"
+                  class="btn btn-sm btn-light-success text-success" title="View Product">
+                  <div class="align-items-center">
+                    View Product Page <i data-feather="external-link" class=" feather-sm"></i>
                   </div>
                 </a>
               </div>
@@ -663,11 +671,6 @@
                         </div>
                       </div>
 
-                    </div><!-- /col-lg-8 -->
-
-                    <!-- RIGHT COLUMN -->
-                    <div class="col-lg-4">
-
                       <!-- SEO CARD -->
                       <div class="card mb-3">
                         <div class="card-body">
@@ -720,6 +723,13 @@
                           </div>
                         </div>
                       </div>
+
+                    </div><!-- /col-lg-8 -->
+
+                    <!-- RIGHT COLUMN -->
+                    <div class="col-lg-4">
+
+
 
                       <div class="card mb-3">
                         <div class="card-body">
@@ -880,7 +890,7 @@
                       </div>
 
                     </div><!-- /col-lg-4 -->
-                    
+
                   </div><!-- /row -->
                 </form>
           </div>

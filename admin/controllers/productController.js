@@ -121,18 +121,17 @@ const upsertMeta = async (productId, key, value) => {
 // ─── LIST PRODUCTS ────────────────────────────────────────────────────────────
 const showProducts = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = 10;
-    const offset = (page - 1) * limit;
     const status = req.query.status || null;
     const type = req.query.type || null;
 
     let where = "WHERE p.parent_id = 0";
     const params = [];
+
     if (status) {
       where += " AND p.product_status = ?";
       params.push(status);
     }
+
     if (type) {
       where += " AND p.product_type = ?";
       params.push(type);
@@ -140,50 +139,44 @@ const showProducts = async (req, res) => {
 
     const [[{ total }]] = await db.query(
       `SELECT COUNT(*) as total FROM tbl_products p ${where}`,
-      params,
+      params
     );
 
-    const [products] = await db.query(
-      `
-        SELECT 
-        p.*,
+   const [products] = await db.query(
+  `
+  SELECT 
+    p.*,
 
-        MAX(CASE WHEN pm.meta_key = '_regular_price' THEN pm.meta_value END) AS regular_price,
-        MAX(CASE WHEN pm.meta_key = '_sale_price'    THEN pm.meta_value END) AS sale_price,
-        MAX(CASE WHEN pm.meta_key = '_sku'           THEN pm.meta_value END) AS sku,
-        MAX(CASE WHEN pm.meta_key = '_stock'         THEN pm.meta_value END) AS stock,
-        MAX(CASE WHEN pm.meta_key = '_stock_status'  THEN pm.meta_value END) AS stock_status,
+    MAX(CASE WHEN pm.meta_key = '_regular_price' THEN pm.meta_value END) AS regular_price,
+    MAX(CASE WHEN pm.meta_key = '_sale_price' THEN pm.meta_value END) AS sale_price,
+    MAX(CASE WHEN pm.meta_key = '_sku' THEN pm.meta_value END) AS sku,
+    MAX(CASE WHEN pm.meta_key = '_stock' THEN pm.meta_value END) AS stock,
+    MAX(CASE WHEN pm.meta_key = '_stock_status' THEN pm.meta_value END) AS stock_status,
 
-        (
-          SELECT m2.media_path
-          FROM tbl_media m2
-          WHERE m2.parent_id = p.ID 
-            AND m2.media_type = 'product_image'
-          ORDER BY m2.media_id ASC
-          LIMIT 1
-        ) AS thumbnail
+    (
+      SELECT m2.media_path
+      FROM tbl_media m2
+      WHERE m2.parent_id = p.ID
+        AND m2.media_type = 'product_image'
+      ORDER BY m2.media_id ASC
+      LIMIT 1
+    ) AS thumbnail
 
-      FROM tbl_products p
+  FROM tbl_products p
+  LEFT JOIN tbl_productmeta pm ON pm.product_id = p.ID
 
-      LEFT JOIN tbl_productmeta pm 
-        ON pm.product_id = p.ID
+  ${where}
 
-      WHERE p.parent_id = 0
-
-      GROUP BY p.ID
-      ORDER BY p.product_date_added DESC
-      LIMIT ? OFFSET ?
-        `,
-      [...params, limit, offset],
-    );
+  GROUP BY p.ID
+  ORDER BY p.product_date_added DESC
+  `,
+  params
+);
 
     res.render("products/index", {
       title: "Products",
       products,
-      currentPage: page,
-      totalPages: Math.ceil(total / limit),
       totalProducts: total,
-      limit,
       success: req.query.success || null,
       error: req.query.error || null,
     });

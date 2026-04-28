@@ -26,9 +26,17 @@
                 </div>
               </div>
               <div class="col-5 align-self-center text-end">
-                <a href="/store/admin/blogs" class="btn btn-secondary rounded-pill px-4">
-                  <div class="d-flex align-items-center">
+                <a href="/store/admin/blogs" class="btn btn-secondary btn-sm text-white" title="Back to Blogs">
+                  <div class="align-items-center">
                     <i data-feather="arrow-left" class="feather-sm me-1"></i> Back to Blogs
+                  </div>
+                </a>
+
+                <!-- View blog -->
+                <a href="http://localhost:3001/store/blog/<%= blog.post_slug %>" target="_blank"
+                  class="btn btn-sm btn-light-success text-success" title="View Blog">
+                  <div class="align-items-center">
+                    View Blog <i data-feather="external-link" class=" feather-sm"></i>
                   </div>
                 </a>
               </div>
