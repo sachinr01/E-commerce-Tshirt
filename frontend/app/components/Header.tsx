@@ -246,17 +246,17 @@ export default function Header() {
                           const shopHref = link.href;
                           const promos = link.mega.isKitchen
                             ? [
-                                { img: 'https://icmedianew.gumlet.io/pub/media//home_banner/images/Best-Seller04-10.03.2026.jpg', title: 'OUR KITCHEN COLLECTION', sub: '150+ Products Available', badge: false, cta: false },
-                                { img: 'https://icmedianew.gumlet.io/pub/media//home_banner/images/Best-Seller02-10.03.2026.jpg', title: 'EXCLUSIVE KITCHEN DEALS', sub: 'GET UPTO 40% DISCOUNT', badge: true, cta: true },
+                                { img: '/store/images/category_images/CC_KITCHEN_ORGANISERS.png', title: 'OUR KITCHEN COLLECTION', sub: '150+ Products Available', badge: false, cta: false },
+                                { img: '/store/images/category_images/CC_KITCHEN_ORGANISERS.png', title: 'EXCLUSIVE KITCHEN DEALS', sub: 'GET UPTO 40% DISCOUNT', badge: true, cta: true },
                               ]
                             : link.mega.isDrinkware
                             ? [
-                                { img: 'https://icmedianew.gumlet.io/pub/media//home_banner/images/Best-Seller02-10.03.2026.jpg', title: 'OUR DRINKWARE COLLECTION', sub: '150+ Products Available', badge: false, cta: false },
-                                { img: 'https://icmedianew.gumlet.io/pub/media//home_banner/images/Best-Seller03-10.03.2026.jpg', title: 'EXCLUSIVE DRINKWARE DEALS', sub: 'GET UPTO 40% DISCOUNT', badge: true, cta: true },
+                                { img: '/store/images/category_images/CC_TUMBLERS.png', title: 'OUR DRINKWARE COLLECTION', sub: '150+ Products Available', badge: false, cta: false },
+                                { img: '/store/images/category_images/CC_TUMBLERS.png', title: 'EXCLUSIVE DRINKWARE DEALS', sub: 'GET UPTO 40% DISCOUNT', badge: true, cta: true },
                               ]
                             : [
-                                { img: 'https://icmedianew.gumlet.io/pub/media//home_banner/images/Best-Seller03-10.03.2026.jpg', title: 'OUR GLASSWARE COLLECTION', sub: '150+ Products Available', badge: false, cta: false },
-                                { img: 'https://icmedianew.gumlet.io/pub/media//home_banner/images/Best-Seller04-10.03.2026.jpg', title: 'EXCLUSIVE GLASSWARE DEALS', sub: 'GET UPTO 40% DISCOUNT', badge: true, cta: true },
+                                { img: '/store/images/category_images/CC_GLASSWARE.png', title: 'OUR GLASSWARE COLLECTION', sub: '150+ Products Available', badge: false, cta: false },
+                                { img: '/store/images/category_images/CC_GLASSWARE.png', title: 'EXCLUSIVE GLASSWARE DEALS', sub: 'GET UPTO 40% DISCOUNT', badge: true, cta: true },
                               ];
                           const placeholder = <span className="nh-km-placeholder"><svg viewBox="0 0 48 48" fill="none"><rect width="48" height="48" fill="#e8e8e8"/><path d="M14 34l8-10 6 7 4-5 6 8H14z" fill="#bbb"/><circle cx="30" cy="20" r="4" fill="#bbb"/></svg></span>;
                           return (

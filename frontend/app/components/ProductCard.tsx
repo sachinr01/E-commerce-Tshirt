@@ -15,12 +15,8 @@ interface ProductCardProps {
   stockStatus?: string | null;
 }
 
-const iconActions = [
-  { icon: "fa-search", title: "View Product", href: "#" },
-  { icon: "fa-shopping-cart", title: "Add to Cart", href: "#" },
-  { icon: "fa-heart", title: "Wishlist", href: "#" },
-  { icon: "fa-share-alt", title: "Share", href: "#" },
-];
+
+
 
 export default function ProductCard({
   name,
@@ -34,7 +30,6 @@ export default function ProductCard({
 }: ProductCardProps) {
   const isOutOfStock = stockStatus != null && stockStatus !== 'instock' && stockStatus !== 'onbackorder';
   const [hovered, setHovered] = useState(false);
-  const [hoveredIcon, setHoveredIcon] = useState<number | null>(null);
 
   return (
     <li
@@ -42,7 +37,7 @@ export default function ProductCard({
       data-animate="fadeIn"
       data-delay={delay || 0}
       onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => { setHovered(false); setHoveredIcon(null); }}
+      onMouseLeave={() => setHovered(false)}
     >
       {/* ── Product Image + Hover Overlay ── */}
       <div className="product-img">
@@ -55,23 +50,11 @@ export default function ProductCard({
             />
           </figure>
 
-          {/* ── Teal overlay ── */}
+          {/* ── View Product overlay ── */}
           <div className={`pc-overlay${hovered ? " hovered" : ""}`}>
             <div className={`pc-border-frame${hovered ? " hovered" : ""}`} />
             <div className={`pc-icon-grid${hovered ? " hovered" : ""}`}>
-              {iconActions.map((action, i) => (
-                <a
-                  key={i}
-                  href={action.href}
-                  title={action.title}
-                  className={`pc-icon-btn${hoveredIcon === i ? " hovered" : ""}`}
-                  onMouseEnter={() => setHoveredIcon(i)}
-                  onMouseLeave={() => setHoveredIcon(null)}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <i className={`fa ${action.icon}`} />
-                </a>
-              ))}
+              <a href="#" className="btn-view-product" style={{ gridColumn: 'span 2' }}>View Product</a>
             </div>
           </div>
 
