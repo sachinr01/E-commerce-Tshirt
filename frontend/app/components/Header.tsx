@@ -177,7 +177,7 @@ export default function Header() {
     { label: "DRINKWARE", href: "/shop/drinkware", mega: { columns: [], featured: [], isDrinkware: true } },
     { label: "GLASSWARE", href: "/shop/glassware", mega: { columns: [], featured: [], isGlassware: true } },
     { label: "KITCHEN ORGANISERS", href: "/shop/jars-and-containers", mega: { columns: [], featured: [], isKitchen: true } },
-    { label: "ABOUT US", href: "/about-us" },
+    { label: "ABOUT US", href: "/about-nestcase" },
     { label: "B2B CONNECT", href: "/b2b-connect" },
   ];
 
@@ -225,7 +225,7 @@ export default function Header() {
               <span className="nh-hamburger-lines"><span /><span /><span /></span>
             </button>
             <Link href="/" className="nh-logo-link" onClick={closeOverlays}>
-              <Image src="/store/images/logo/Nestcase_Logo.png" alt="Nestcase" width={280} height={64} priority className="nh-logo-image" />
+              <Image src="/store/images/logo/Nestcase_Logo.png" alt="Nestcase" width={220} height={80} priority className="nh-logo-image" />
             </Link>
           </div>
 

@@ -1,18 +1,18 @@
 /* ─── HEADER LAYOUT ─── */
 .nh-header { position: sticky; top: 0; z-index: 1000; background: #fff; border-bottom: 1px solid #ececec; overflow: visible; }
-.nh-inner { max-width: 1360px; margin: 0 auto; height: 110px; padding: 0 35px 0 24px; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 16px; }
+.nh-inner { max-width: 1360px; margin: 0 auto; height: 80px; padding: 0 32px 0 24px; display: grid; grid-template-columns: 180px 1fr auto; align-items: center; gap: 24px; }
 .nh-left, .nh-right { display: flex; align-items: center; min-width: 0; gap: 12px; overflow: visible; }
 .nh-left { justify-content: flex-start; }
-.nh-center { display: flex; align-items: center; justify-content: center; }
+.nh-center { display: flex; align-items: center; justify-content: center; overflow: visible; }
 .nh-right { justify-content: flex-end; }
 
 /* ─── LOGO ─── */
-.nh-logo-link { display: inline-flex; align-items: center; justify-content: center; line-height: 0; }
-.nh-logo-image { width: auto; height: 100px; max-width: 360px; object-fit: contain; }
+.nh-logo-link { display: inline-flex; align-items: center; justify-content: flex-start; line-height: 0; }
+.nh-logo-image { width: auto; height: 80px; max-width: 220px; object-fit: contain; }
 
 /* ─── NAV ─── */
-.nh-nav { display: flex; align-items: center; gap: 24px; list-style: none; margin: 0; padding: 0; min-width: 0; }
-.nh-nav a, .nh-login, .nh-account-link { color: #1b1b1b; text-decoration: none; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; }
+.nh-nav { display: flex; align-items: center; gap: 28px; list-style: none; margin: 0; padding: 0; flex-wrap: nowrap; }
+.nh-nav a, .nh-login, .nh-account-link { color: #1b1b1b; text-decoration: none; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; white-space: nowrap; }
 .nh-nav a:hover, .nh-login:hover, .nh-account-link:hover { color: #555; }
 
 /* ─── ICON BUTTONS ─── */
@@ -25,7 +25,7 @@
 
 /* ─── HEADER INLINE SEARCH ─── */
 .nh-header-search { position: relative; display: flex; align-items: center; }
-.nh-header-search-form { display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px; background: #f5f5f5; border-radius: 999px; border: 1px solid transparent !important; outline: none !important; transition: border-color 0.15s, background 0.15s; width: 280px; }
+.nh-header-search-form { display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px; background: #f5f5f5; border-radius: 999px; border: 1px solid transparent !important; outline: none !important; transition: border-color 0.15s, background 0.15s; width: 220px; }
 .nh-header-search-form:focus, .nh-header-search-form:focus-visible { outline: none !important; }
 .nh-header-search-form:focus-within { background: #fff; border-color: #ddd !important; outline: none !important; }
 .nh-header-search-form input { flex: 1; min-width: 0; border: none !important; outline: none !important; box-shadow: none !important; font-size: 13px; color: #1a1a1a; background: transparent; }
@@ -158,8 +158,8 @@
 
 /* ─── RESPONSIVE ─── */
 @media (max-width: 1199px) {
-  .nh-inner { padding: 0 18px; gap: 12px; }
-  .nh-nav { gap: 18px; }
+  .nh-inner { padding: 0 18px; gap: 16px; grid-template-columns: 160px 1fr auto; }
+  .nh-nav { gap: 20px; }
   .nh-account-text { max-width: 84px; }
   .nh-mega-inner { padding: 20px 36px 24px; grid-template-columns: 1fr; gap: 28px; }
   .nh-mega-grid { gap: 20px; }
@@ -168,26 +168,27 @@
   .nh-km-promo { min-height: 200px; }
 }
 @media (max-width: 1080px) {
-  .nh-nav { gap: 12px; }
-  .nh-header-search-form { width: 180px; }
-  .nh-inner { gap: 8px; }
+  .nh-nav { gap: 14px; }
+  .nh-nav a, .nh-mega-trigger { font-size: 12px; letter-spacing: 0.05em; }
+  .nh-header-search-form { width: 160px; }
+  .nh-inner { gap: 10px; }
   .nh-account-text { display: none; }
 }
 @media (max-width: 991px) {
-  .nh-inner { grid-template-columns: auto 1fr auto; height: 90px; padding: 0 12px; gap: 10px; }
+  .nh-inner { grid-template-columns: auto 1fr auto; height: 70px; padding: 0 12px; gap: 10px; }
   .nh-left { flex: 0 0 auto; }
   .nh-center, .nh-nav, .nh-mega-panel, .nh-login-label { display: none; }
   .nh-hamburger, .nh-mobile-search { display: inline-flex !important; }
   .nh-header-search { display: none; }
   .nh-right { gap: 4px; }
   .nh-icon-btn { width: 34px; height: 34px; }
-  .nh-logo-image { height: 80px; max-width: min(300px, 100%); }
+  .nh-logo-image { height: 44px; max-width: min(160px, 100%); }
   .nh-account-link, .nh-cart-link { padding: 6px; }
   .nh-account-text, .nh-cart-label { display: none; }
 }
 @media (max-width: 575px) {
-  .nh-inner { height: 90px; padding: 0 10px; gap: 8px; }
-  .nh-logo-image { height: 75px; max-width: 260px; }
+  .nh-inner { height: 64px; padding: 0 10px; gap: 8px; }
+  .nh-logo-image { height: 40px; max-width: 140px; }
   .nh-cart-dropdown { right: -6px; width: min(300px, calc(100vw - 20px)); padding: 14px; }
   .nh-search-overlay { padding-top: 16px; align-items: flex-start; }
   .nh-search-box-wrap { width: 100%; }
