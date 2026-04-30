@@ -130,7 +130,7 @@
 .nh-mega-featured-title { font-size: 13px; font-weight: 700; color: #fff; letter-spacing: 0.02em; line-height: 1.3; }
 
 /* ─── PRODUCT-CARD MEGA MENU (DRINKWARE / GLASSWARE / KITCHEN) ─── */
-.nh-km-layout { max-width: 1360px; margin: 0 auto; padding: 24px 48px 28px; display: grid; grid-template-columns: 1fr 420px; gap: 24px; align-items: start; }
+.nh-km-layout { max-width: 1360px; margin: 0 auto; padding: 24px 48px 28px; display: grid; grid-template-columns: 1fr 380px; gap: 24px; align-items: stretch; }
 .nh-km-products { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border-right: 1px solid #efefef; padding-right: 24px; min-width: 0; overflow: hidden; }
 .nh-km-section { padding: 0 16px; min-width: 0; overflow: hidden; }
 .nh-km-section:first-child { border-right: 1px solid #efefef; padding-left: 0; }
@@ -146,15 +146,15 @@
 .nh-km-price { font-size: 13px; font-weight: 700; color: #1b1b1b; margin: 0; }
 .nh-km-shop { font-size: 11px; color: #555; text-decoration: underline; text-underline-offset: 2px; }
 .nh-km-card:hover .nh-km-shop { color: #111; }
-.nh-km-promos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.nh-km-promo { position: relative; overflow: hidden; flex: 1; min-height: 280px; display: block; text-decoration: none; background: #e8e8e8; }
-.nh-km-promo img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s ease; position: absolute; inset: 0; }
+.nh-km-promos { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr; gap: 8px; align-self: stretch; height: 100%; }
+.nh-km-promo { position: relative; overflow: hidden; display: block; text-decoration: none; background: #f5ede4; width: 100%; height: 100%; min-height: 0; aspect-ratio: 3/4; }
+.nh-km-promo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: left top; display: block; transition: transform 0.4s ease; }
 .nh-km-promo:hover img { transform: scale(1.05); }
 .nh-km-promo-badge { position: absolute; top: 8px; left: 8px; background: #1a5fd4; color: #fff; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; padding: 2px 7px; z-index: 2; text-transform: uppercase; }
-.nh-km-promo-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 20px 12px 12px; background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%); display: flex; flex-direction: column; gap: 3px; z-index: 2; }
-.nh-km-promo-title { font-size: 11px; font-weight: 800; color: #fff; letter-spacing: 0.05em; text-transform: uppercase; line-height: 1.3; }
-.nh-km-promo-sub { font-size: 11px; font-weight: 600; color: #fff; }
-.nh-km-promo-cta { color: #f5c518; font-weight: 800; }
+.nh-km-promo-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 28px 10px 12px; background: linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.3) 60%, transparent 100%); display: flex; flex-direction: column; gap: 4px; z-index: 2; }
+.nh-km-promo-title { font-size: 12px; font-weight: 900; color: #fff; letter-spacing: 0.04em; text-transform: uppercase; line-height: 1.35; white-space: normal; word-break: break-word; text-shadow: 0 1px 4px rgba(0,0,0,0.5); }
+.nh-km-promo-sub { font-size: 11px; font-weight: 700; color: #fff; white-space: normal; word-break: break-word; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
+.nh-km-promo-cta { color: #f5c518; font-weight: 900; }
 
 /* ─── RESPONSIVE ─── */
 @media (max-width: 1199px) {
@@ -163,6 +163,9 @@
   .nh-account-text { max-width: 84px; }
   .nh-mega-inner { padding: 20px 36px 24px; grid-template-columns: 1fr; gap: 28px; }
   .nh-mega-grid { gap: 20px; }
+  .nh-km-layout { grid-template-columns: 1fr 280px; padding: 20px 28px 24px; }
+  .nh-km-img-wrap { width: 120px; height: 120px; }
+  .nh-km-promo { min-height: 200px; }
 }
 @media (max-width: 991px) {
   .nh-inner { grid-template-columns: auto 1fr auto; height: 72px; padding: 0 12px; gap: 10px; }

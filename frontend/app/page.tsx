@@ -12,7 +12,7 @@ import { BLOG_HOME_LIMIT } from './blog/utils/config';
 import { getLatestBlogs } from './blog/utils/getBlogs';
 
 const SITE_URL  = process.env.NEXT_PUBLIC_SITE_URL  ?? 'http://localhost:3001';
-const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? 'Coffr';
+const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? 'NESTCASE';
 
 export const metadata: Metadata = {
   title: `${SITE_NAME} | Hoodies, Mugs, Decals & More`,
@@ -68,7 +68,7 @@ const jsonLd = {
       name: SITE_NAME,
       logo: {
         '@type': 'ImageObject',
-        url: `${SITE_URL}/store/images/logo-icon.png`,
+        url: `${SITE_URL}/store/images/logo/Nestcase_logo.png`,
       },
     },
     {
