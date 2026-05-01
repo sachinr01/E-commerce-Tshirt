@@ -977,7 +977,12 @@ const placeOrder = async (req, res) => {
     });
   } catch (err) {
     await conn.rollback();
-    console.error("placeOrder error:", err);
+    console.error("placeOrder error:", {
+  message: err.message,
+  stack: err.stack,
+  sqlMessage: err.sqlMessage,
+  code: err.code,
+});
     res
       .status(500)
       .json({ success: false, message: "Order placement failed." });
