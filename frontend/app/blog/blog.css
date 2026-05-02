@@ -220,11 +220,13 @@
   color: #1a1a1a;
   margin: 18px 0 10px;
   line-height: 1.4;
+  font-weight: 700;
 }
 
 .blog-content h1 { font-size: 24px; }
 .blog-content h2 { font-size: 20px; }
 .blog-content h3 { font-size: 18px; }
+.blog-content h4 { font-size: 16px; }
 
 .blog-content ul {
   padding-left: 18px;
