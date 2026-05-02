@@ -139,39 +139,77 @@ const showProducts = async (req, res) => {
 
     const [[{ total }]] = await db.query(
       `SELECT COUNT(*) as total FROM tbl_products p ${where}`,
-      params
+      params,
     );
 
-   const [products] = await db.query(
-  `
+    const [products] = await db.query(
+      `
   SELECT 
-    p.*,
+  p.*,
 
-    MAX(CASE WHEN pm.meta_key = '_regular_price' THEN pm.meta_value END) AS regular_price,
-    MAX(CASE WHEN pm.meta_key = '_sale_price' THEN pm.meta_value END) AS sale_price,
-    MAX(CASE WHEN pm.meta_key = '_sku' THEN pm.meta_value END) AS sku,
-    MAX(CASE WHEN pm.meta_key = '_stock' THEN pm.meta_value END) AS stock,
-    MAX(CASE WHEN pm.meta_key = '_stock_status' THEN pm.meta_value END) AS stock_status,
+  (
+    SELECT pm.meta_value
+    FROM tbl_productmeta pm
+    WHERE pm.product_id = p.ID
+      AND pm.meta_key = '_regular_price'
+    ORDER BY pm.meta_id DESC
+    LIMIT 1
+  ) AS regular_price,
 
-    (
-      SELECT m2.media_path
-      FROM tbl_media m2
-      WHERE m2.parent_id = p.ID
-        AND m2.media_type = 'product_image'
-      ORDER BY m2.media_id ASC
-      LIMIT 1
-    ) AS thumbnail
+  (
+    SELECT pm.meta_value
+    FROM tbl_productmeta pm
+    WHERE pm.product_id = p.ID
+      AND pm.meta_key = '_sale_price'
+    ORDER BY pm.meta_id DESC
+    LIMIT 1
+  ) AS sale_price,
 
-  FROM tbl_products p
-  LEFT JOIN tbl_productmeta pm ON pm.product_id = p.ID
+  (
+    SELECT pm.meta_value
+    FROM tbl_productmeta pm
+    WHERE pm.product_id = p.ID
+      AND pm.meta_key = '_sku'
+    ORDER BY pm.meta_id DESC
+    LIMIT 1
+  ) AS sku,
 
-  ${where}
+  (
+    SELECT pm.meta_value
+    FROM tbl_productmeta pm
+    WHERE pm.product_id = p.ID
+      AND pm.meta_key = '_stock'
+    ORDER BY pm.meta_id DESC
+    LIMIT 1
+  ) AS stock,
 
-  GROUP BY p.ID
-  ORDER BY p.product_date_added DESC
+  (
+    SELECT pm.meta_value
+    FROM tbl_productmeta pm
+    WHERE pm.product_id = p.ID
+      AND pm.meta_key = '_stock_status'
+    ORDER BY pm.meta_id DESC
+    LIMIT 1
+  ) AS stock_status,
+
+  (
+    SELECT m2.media_path
+    FROM tbl_media m2
+    WHERE m2.parent_id = p.ID
+      AND m2.media_type = 'product_image'
+    ORDER BY m2.media_id ASC
+    LIMIT 1
+  ) AS thumbnail
+
+FROM tbl_products p
+
+${where}
+
+ORDER BY p.product_date_added DESC
+
   `,
-  params
-);
+      params,
+    );
 
     res.render("products/index", {
       title: "Products",
@@ -582,10 +620,13 @@ const storeProduct = async (req, res) => {
       body.product_more_info || "",
     );
     await insertMeta(productId, "meta_title", body.meta_title || "");
-    await insertMeta(productId, "meta_description", body.meta_description || "");
+    await insertMeta(
+      productId,
+      "meta_description",
+      body.meta_description || "",
+    );
     await insertMeta(productId, "canonical_tag", body.canonical_tag || "");
     await insertMeta(productId, "meta_index", body.meta_index || "");
-
 
     // ═══════════════════════════════════════════════════════
     // STEP 3: MAIN FEATURED IMAGE

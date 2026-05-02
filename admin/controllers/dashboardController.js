@@ -96,27 +96,42 @@ const showDashboard = async (req, res) => {
     // LOW STOCK PRODUCTS
     // =========================
     const [lowStockProducts] = await db.query(`
-            SELECT 
-                p.ID,
-                p.product_title,
-                pm.meta_value AS stock,
-                (
-                    SELECT m.media_path
-                    FROM tbl_media m
-                    WHERE m.parent_id = p.ID
-                    AND m.media_type = 'product_image'
-                    ORDER BY m.media_id ASC
-                    LIMIT 1
-                ) AS thumbnail
-            FROM tbl_products p
-            INNER JOIN tbl_productmeta pm 
-                ON pm.product_id = p.ID
-            WHERE pm.meta_key = '_stock'
-                AND CAST(pm.meta_value AS UNSIGNED) <= 5
-                AND p.parent_id = 0
-            ORDER BY CAST(pm.meta_value AS UNSIGNED) ASC
-            LIMIT 10
-        `);
+    SELECT 
+        p.ID,
+        p.product_title,
+
+        (
+            SELECT pm.meta_value
+            FROM tbl_productmeta pm
+            WHERE pm.product_id = p.ID
+              AND pm.meta_key = '_stock'
+            ORDER BY pm.meta_id DESC
+            LIMIT 1
+        ) AS stock,
+
+        (
+            SELECT m.media_path
+            FROM tbl_media m
+            WHERE m.parent_id = p.ID
+              AND m.media_type = 'product_image'
+            ORDER BY m.media_id ASC
+            LIMIT 1
+        ) AS thumbnail
+
+    FROM tbl_products p
+    WHERE p.parent_id = 0
+      AND CAST((
+            SELECT pm.meta_value
+            FROM tbl_productmeta pm
+            WHERE pm.product_id = p.ID
+              AND pm.meta_key = '_stock'
+            ORDER BY pm.meta_id DESC
+            LIMIT 1
+        ) AS UNSIGNED) <= 5
+
+    ORDER BY stock ASC
+    LIMIT 10
+`);
 
     res.render("dashboard/index", {
       title: "Dashboard",
