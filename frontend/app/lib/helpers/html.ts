@@ -13,6 +13,79 @@ function basicSanitize(html: string): string {
     .replace(/\s(href|src)\s*=\s*(['"])\s*javascript:[\s\S]*?\2/gi, ' $1="#"');
 }
 
+/**
+ * Fixes invalid HTML where block elements (h1–h6, p, div, ul, ol, li, table…)
+ * are wrapped inside inline elements (strong, em, b, i, span, a).
+ *
+ * The editor produces markup like:
+ *   <strong><h4>Heading</h4></strong>
+ *
+ * Browsers auto-correct this by pulling the block tag *out* of the inline
+ * wrapper, which silently closes <strong> early — the heading renders
+ * without bold/weight and subsequent content loses its styling too.
+ *
+ * Strategy: for every inline wrapper that contains a block-level child,
+ * copy the inline wrapper's attributes (class, style, etc.) directly onto
+ * each block child, then remove the now-redundant inline wrapper.
+ *
+ * Example:
+ *   <strong><h4>Title</h4></strong>
+ *   → <h4><strong>Title</strong></h4>
+ *
+ * This runs only in a browser (DOMParser required); the server-side path
+ * gets a lightweight regex fallback that strips the outer inline tags.
+ */
+const BLOCK_TAGS = new Set([
+  'p','div','h1','h2','h3','h4','h5','h6',
+  'ul','ol','li','table','thead','tbody','tr','th','td',
+  'blockquote','figure','section','article','header','footer','main','aside',
+]);
+const INLINE_WRAPPERS = new Set(['strong','em','b','i','u','s','span','a','mark','small','sub','sup']);
+
+function fixInvalidNestingDOM(root: HTMLElement): void {
+  // Keep iterating until no more invalid nesting is found (handles nested cases)
+  let changed = true;
+  while (changed) {
+    changed = false;
+    root.querySelectorAll([...INLINE_WRAPPERS].join(',')).forEach((inline) => {
+      const blockChildren = [...inline.children].filter(
+        (child) => BLOCK_TAGS.has(child.tagName.toLowerCase())
+      );
+      if (blockChildren.length === 0) return;
+
+      const parent = inline.parentNode;
+      if (!parent) return;
+
+      // For each block child: wrap its contents in a clone of the inline tag
+      // (preserving attributes like class/style), then insert before the inline.
+      blockChildren.forEach((blockEl) => {
+        const inlineClone = inline.cloneNode(false) as HTMLElement; // shallow clone
+        // Move all block children inside a fresh inline clone
+        while (blockEl.firstChild) {
+          inlineClone.appendChild(blockEl.firstChild);
+        }
+        blockEl.appendChild(inlineClone);
+        parent.insertBefore(blockEl, inline);
+      });
+
+      // Move any remaining non-block content after the blocks
+      while (inline.firstChild) {
+        parent.insertBefore(inline.firstChild, inline);
+      }
+      inline.remove();
+      changed = true;
+    });
+  }
+}
+
+/** Lightweight server-side fallback: just strip the outer inline tags. */
+function fixInvalidNestingString(html: string): string {
+  // Remove <strong>/<em>/etc. that immediately wraps a block tag
+  return html
+    .replace(/<(strong|em|b|i|u|s|span|mark|small)([^>]*)>\s*(<(?:h[1-6]|p|div|ul|ol|li|blockquote|table)[^>]*>)/gi, '$3')
+    .replace(/(<\/(?:h[1-6]|p|div|ul|ol|li|blockquote|table)>)\s*<\/(?:strong|em|b|i|u|s|span|mark|small)>/gi, '$1');
+}
+
 function isLikelySpecLabel(text: string): boolean {
   const value = text.trim();
   if (!value || value.length > 40) return false;
@@ -106,9 +179,10 @@ export function sanitizeHtml(
   options: SanitizeHtmlOptions = {}
 ): string {
   const { normalizeSpecLists = true } = options;
+  const fixed = fixInvalidNestingString(basicSanitize(String(html || '')));
   const input = normalizeSpecLists
-    ? normalizeSpecListsInString(basicSanitize(String(html || '')))
-    : basicSanitize(String(html || ''));
+    ? normalizeSpecListsInString(fixed)
+    : fixed;
 
   if (typeof window === 'undefined') {
     return input;
@@ -116,6 +190,10 @@ export function sanitizeHtml(
 
   const parser = new DOMParser();
   const doc = parser.parseFromString(input, 'text/html');
+
+  // Fix invalid nesting (e.g. <strong><h4>…</h4></strong>) before any
+  // other DOM work so downstream queries see valid structure.
+  fixInvalidNestingDOM(doc.body as HTMLElement);
 
   doc.querySelectorAll('script, style, iframe, object, embed, form, meta, link, oembed').forEach((node) => {
     node.remove();

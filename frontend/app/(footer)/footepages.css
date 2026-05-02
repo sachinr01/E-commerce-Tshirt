@@ -80,6 +80,7 @@
   color: #1a1a1a;
   margin: 18px 0 10px;
   line-height: 1.4;
+  font-weight: 700;
 }
 
 .static-content h1 {
@@ -92,6 +93,10 @@
 
 .static-content h3 {
   font-size: 16px;
+}
+
+.static-content h4 {
+  font-size: 15px;
 }
 
 .static-content ul {
