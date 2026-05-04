@@ -462,11 +462,36 @@ const getOnSaleProducts = async (req, res) => {
     }
 };
 
-// Best-selling products based on actual order count (same logic as admin dashboard).
+// Best-selling products based on total units sold (SUM of _qty per product).
 // Query params: ?limit=N (default 5)
 const getBestSellerProducts = async (req, res) => {
     try {
-        const limit = Math.min(parseInt(req.query.limit) || 5, 20);
+        const limit    = Math.min(parseInt(req.query.limit) || 5, 20);
+        const catSlug  = req.query.category ? String(req.query.category).trim() : null;
+
+        // Resolve category slug → IDs (including children) when requested
+        let catFilter = '';
+        let params    = [];
+
+        if (catSlug) {
+            const [[cat]] = await db.query(
+                `SELECT category_id FROM tbl_products_category WHERE category_slug = ? LIMIT 1`,
+                [catSlug]
+            );
+            if (!cat) return res.json({ success: true, count: 0, data: [] });
+
+            const [children] = await db.query(
+                `SELECT category_id FROM tbl_products_category WHERE parent_id = ?`,
+                [cat.category_id]
+            );
+            const catIds = [cat.category_id, ...children.map(c => c.category_id)];
+            const ph     = catIds.map(() => '?').join(', ');
+            catFilter    = `AND EXISTS (
+                SELECT 1 FROM tbl_products_category_link cl
+                WHERE cl.product_id = p.ID AND cl.category_id IN (${ph})
+            )`;
+            params = [...catIds];
+        }
 
         const [rows] = await db.query(`
             SELECT
@@ -474,7 +499,7 @@ const getBestSellerProducts = async (req, res) => {
                 p.product_title AS title,
                 p.product_url   AS slug,
                 p.product_date_added AS date_added,
-                COUNT(oim.meta_value) AS total_sales,
+                SUM(CAST(qty_meta.meta_value AS UNSIGNED)) AS total_sales,
                 (
                     SELECT m2.media_path
                     FROM tbl_productmeta pm2
@@ -506,27 +531,31 @@ const getBestSellerProducts = async (req, res) => {
             INNER JOIN tbl_order_items oi ON oi.order_item_id = oim.order_item_id
             INNER JOIN tbl_orders o ON o.order_id = oi.order_id
             INNER JOIN tbl_products p ON p.ID = oim.meta_value
+            INNER JOIN tbl_order_itemmeta qty_meta
+                ON qty_meta.order_item_id = oim.order_item_id
+               AND qty_meta.meta_key = '_qty'
             WHERE oim.meta_key = '_product_id'
               AND p.product_status = 'publish'
               AND (p.parent_id = 0 OR p.parent_id IS NULL)
               AND o.order_type = 'shop_order'
+              ${catFilter}
             GROUP BY p.ID
             ORDER BY total_sales DESC
             LIMIT ?
-        `, [limit]);
+        `, [...params, limit]);
 
         const data = rows.map(r => ({
-            ID:            r.ID,
-            title:         r.title,
-            slug:          r.slug,
-            date_added:    r.date_added,
-            total_sales:   r.total_sales,
-            thumbnail_url: r.thumbnail_url || null,
-            price_min:     r.price_min,
-            price_max:     r.price_min,
+            ID:             r.ID,
+            title:          r.title,
+            slug:           r.slug,
+            date_added:     r.date_added,
+            total_sales:    r.total_sales,
+            thumbnail_url:  r.thumbnail_url || null,
+            price_min:      r.price_min,
+            price_max:      r.price_min,
             _regular_price: r._regular_price,
-            _sale_price:   r._sale_price,
-            stock_status:  r.stock_status,
+            _sale_price:    r._sale_price,
+            stock_status:   r.stock_status,
         }));
 
         res.json({ success: true, count: data.length, data });

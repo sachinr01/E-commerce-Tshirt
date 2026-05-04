@@ -72,7 +72,7 @@ const fetchCategories = async (): Promise<FooterCategory[]> => {
 
 const fetchPopularProducts = async (): Promise<FooterProduct[]> => {
   try {
-    const res = await fetch('/store/api/products/featured?limit=4', { cache: 'no-store' });
+    const res = await fetch('/store/api/products/best-sellers?limit=4', { cache: 'no-store' });
     if (!res.ok) return [];
     const data = await res.json();
     if (!data?.success || !Array.isArray(data.data)) return [];
@@ -131,12 +131,12 @@ export default function Footer() {
     return () => { active = false; };
   }, []);
 
-  const aboutHref   = resolvePageHref(pages, ['about us']);
+  const aboutHref   = resolvePageHref(pages, ['about us', 'our story', 'about']) || '/about-us';
   const contactHref = resolvePageHref(pages, ['contact us', 'contact']);
   const returnsHref = resolvePageHref(pages, ['refund', 'return']);
   const privacyHref = resolvePageHref(pages, ['privacy']);
   const termsHref   = resolvePageHref(pages, ['terms', 'conditions']);
-  const b2bHref     = resolvePageHref(pages, ['b2b', 'b2b connect']);
+  const b2bHref     = resolvePageHref(pages, ['b2b', 'b2b connect']) || '/b2b-connect';
 
   return (
     <footer className="okab-footer">
@@ -151,7 +151,7 @@ export default function Footer() {
               {b2bHref && <li><Link href={b2bHref} className="link-faded">B2B Connect</Link></li>}
               {aboutHref && <li><Link href={aboutHref} className="link-faded">About Us</Link></li>}
               {contactHref && <li><Link href={contactHref} className="link-faded">Contact Us</Link></li>}
-              <li><a href="/orders" className="link-faded">Track Order</a></li>
+              <li><a href="/store/orders" className="link-faded">Track Order</a></li>
             </ul>
           </div>
           <div>

@@ -171,11 +171,11 @@ export default function Header() {
         if (!data?.success || !Array.isArray(data.data)) return;
         const normalize = (v: string) => String(v || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
         const aboutPage = data.data.find((p: { title: string; slug: string }) =>
-          ['about us', 'our story', 'about'].some(m => normalize(p.title).includes(m))
+          ['about us'].some(m => normalize(p.title).includes(m))
         );
         if (aboutPage?.slug) setAboutHref(`/${aboutPage.slug}`);
         const b2bPage = data.data.find((p: { title: string; slug: string }) =>
-          ['b2b connect', 'b2b'].some(m => normalize(p.title).includes(m))
+          ['b2b connect' ].some(m => normalize(p.title).includes(m))
         );
         if (b2bPage?.slug) setB2bHref(`/${b2bPage.slug}`);
       })
@@ -193,6 +193,9 @@ export default function Header() {
   const [kitchenProducts, setKitchenProducts] = useState<Array<{ id: number; title: string; price: string; image: string; slug: string }>>([]);
   const [drinkwareProducts, setDrinkwareProducts] = useState<Array<{ id: number; title: string; price: string; image: string; slug: string }>>([]);
   const [glasswareProducts, setGlasswareProducts] = useState<Array<{ id: number; title: string; price: string; image: string; slug: string }>>([]);
+  const [kitchenBestSellers, setKitchenBestSellers] = useState<Array<{ id: number; title: string; price: string; image: string; slug: string }>>([]);
+  const [drinkwareBestSellers, setDrinkwareBestSellers] = useState<Array<{ id: number; title: string; price: string; image: string; slug: string }>>([]);
+  const [glasswareBestSellers, setGlasswareBestSellers] = useState<Array<{ id: number; title: string; price: string; image: string; slug: string }>>([]);
 
   const mapProducts = (raw: any[]) => raw.slice(0, 4).map((p: any) => {
     const raw_img = p.thumbnail_url ?? '';
@@ -213,9 +216,15 @@ export default function Header() {
     const fetchCat = (cat: string, setter: (v: any[]) => void) =>
       fetch(`/store/api/product-categories/${cat}/products`, { headers: { Accept: 'application/json' } })
         .then(r => r.json()).then(json => setter(mapProducts(json.data ?? json ?? []))).catch(() => {});
+    const fetchBestSellers = (cat: string, setter: (v: any[]) => void) =>
+      fetch(`/store/api/products/best-sellers?category=${cat}&limit=2`, { headers: { Accept: 'application/json' } })
+        .then(r => r.json()).then(json => setter(mapProducts(json.data ?? []))).catch(() => {});
     fetchCat('jars-and-containers', setKitchenProducts);
     fetchCat('drinkware', setDrinkwareProducts);
     fetchCat('glassware', setGlasswareProducts);
+    fetchBestSellers('jars-and-containers', setKitchenBestSellers);
+    fetchBestSellers('drinkware', setDrinkwareBestSellers);
+    fetchBestSellers('glassware', setGlasswareBestSellers);
   }, []);
 
   const closeOverlays = () => { setCartOpen(false); setSearchOpen(false); setMobileSearchOpen(false); setMobileMenuOpen(false); setActiveMenu(null); };
@@ -364,6 +373,7 @@ export default function Header() {
                       <div className={`nh-mega-panel${activeMenu === link.label ? ' open' : ''}`} onMouseEnter={keepMega} onMouseLeave={closeMega}>
                         {(link.mega.isKitchen || link.mega.isDrinkware || link.mega.isGlassware) ? (() => {
                           const products = link.mega.isKitchen ? kitchenProducts : link.mega.isDrinkware ? drinkwareProducts : glasswareProducts;
+                          const bestSellers = link.mega.isKitchen ? kitchenBestSellers : link.mega.isDrinkware ? drinkwareBestSellers : glasswareBestSellers;
                           const shopHref = link.href;
                           const promos = link.mega.isKitchen
                             ? [
@@ -399,7 +409,7 @@ export default function Header() {
                                 <div className="nh-km-section">
                                   <p className="nh-km-section-title">BEST SELLER</p>
                                   <div className="nh-km-grid">
-                                    {(products.length ? products.slice(2, 4) : Array(2).fill(null)).map((p, i) => (
+                                    {(bestSellers.length ? bestSellers.slice(0, 2) : Array(2).fill(null)).map((p, i) => (
                                       <Link key={p?.id ?? i} href={p ? `/shop/product/${p.slug}` : shopHref} className="nh-km-card" onClick={closeOverlays}>
                                         <div className="nh-km-img-wrap">{p?.image ? <img src={p.image} alt={p.title} loading="lazy" /> : placeholder}</div>
                                         <p className="nh-km-name">{p?.title ?? ''}</p>
