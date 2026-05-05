@@ -17,7 +17,7 @@ const panels = [
 export default function GiftingWorld() {
   return (
     <section className="gw-section">
-        <h2 className="gw-title">GIFTING</h2>
+        <h3 className="gw-title">NESTCASE GIFTING</h3>
         <div className="gw-grid">
           {panels.map((p, i) => (
             <Link key={i} href={p.href} className="gw-panel">

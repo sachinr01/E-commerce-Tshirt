@@ -79,6 +79,7 @@ const normalizePage = (row) => {
         content:              safeContent,
         summary:              safeSummary,
         date:                 formatPostDate(row.post_date),
+        menu_order:           row.menu_order ?? 0,
         // Page image — fetched from tbl_media where media_type='blog_image' AND parent_id=page.ID
         // Same mechanism as blog images; admin uploads via Page Image section
         image:                row.page_img_path || null,
@@ -222,6 +223,15 @@ async function queryProductList(extraWhere = '', orderBy = 'p.menu_order ASC', l
                     ELSE COALESCE((SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_stock_status' ORDER BY meta_id DESC LIMIT 1), 'instock')
                 END
             ) AS stock_status,
+            (
+                -- For simple products: return _stock qty. For variable products: NULL (stock is per-variation)
+                CASE
+                    WHEN EXISTS (
+                        SELECT 1 FROM tbl_products v WHERE v.parent_id = p.ID AND v.product_type = 'product_variation'
+                    ) THEN NULL
+                    ELSE (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_stock' ORDER BY meta_id DESC LIMIT 1)
+                END
+            ) AS stock_qty,
             (SELECT CAST(meta_value AS UNSIGNED) FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = 'total_sales' LIMIT 1) AS total_sales,
             (
                 SELECT GROUP_CONCAT(DISTINCT a.attr_slug ORDER BY a.attr_slug SEPARATOR ',')
@@ -387,6 +397,7 @@ const getProducts = async (req, res) => {
         if (sortBy === 'price-descending') orderBy = 'price_min DESC, p.menu_order ASC';
         if (sortBy === 'title-ascending') orderBy = 'p.product_title ASC';
         if (sortBy === 'newest') orderBy = 'p.product_date_added DESC, p.ID DESC';
+        if (sortBy === 'menu-order') orderBy = 'p.menu_order ASC';
 
         const extraWhere = whereParts.length ? `\n          ${whereParts.join('\n          ')}` : '';
 
@@ -462,11 +473,36 @@ const getOnSaleProducts = async (req, res) => {
     }
 };
 
-// Best-selling products based on actual order count (same logic as admin dashboard).
+// Best-selling products based on total units sold (SUM of _qty per product).
 // Query params: ?limit=N (default 5)
 const getBestSellerProducts = async (req, res) => {
     try {
-        const limit = Math.min(parseInt(req.query.limit) || 5, 20);
+        const limit    = Math.min(parseInt(req.query.limit) || 5, 20);
+        const catSlug  = req.query.category ? String(req.query.category).trim() : null;
+
+        // Resolve category slug → IDs (including children) when requested
+        let catFilter = '';
+        let params    = [];
+
+        if (catSlug) {
+            const [[cat]] = await db.query(
+                `SELECT category_id FROM tbl_products_category WHERE category_slug = ? LIMIT 1`,
+                [catSlug]
+            );
+            if (!cat) return res.json({ success: true, count: 0, data: [] });
+
+            const [children] = await db.query(
+                `SELECT category_id FROM tbl_products_category WHERE parent_id = ?`,
+                [cat.category_id]
+            );
+            const catIds = [cat.category_id, ...children.map(c => c.category_id)];
+            const ph     = catIds.map(() => '?').join(', ');
+            catFilter    = `AND EXISTS (
+                SELECT 1 FROM tbl_products_category_link cl
+                WHERE cl.product_id = p.ID AND cl.category_id IN (${ph})
+            )`;
+            params = [...catIds];
+        }
 
         const [rows] = await db.query(`
             SELECT
@@ -474,7 +510,7 @@ const getBestSellerProducts = async (req, res) => {
                 p.product_title AS title,
                 p.product_url   AS slug,
                 p.product_date_added AS date_added,
-                COUNT(oim.meta_value) AS total_sales,
+                SUM(CAST(qty_meta.meta_value AS UNSIGNED)) AS total_sales,
                 (
                     SELECT m2.media_path
                     FROM tbl_productmeta pm2
@@ -506,27 +542,31 @@ const getBestSellerProducts = async (req, res) => {
             INNER JOIN tbl_order_items oi ON oi.order_item_id = oim.order_item_id
             INNER JOIN tbl_orders o ON o.order_id = oi.order_id
             INNER JOIN tbl_products p ON p.ID = oim.meta_value
+            INNER JOIN tbl_order_itemmeta qty_meta
+                ON qty_meta.order_item_id = oim.order_item_id
+               AND qty_meta.meta_key = '_qty'
             WHERE oim.meta_key = '_product_id'
               AND p.product_status = 'publish'
               AND (p.parent_id = 0 OR p.parent_id IS NULL)
               AND o.order_type = 'shop_order'
+              ${catFilter}
             GROUP BY p.ID
             ORDER BY total_sales DESC
             LIMIT ?
-        `, [limit]);
+        `, [...params, limit]);
 
         const data = rows.map(r => ({
-            ID:            r.ID,
-            title:         r.title,
-            slug:          r.slug,
-            date_added:    r.date_added,
-            total_sales:   r.total_sales,
-            thumbnail_url: r.thumbnail_url || null,
-            price_min:     r.price_min,
-            price_max:     r.price_min,
+            ID:             r.ID,
+            title:          r.title,
+            slug:           r.slug,
+            date_added:     r.date_added,
+            total_sales:    r.total_sales,
+            thumbnail_url:  r.thumbnail_url || null,
+            price_min:      r.price_min,
+            price_max:      r.price_min,
             _regular_price: r._regular_price,
-            _sale_price:   r._sale_price,
-            stock_status:  r.stock_status,
+            _sale_price:    r._sale_price,
+            stock_status:   r.stock_status,
         }));
 
         res.json({ success: true, count: data.length, data });
@@ -563,6 +603,7 @@ const getProduct = async (req, res) => {
                 (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_product_image_gallery' LIMIT 1) AS gallery_ids,
                 (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_sku' ORDER BY meta_id DESC LIMIT 1) AS sku,
                 COALESCE((SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_stock_status' ORDER BY meta_id DESC LIMIT 1), 'instock') AS stock_status,
+                (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_stock' ORDER BY meta_id DESC LIMIT 1) AS stock_qty,
                 (SELECT CAST(meta_value AS UNSIGNED) FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = 'total_sales' ORDER BY meta_id DESC LIMIT 1) AS total_sales,
                 (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_price' ORDER BY meta_id DESC LIMIT 1) AS price,
                 (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_regular_price' ORDER BY meta_id DESC LIMIT 1) AS regular_price,
@@ -787,6 +828,7 @@ const getAttributesByTaxonomy = async (req, res) => {
 // Adding a new taxonomy to tbl_attributes_lookup automatically shows it here.
 const getAllAttributeGroups = async (req, res) => {
     try {
+        const taxPh = [...ATTRIBUTE_TAXONOMIES].map(() => '?').join(',');
         const [rows] = await withRetry(() => db.query(`
             SELECT
                 al.taxonomy,
@@ -797,9 +839,10 @@ const getAllAttributeGroups = async (req, res) => {
             JOIN tbl_attributes_lookup al ON al.attr_id = a.attr_id
             JOIN tbl_products p ON p.ID = al.product_or_parent_id
             WHERE p.product_status = 'publish'
+              AND al.taxonomy IN (${taxPh})
             GROUP BY al.taxonomy, a.attr_name
             ORDER BY al.taxonomy ASC, a.attr_name ASC
-        `));
+        `, [...ATTRIBUTE_TAXONOMIES]));
 
         // Group by taxonomy
         const grouped = {};
@@ -999,7 +1042,14 @@ const getCategoryProducts = async (req, res) => {
                         )
                         ELSE COALESCE((SELECT pm.meta_value FROM tbl_productmeta pm WHERE pm.product_id = p.ID AND pm.meta_key = '_stock_status' ORDER BY pm.meta_id DESC LIMIT 1), 'instock')
                     END
-                ) AS stock_status
+                ) AS stock_status,
+                (
+                    CASE
+                        WHEN EXISTS (SELECT 1 FROM tbl_products v WHERE v.parent_id = p.ID AND v.product_type = 'product_variation')
+                        THEN NULL
+                        ELSE (SELECT pm.meta_value FROM tbl_productmeta pm WHERE pm.product_id = p.ID AND pm.meta_key = '_stock' ORDER BY pm.meta_id DESC LIMIT 1)
+                    END
+                ) AS stock_qty
              FROM tbl_products p
              JOIN tbl_products_category_link l ON l.product_id = p.ID
              JOIN tbl_products_category c ON c.category_id = l.category_id
@@ -1111,7 +1161,7 @@ const getBlogs = async (req, res) => {
                       FROM tbl_posts_category_link fl
                       WHERE fl.post_id = p.ID AND fl.category_id = ?
                   )
-                ORDER BY p.post_date DESC
+                ORDER BY p.menu_order ASC, p.post_date DESC
                 ${limitClause}
             `, params));
         } else {
@@ -1119,7 +1169,7 @@ const getBlogs = async (req, res) => {
             [rows] = await withRetry(() => db.query(`
                 ${POST_WITH_CATEGORY_SQL}
                 WHERE p.post_type = 'post' AND p.post_status = 'publish'
-                ORDER BY p.post_date DESC
+                ORDER BY p.menu_order ASC, p.post_date DESC
                 ${limitClause}
             `, params));
         }
@@ -1181,6 +1231,7 @@ const getPages = async (_req, res) => {
         const [rows] = await withRetry(() => db.query(`
             SELECT
                 p.post_slug, p.post_title, p.post_content, p.post_short_desc, p.post_date,
+                p.menu_order,
                 (
                     SELECT m.media_path FROM tbl_media m
                     WHERE m.parent_id = p.ID AND m.media_type = 'blog_image'
@@ -1192,7 +1243,7 @@ const getPages = async (_req, res) => {
                 (SELECT pm4.meta_value FROM tbl_postmeta pm4 WHERE pm4.post_id = p.ID AND pm4.meta_key = 'meta_index'       ORDER BY pm4.meta_id DESC LIMIT 1) AS seo_meta_index
             FROM tbl_posts p
             WHERE p.post_type = 'page' AND p.post_status = 'publish'
-            ORDER BY p.post_date DESC
+            ORDER BY p.menu_order ASC, p.post_date DESC
         `));
         const data = rows.map((row) => normalizePage(row));
         res.json({ success: true, count: data.length, data });

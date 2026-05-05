@@ -14,10 +14,9 @@
 .tb-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 0 100px;
-  max-width: 1200px;
+  gap: 0 5px;
   margin: 0 auto;
-  padding: 20px 35px 0;
+  padding: 20px 45px 0;
 }
 .tb-item {
   display: flex;
@@ -27,35 +26,21 @@
   position: relative;
   background: #fff;
 }
-.tb-item::after {
-  content: '';
-  position: absolute;
-  right: 0;
-  top: 20%;
-  height: 60%;
-  width: 1px;
-  background: #efefef;
-}
 .tb-item:last-child::after { display: none; }
 .tb-stripe-bar { display: none; }
 .tb-icon { flex-shrink: 0; }
 .tb-text h4 {
-  font-size: 13px;
+  font-size: 19px;
   font-weight: 600;
   color: #1a1a1a;
   margin: 0 0 4px;
 }
-.tb-text p {
+.tb-text h6 {
   font-size: 11.5px;
   color: #aaa;
   margin: 0;
   line-height: 1.6;
-}
-.tb-text a {
-  font-size: 11.5px;
-  color: #888;
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  font-weight: 400;
 }
 @media (max-width: 900px) {
   .tb-grid { grid-template-columns: repeat(2, 1fr); }

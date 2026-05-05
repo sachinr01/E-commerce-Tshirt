@@ -24,6 +24,7 @@ export interface Product {
   gallery_ids: string | null;
   sku: string | null;
   stock_status: string | null;
+  stock_qty: string | null;
   total_sales: number | null;
   date_added: string;
   color_slugs: string | null;

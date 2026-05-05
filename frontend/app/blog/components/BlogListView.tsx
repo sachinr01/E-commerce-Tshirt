@@ -159,7 +159,7 @@ export default function BlogListView({
           </nav>
         )}
         <h1 className="blog-list-title">{title}</h1>
-        <p className="blog-list-subtitle">{subtitle}</p>
+        <h3 className="blog-list-subtitle">{subtitle}</h3>
       </div>
 
       <div className="blog-list-layout">

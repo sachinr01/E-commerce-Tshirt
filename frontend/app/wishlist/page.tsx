@@ -43,8 +43,16 @@ export default function WishlistPage() {
     return simple ?? min;
   };
 
-  const getStock = (p: ProductDetail) =>
-    p.stock_status === 'instock' || p.variations.some(v => v.stock_status === 'instock');
+  const getStock = (p: ProductDetail) => {
+    if (p.variations.length) {
+      return p.variations.some(v =>
+        (v.stock_status === 'instock' || v.stock_status === 'onbackorder') &&
+        (v.stock_qty === null || v.stock_qty === undefined || Number(v.stock_qty) > 0)
+      );
+    }
+    return (p.stock_status === 'instock' || p.stock_status === 'onbackorder') &&
+      (p.stock_qty === null || p.stock_qty === undefined || Number(p.stock_qty) > 0);
+  };
 
   return (
     <>

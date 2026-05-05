@@ -8,14 +8,27 @@
 
 /* ─── GLOBAL FONT TOKENS ─── */
 :root {
-  --font-body: 'Lato', Helvetica, Arial, sans-serif;
-  --font-head: 'Lato', Helvetica, Arial, sans-serif;
+  --font-body: 'Lato';
+  --font-head: 'Lato';
 }
 
 /* Single source of truth for fonts — overrides everything */
 *, *::before, *::after {
-  font-family: 'Lato', Helvetica, Arial, sans-serif !important;
+  font-family: 'Lato';
 }
+
+/* Heading styles */
+h1, h2, h3, h4, h5, h6 {
+  color: #22311d;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+h1 { font-size: 30px; line-height: 40px; }
+h2 { font-size: 26px; line-height: 34px; }
+h3 { font-size: 22px; line-height: 30px; }
+h4 { font-size: 19px; line-height: 26px; }
+h5 { font-size: 17px; line-height: 22px; }
+h6 { font-size: 15px; line-height: 18px; }
 
 /* Ensure full viewport height for slider */
 html, body {

@@ -125,7 +125,7 @@ body {
   color: #828077;
   background-color: #ffffff;
   font-weight: 400;
-  font-family: "Lato", Helvetica, Arial, sans-serif;
+  font-family: 'Lato';
   overflow-x: hidden;
   font-size: 14px;
   line-height: 1;
@@ -162,7 +162,7 @@ html.responsive,
 }
 
 .page-section-content {
-  padding: 6.25em 0;
+  padding: 3em 0;
   position: relative;
 }
 
@@ -302,9 +302,10 @@ input[type="tel"] {
   outline: none;
   margin: 0 0 10px;
   padding: 0.8em 2em;
-  background-color: #00bfa5;
-  border: 1px solid #00bfa5;
-  font-size: 1rem !important;
+  background-color: #22311d;
+  border: 1.5px solid #22311d;
+  border-radius: 8px;
+  font-size: 12px !important;
   font-weight: 700 !important;
   text-align: center !important;
   line-height: 1;
@@ -316,25 +317,26 @@ input[type="tel"] {
   transition: all 0.2s ease-in;
 }
 
-/* filled — white text on teal */
+/* filled — white text on dark green */
 .fill {
   color: #fff !important;
-  border: 1px solid #00bfa5;
+  border: 1.5px solid #22311d;
 }
 .fill:hover {
-  color: #fff !important;
-  background-color: #008c79 !important;
+  color: #000 !important;
+  background-color: transparent !important;
+  border-color: #22311d !important;
 }
 
-/* outline — teal text, transparent background */
+/* outline — dark green text, transparent background */
 .stroke {
   background: transparent !important;
-  color: #00bfa5 !important;
+  color: #22311d !important;
   transition: all 0.2s ease-in;
 }
 .stroke:hover {
   color: #fff !important;
-  background-color: #00bfa5 !important;
+  background-color: #22311d !important;
 }
 
 /* compact size — used in form submit rows */
@@ -421,16 +423,16 @@ input[type="tel"] {
   display: block !important;
   text-align: center !important;
   padding: 9px 16px !important;
-  border: 1.5px solid #1a8a6e !important;
-  border-radius: 7px !important;
+  border: 1.5px solid #22311d !important;
+  border-radius: 8px !important;
   font-size: 12px !important;
   font-weight: 700 !important;
   line-height: 1.2 !important;
-  color: #1a8a6e !important;
+  color: #fff !important;
   text-decoration: none !important;
   letter-spacing: 0.08em !important;
   text-transform: uppercase !important;
-  background: transparent !important;
+  background: #22311d !important;
   width: 100%;
   box-sizing: border-box;
   cursor: pointer;
@@ -438,8 +440,9 @@ input[type="tel"] {
 }
 
 .btn-view-product:hover {
-  background: #1a8a6e !important;
-  color: #fff !important;
+  background: transparent !important;
+  color: #000 !important;
+  border-color: #22311d !important;
 }
 
 /* inline modifier — auto width with side padding,

@@ -60,8 +60,7 @@ export default function CartPage() {
           <span className="cart-breadcrumb-current">Cart</span>
         </nav>
 
-        <section className="section">
-          <div className="page-section-content overflow-hidden cart-content">
+        <div className="cart-content">
             <div className="container">
               {items.length === 0 ? (
                 <div className="cart-empty">
@@ -225,8 +224,7 @@ export default function CartPage() {
                 </div>
               )}
             </div>
-          </div>
-        </section>
+        </div>
       </div>
       <Footer />
     </>

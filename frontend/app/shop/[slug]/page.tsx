@@ -1,7 +1,8 @@
 'use client';
-
+/* Dynamic Category pages */
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import { getCategoryChildren, getCategoryProducts, getImageUrl, type ProductCategory, type Product } from '../../lib/api';
@@ -11,13 +12,11 @@ import { useWishlist } from '../../lib/wishlistContext';
 import { usePlaceholderImage } from '../../lib/siteSettingsContext';
 import '../shop.css';
 
-const PLACEHOLDER = '/store/images/dummy.jpg';
-const PAGE_SLUG    = 'drinkware';
-const PAGE_LABEL   = 'Drinkware';
-
 const toSlug = (s: string) => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 const normalizeList = (v: string | null | undefined) =>
   (v ?? '').split(',').map(s => s.trim()).filter(Boolean);
+const toLabel = (slug: string) =>
+  slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
 /* ── Dual Range Slider ─────────────────────────────────────────────────────── */
 function DualRangeSlider({ min, max, valueMin, valueMax, onChangeMin, onChangeMax }: {
@@ -92,6 +91,9 @@ function ProductCard({ product, idx, listMode }: { product: Product; idx: number
   const PLACEHOLDER = usePlaceholderImage();
   const inWishlist = hasItem(product.ID);
   const href = `/shop/product/${toSlug(product.slug || product.title)}`;
+  const isOutOfStock =
+    (product.stock_status !== 'instock' && product.stock_status !== 'onbackorder') ||
+    (product.stock_qty !== null && product.stock_qty !== undefined && Number(product.stock_qty) <= 0);
   const priceMin = Number(product.price_min ?? 0);
   const priceMax = Number(product.price_max ?? product.price_min ?? 0);
   const showRange = priceMin > 0 && priceMax > priceMin;
@@ -114,12 +116,11 @@ function ProductCard({ product, idx, listMode }: { product: Product; idx: number
         </Link>
         <div className="csp-badges">
           {isOnSale && <span className="csp-badge sale">Sale</span>}
-          {product.stock_status !== 'instock' && product.stock_status !== 'onbackorder' &&
-            <span className="csp-badge oos">Sold Out</span>}
+          {isOutOfStock && <span className="csp-badge oos">Sold Out</span>}
         </div>
         <button className={`csp-wishlist${inWishlist ? ' active' : ''}`}
           aria-label={inWishlist ? `Remove ${product.title} from wishlist` : `Add ${product.title} to wishlist`}
-          onClick={e => { e.preventDefault(); inWishlist ? removeItem(product.ID) : addItem({ id: product.ID, title: product.title, price: displayPrice ?? 0, image: getImageUrl(product.thumbnail_url, PLACEHOLDER), inStock: product.stock_status === 'instock' || product.stock_status === 'onbackorder' }); }}>
+          onClick={e => { e.preventDefault(); inWishlist ? removeItem(product.ID) : addItem({ id: product.ID, title: product.title, price: displayPrice ?? 0, image: getImageUrl(product.thumbnail_url, PLACEHOLDER), inStock: !isOutOfStock }); }}>
           <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"
             fill={inWishlist ? '#e74c3c' : 'none'} stroke={inWishlist ? '#e74c3c' : 'currentColor'} strokeWidth="1.8">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
@@ -137,7 +138,7 @@ function ProductCard({ product, idx, listMode }: { product: Product; idx: number
           <span className={`csp-price${isOnSale ? ' sale' : ''}`}>{priceStr}</span>
           {discount !== null && <span className="csp-save-badge">{discount}% off</span>}
         </div>
-        {product.stock_status !== 'instock' && product.stock_status !== 'onbackorder' && (
+        {isOutOfStock && (
           <span className="csp-stock-label out">Out of Stock</span>
         )}
         {listMode && product.short_description && (
@@ -149,40 +150,54 @@ function ProductCard({ product, idx, listMode }: { product: Product; idx: number
 }
 
 /* ── Page ──────────────────────────────────────────────────────────────────── */
-export default function DrinkwarePage() {
+export default function CategoryPage() {
+  const params = useParams();
+  const pageSlug = (params?.slug as string) ?? '';
+  const pageLabel = toLabel(pageSlug);
+
   const [categories,  setCategories]  = useState<ProductCategory[]>([]);
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [loading,     setLoading]     = useState(true);
+  const [notFound,    setNotFound]    = useState(false);
+  const [error,       setError]       = useState('');
   const [viewMode,    setViewMode]    = useState<'grid'|'list'>('grid');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // filters
-  const [selectedCats,       setSelectedCats]       = useState<string[]>([]);
-  const [selectedColors,     setSelectedColors]     = useState<string[]>([]);
-  const [selectedSizes,      setSelectedSizes]      = useState<string[]>([]);
-  const [selectedMaterials,  setSelectedMaterials]  = useState<string[]>([]);
+  const [selectedCats,      setSelectedCats]      = useState<string[]>([]);
+  const [selectedColors,    setSelectedColors]    = useState<string[]>([]);
+  const [selectedSizes,     setSelectedSizes]     = useState<string[]>([]);
+  const [selectedMaterials, setSelectedMaterials] = useState<string[]>([]);
   const [sliderMin, setSliderMin] = useState(0);
   const [sliderMax, setSliderMax] = useState(0);
   const [absoluteMax, setAbsoluteMax] = useState(0);
 
-  // accordion open state
   const [openFilters, setOpenFilters] = useState<Record<string, boolean>>({});
   const priceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    if (!pageSlug) return;
+    setLoading(true);
+    setNotFound(false);
+    setError('');
     Promise.all([
-      getCategoryChildren(PAGE_SLUG).catch(() => []),
-      getCategoryProducts(PAGE_SLUG).catch(() => []),
+      getCategoryChildren(pageSlug).catch(() => []),
+      getCategoryProducts(pageSlug).catch((err: Error) => {
+        const msg = err?.message ?? '';
+        if (msg.includes('404') || msg.toLowerCase().includes('not found')) return null;
+        return [] as Product[]; // API error — show empty, not "not found"
+      }),
     ]).then(([cats, prods]) => {
+      if (prods === null) { setNotFound(true); return; }
       setCategories(cats);
       setAllProducts(prods);
       const max = prods.length
-        ? Math.max(...prods.map(p => Number(p.price_max ?? p.price_min ?? 0)))
+        ? Math.max(...prods.map((p: Product) => Number(p.price_max ?? p.price_min ?? 0)))
         : 0;
       setAbsoluteMax(max);
       setSliderMax(max);
     }).finally(() => setLoading(false));
-  }, []);
+  }, [pageSlug]);
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if (e.key === 'Escape') setSidebarOpen(false); };
@@ -200,28 +215,19 @@ export default function DrinkwarePage() {
     priceTimer.current = setTimeout(() => { setSliderMin(min); setSliderMax(max); }, 200);
   }, []);
 
-  // derive available colors, sizes & materials from loaded products
   const availableColors = useMemo(() =>
-    [...new Set(allProducts.flatMap(p => normalizeList(p.color_slugs)))].sort(),
-    [allProducts]);
+    [...new Set(allProducts.flatMap(p => normalizeList(p.color_slugs)))].sort(), [allProducts]);
   const availableSizes = useMemo(() =>
-    [...new Set(allProducts.flatMap(p => normalizeList(p.size_slugs)))].sort(),
-    [allProducts]);
+    [...new Set(allProducts.flatMap(p => normalizeList(p.size_slugs)))].sort(), [allProducts]);
   const availableMaterials = useMemo(() =>
-    [...new Set(allProducts.flatMap(p => normalizeList(p.material_slugs)))].sort(),
-    [allProducts]);
+    [...new Set(allProducts.flatMap(p => normalizeList(p.material_slugs)))].sort(), [allProducts]);
 
   const isPriceActive = sliderMin > 0 || sliderMax < absoluteMax;
-
   const totalActive = selectedCats.length + selectedColors.length + selectedSizes.length + selectedMaterials.length + (isPriceActive ? 1 : 0);
 
   const clearAll = () => {
-    setSelectedCats([]);
-    setSelectedColors([]);
-    setSelectedSizes([]);
-    setSelectedMaterials([]);
-    setSliderMin(0);
-    setSliderMax(absoluteMax);
+    setSelectedCats([]); setSelectedColors([]); setSelectedSizes([]); setSelectedMaterials([]);
+    setSliderMin(0); setSliderMax(absoluteMax);
   };
 
   const toggleItem = (setter: React.Dispatch<React.SetStateAction<string[]>>, val: string) =>
@@ -246,8 +252,6 @@ export default function DrinkwarePage() {
         <span className="nf-sidebar-title">Filters</span>
         {totalActive > 0 && <button className="nf-clear-all" onClick={clearAll}>Clear all ({totalActive})</button>}
       </div>
-
-      {/* Price Range — always visible */}
       <FilterSection
         label={isPriceActive ? 'Price Range (Active)' : 'Price Range'}
         isOpen={!!openFilters.price}
@@ -263,95 +267,36 @@ export default function DrinkwarePage() {
                 onChangeMax={v => handlePriceChange(sliderMin, Math.max(v, sliderMin + 1))}/>
         }
       </FilterSection>
-
-      {/* Category — commented out
-      <FilterSection
-        label={selectedCats.length ? `Category (${selectedCats.length})` : 'Category'}
-        isOpen={!!openFilters.category}
-        onToggle={() => setOpenFilters(p => ({ ...p, category: !p.category }))}>
-        {loading
-          ? <span className="nf-option-text" style={{ color: 'var(--cs-text-muted)', fontSize: 13 }}>Loading…</span>
-          : categories.length === 0
-            ? <span className="nf-option-text" style={{ color: 'var(--cs-text-muted)', fontSize: 13 }}>No subcategories</span>
-            : categories.map(c => (
-                <CheckOption key={c.category_id} label={c.category_name}
-                  checked={selectedCats.includes(c.category_slug)}
-                  onChange={() => toggleItem(setSelectedCats, c.category_slug)}/>
-              ))
-        }
-      </FilterSection>
-      */}
-
-      {/* Color — commented out
-      <FilterSection
-        label={selectedColors.length ? `Color (${selectedColors.length})` : 'Color'}
-        isOpen={!!openFilters.color}
-        onToggle={() => setOpenFilters(p => ({ ...p, color: !p.color }))}>
-        {loading
-          ? <span className="nf-option-text" style={{ color: 'var(--cs-text-muted)', fontSize: 13 }}>Loading…</span>
-          : availableColors.length === 0
-            ? <span className="nf-option-text" style={{ color: 'var(--cs-text-muted)', fontSize: 13 }}>No options</span>
-            : availableColors.map(c => (
-                <CheckOption key={c} label={c.charAt(0).toUpperCase() + c.slice(1)}
-                  checked={selectedColors.includes(c)}
-                  onChange={() => toggleItem(setSelectedColors, c)}/>
-              ))
-        }
-      </FilterSection>
-      */}
-
-      {/* Dimensions — commented out
-      <FilterSection
-        label={selectedMaterials.length ? `Dimensions (${selectedMaterials.length})` : 'Dimensions'}
-        isOpen={!!openFilters.dimensions}
-        onToggle={() => setOpenFilters(p => ({ ...p, dimensions: !p.dimensions }))}>
-        {loading
-          ? <span className="nf-option-text" style={{ color: 'var(--cs-text-muted)', fontSize: 13 }}>Loading…</span>
-          : availableMaterials.length === 0
-            ? <span className="nf-option-text" style={{ color: 'var(--cs-text-muted)', fontSize: 13 }}>No options</span>
-            : availableMaterials.map(m => (
-                <CheckOption key={m} label={m.charAt(0).toUpperCase() + m.slice(1)}
-                  checked={selectedMaterials.includes(m)}
-                  onChange={() => toggleItem(setSelectedMaterials, m)}/>
-              ))
-        }
-      </FilterSection>
-      */}
-
-      {/* Size — commented out
-      <FilterSection
-        label={selectedSizes.length ? `Size (${selectedSizes.length})` : 'Size'}
-        isOpen={!!openFilters.size}
-        onToggle={() => setOpenFilters(p => ({ ...p, size: !p.size }))}>
-        {loading
-          ? <span className="nf-option-text" style={{ color: 'var(--cs-text-muted)', fontSize: 13 }}>Loading…</span>
-          : availableSizes.length === 0
-            ? <span className="nf-option-text" style={{ color: 'var(--cs-text-muted)', fontSize: 13 }}>No options</span>
-            : availableSizes.map(s => (
-                <CheckOption key={s} label={s.toUpperCase()}
-                  checked={selectedSizes.includes(s)}
-                  onChange={() => toggleItem(setSelectedSizes, s)}/>
-              ))
-        }
-      </FilterSection>
-      */}
     </>
   );
+
+  if (!loading && notFound) {
+    return (
+      <>
+        <Header/>
+        <div className="csp-state-wrap" style={{ minHeight: '60vh' }}>
+          <p className="csp-state-text">Category &quot;{pageLabel}&quot; not found.</p>
+          <Link href="/shop" className="btn-view-product" style={{ display: 'inline-block', width: 'auto' }}>Back to Shop</Link>
+        </div>
+        <Footer/>
+      </>
+    );
+  }
 
   return (
     <>
       <Header/>
       <nav className="csp-breadcrumb" aria-label="Breadcrumb">
         <div className="csp-breadcrumb-left">
-          <span className="csp-breadcrumb-title">{PAGE_LABEL}</span>
-          <span className="csp-breadcrumb-sub">Explore our {PAGE_LABEL} collection</span>
+          <span className="csp-breadcrumb-title">{pageLabel}</span>
+          <h1 className="csp-breadcrumb-sub">Explore our {pageLabel} collection</h1>
         </div>
         <div className="csp-breadcrumb-right">
           <Link href="/">Home</Link>
           <span className="csp-bsep" aria-hidden="true">&gt;</span>
           <Link href="/shop">Shop</Link>
           <span className="csp-bsep" aria-hidden="true">&gt;</span>
-          <span aria-current="page">{PAGE_LABEL}</span>
+          <span aria-current="page">{pageLabel}</span>
         </div>
       </nav>
 
@@ -457,7 +402,7 @@ export default function DrinkwarePage() {
           )}
 
           {!loading && filtered.length > 0 && (
-            <div className={`csp-grid${viewMode === 'list' ? ' list-mode' : ''}`} aria-label={`${PAGE_LABEL} products`}>
+            <div className={`csp-grid${viewMode === 'list' ? ' list-mode' : ''}`} aria-label={`${pageLabel} products`}>
               {filtered.map((p, i) => <ProductCard key={p.ID} product={p} idx={i} listMode={viewMode === 'list'}/>)}
             </div>
           )}

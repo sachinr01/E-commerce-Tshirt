@@ -4,6 +4,8 @@ import { notFound } from 'next/navigation';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import PdfDownloadButton from './PdfDownloadButton';
+import { getLatestBlogs } from '../blog/utils/getBlogs';
+import { getBlogDetailHref } from '../blog/utils/links';
 import './footepages.css';
 
 type StaticPage = {
@@ -23,20 +25,12 @@ type StaticPage = {
 
 type PageResult = { page?: StaticPage; error?: 'api' | 'not-found' };
 type PageListItem = { slug: string; title: string; date: string };
-type SidebarCategory = { label: string; count: string };
 
 const normalizeText = (value: string) =>
   String(value || '')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, ' ')
     .trim();
-
-const STATIC_CATEGORIES: SidebarCategory[] = [
-  { label: 'General', count: '08' },
-  { label: 'Updates', count: '04' },
-  { label: 'Stories', count: '06' },
-  { label: 'Guides', count: '03' },
-];
 
 const BASE_URL =
   process.env.SITE_URL ||
@@ -95,9 +89,10 @@ const fetchPageList = async (): Promise<PageListItem[]> => {
 };
 
 export async function renderStaticPage(slug: string) {
-  const [result, pageList] = await Promise.all([
+  const [result, pageList, latestBlogs] = await Promise.all([
     fetchPage(slug),
     fetchPageList(),
+    getLatestBlogs(5),
   ]);
 
   if (result.error === 'api') {
@@ -175,20 +170,50 @@ export async function renderStaticPage(slug: string) {
           </div>
 
           <aside className="static-sidebar">
+            {/* Latest Posts — dynamic from blog API */}
             <div className="sidebar-box">
-              <h4 className="sidebar-title">Featured Posts</h4>
+              <h4 className="sidebar-title">Latest Posts</h4>
+              <ul className="featured-list">
+                {latestBlogs.length > 0 ? (
+                  latestBlogs.map((blog) => (
+                    <li key={blog.slug} className="featured-item">
+                      <Link
+                        href={getBlogDetailHref(blog, '/blog')}
+                        className="featured-title"
+                      >
+                        <h6 className="featured-link-title">{blog.title}</h6>
+                      </Link>
+                      {blog.date && (
+                        <span className="featured-meta">
+                          {new Date(blog.date).toLocaleDateString('en-IN', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric',
+                          })}
+                        </span>
+                      )}
+                    </li>
+                  ))
+                ) : (
+                  <li className="featured-empty">No posts yet.</li>
+                )}
+              </ul>
+            </div>
+
+            {/* Quick Links — other static pages */}
+            <div className="sidebar-box">
+              <h4 className="sidebar-title">Quick Links</h4>
               <ul className="featured-list">
                 {featuredPages.length > 0 ? (
                   featuredPages.map((p) => (
                     <li key={p.slug} className="featured-item">
-                      <Link href={`/${p.slug}`} className="featured-title">{p.title}</Link>
-                      <span className="featured-meta">
-                        By Admin <span>/</span> {p.date || '-'}
-                      </span>
+                      <Link href={`/${p.slug}`} className="featured-title">
+                        <h6 className="featured-link-title">{p.title}</h6>
+                      </Link>
                     </li>
                   ))
                 ) : (
-                  <li className="featured-empty">No featured posts yet.</li>
+                  <li className="featured-empty">No links yet.</li>
                 )}
               </ul>
             </div>
@@ -214,18 +239,6 @@ export async function renderStaticPage(slug: string) {
                 </ul>
               </div>
             )}
-
-            <div className="sidebar-box">
-              <h4 className="sidebar-title">Categories</h4>
-              <ul className="sidebar-list">
-                {STATIC_CATEGORIES.map((category) => (
-                  <li key={category.label} className="sidebar-item">
-                    <span>{category.label}</span>
-                    <span>{category.count}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
           </aside>
         </div>
       </div>

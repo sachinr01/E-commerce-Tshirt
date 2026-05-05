@@ -35,7 +35,7 @@ export default function BlogSidebar({
   return (
     <aside className="sidebar">
       <div className={wrapClass}>
-        <h5 className={titleClass}>{featuredTitle}</h5>
+        <h4 className={titleClass}>{featuredTitle}</h4>
         <div className={contentClass}>
           <ul className={featuredListClass}>
             {featuredItems.length > 0 ? (
@@ -48,7 +48,7 @@ export default function BlogSidebar({
                     href={item.href}
                     className={variant === 'sidebar-box' ? 'featuredTitle' : undefined}
                   >
-                    {variant === 'sidebar-box' ? item.title : <h6>{item.title}</h6>}
+                    {variant === 'sidebar-box' ? <h6 className="featured-link-title">{item.title}</h6> : <h6>{item.title}</h6>}
                   </Link>
                   {item.meta ? (
                     variant === 'sidebar-box' ? (
@@ -69,7 +69,7 @@ export default function BlogSidebar({
       </div>
 
       <div className={wrapClass}>
-        <h5 className={titleClass}>Categories</h5>
+        <h4 className={titleClass}>Categories</h4>
         <div className={contentClass}>
           {visibleCategories.length > 0 ? (
             <ul className={categoryListClass}>
@@ -87,7 +87,7 @@ export default function BlogSidebar({
                 return (
                   <li key={cat.category_id}>
                     <Link href={`/blog/${resolvedCategorySlug}`} className={linkClass}>
-                      <span className="catName">{cat.category_name}</span>
+                      <h6 className="catName">{cat.category_name}</h6>
                       <span className="catCount">{String(cat.post_count).padStart(2, '0')}</span>
                     </Link>
                   </li>

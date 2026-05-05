@@ -10,7 +10,7 @@
   --cs-border-light: #f3f4f6;
   --cs-bg:           #f9fafb;
   --cs-white:        #ffffff;
-  --cs-sale:         #dc2626;
+  --cs-sale:         #22311d;
   --cs-shadow-xs:    0 1px 3px rgba(0,0,0,.08);
   --cs-shadow-sm:    0 2px 8px rgba(0,0,0,.08);
   --cs-shadow-md:    0 8px 28px rgba(0,0,0,.10);
@@ -47,10 +47,13 @@
   color: var(--cs-text);
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  margin: 0;
 }
 .csp-breadcrumb-sub {
   font-size: 12px;
   color: var(--cs-text-muted);
+  margin: 0;
+  font-weight: 400;
 }
 .csp-breadcrumb-right {
   display: flex;
@@ -192,6 +195,7 @@
   letter-spacing: 1.8px;
   text-transform: uppercase;
   color: var(--cs-text);
+  margin: 0;
 }
 .nf-clear-all {
   font-family: var(--font-body);
@@ -233,16 +237,15 @@
 }
 .nf-section-label {
   font-family: var(--font-body);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  text-transform: none;
   color: #374151;
   transition: color var(--transition-fast);
   flex: 1;
   text-align: left;
-  
-  line-height: 1.2;
+  line-height: 1.3;
 }
 .nf-section-btn:hover .nf-section-label { color: var(--cs-brand); }
 
@@ -827,11 +830,11 @@
 }
 .csp-name {
   font-family: var(--font-body);
-  font-size: 13.5px;
+  font-size: 15px;
   font-weight: 500;
-  color: var(--cs-text);
+  color: #22311d;
   text-decoration: none;
-  line-height: 1.4;
+  line-height: 20px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -858,20 +861,20 @@
   font-family: var(--font-head);
   font-size: 15.5px;
   font-weight: 700;
-  color: #dc2626;
+  color: #22311d;
 }
-.csp-price.sale { color: var(--cs-sale); }
+.csp-price.sale { color: #22311d; }
 .csp-save-badge {
   font-family: var(--font-body);
   font-size: 12px;
   font-weight: 600;
-  color: var(--cs-sale);
+  color: #22311d;
   white-space: nowrap;
 }
 .csp-stock-label { font-family: var(--font-body); font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
 .csp-stock-label.in   { color: #16a34a; }
 .csp-stock-label.back { color: #d97706; }
-.csp-stock-label.out  { color: #dc2626; }
+.csp-stock-label.out  { color: #22311d; }
 
 .csp-state-wrap {
   display: flex;
@@ -993,7 +996,7 @@
   .csp-cat-strip::-webkit-scrollbar { display: none; }
   .csp-info { padding: 10px 10px 12px; }
   .csp-name { font-size: 12.5px; }
-  .csp-price { font-size: 13.5px; }
+  .csp-price { font-size: 13.5px; color: #22311d; }
   .csp-old-price { font-size: 11px; }
   .csp-save-badge { font-size: 11px; }
 }

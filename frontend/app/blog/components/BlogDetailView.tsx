@@ -3,6 +3,7 @@ import BlogSidebar from './BlogSidebar';
 import BlogHeroImage from './BlogHeroImage';
 import type { Blog, BlogBreadcrumbItem, BlogCategory } from '../types';
 import { getBlogDetailHref } from '../utils/links';
+import { sanitizeHtml } from '../../lib/helpers/html';
 
 const CalendarIcon = () => (
   <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -22,17 +23,6 @@ const FolderIcon = () => (
   </svg>
 );
 
-function sanitizeHtml(raw: string): string {
-  return raw
-    .replace(/<(script|style|iframe|frame|frameset|object|embed|applet|form|base|meta|link|noscript)[^>]*>[\s\S]*?<\/\1>/gi, '')
-    .replace(/<(script|iframe|frame|object|embed|applet|form|base|meta|link|input|button)[^>]*\/?>/gi, '')
-    .replace(/\s+on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi, '')
-    .replace(/(href|src|action|formaction)\s*=\s*(?:"[^"]*"|'[^']*')/gi, (match) =>
-      /javascript:|data:/i.test(match) ? '' : match
-    )
-    .replace(/\s+srcdoc\s*=\s*(?:"[^"]*"|'[^']*')/gi, '')
-    .replace(/<img[^>]*\/?>/gi, '');
-}
 
 export default function BlogDetailView({
   blog,

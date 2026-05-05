@@ -42,6 +42,10 @@ function ShopProductCard({ product, idx, listMode }: { product: Product; idx: nu
   const PLACEHOLDER = usePlaceholderImage();
   const inWishlist = hasItem(product.ID);
 
+  const isOutOfStock =
+    (product.stock_status !== 'instock' && product.stock_status !== 'onbackorder') ||
+    (product.stock_qty !== null && product.stock_qty !== undefined && Number(product.stock_qty) <= 0);
+
   const slugBase = toSlug(product.slug || product.title) || 'product';
   const productHref = `/shop/product/${slugBase}`;
 
@@ -75,7 +79,7 @@ function ShopProductCard({ product, idx, listMode }: { product: Product; idx: nu
 
         <div className="csp-badges">
           {isOnSale && <span className="csp-badge sale">Sale</span>}
-          {product.stock_status !== 'instock' && product.stock_status !== 'onbackorder' && <span className="csp-badge oos">Sold Out</span>}
+          {isOutOfStock && <span className="csp-badge oos">Sold Out</span>}
         </div>
 
         <button
@@ -91,7 +95,7 @@ function ShopProductCard({ product, idx, listMode }: { product: Product; idx: nu
                 title: product.title,
                 price: displayPrice ?? 0,
                 image: getImageUrl(product.thumbnail_url, PLACEHOLDER),
-                inStock: product.stock_status === 'instock' || product.stock_status === 'onbackorder',
+                inStock: !isOutOfStock,
               });
             }
           }}
@@ -122,7 +126,7 @@ function ShopProductCard({ product, idx, listMode }: { product: Product; idx: nu
             <span className="csp-save-badge">{discountPercent}% off</span>
           )}
         </div>
-        {product.stock_status !== 'instock' && product.stock_status !== 'onbackorder' && (
+        {isOutOfStock && (
           <span className="csp-stock-label out">Out of Stock</span>
         )}
         {listMode && product.short_description && (
@@ -289,7 +293,7 @@ function ShopInner({ heading, subheading }: { heading: string; subheading: strin
   useEffect(() => {
     setLoading(true);
     setError(null);
-    getProducts(new URLSearchParams())
+    getProducts(new URLSearchParams({ sort_by: 'menu-order' }))
       .then(data => {
         setProducts(data);
         const rawMax = data.length
@@ -446,7 +450,7 @@ function ShopInner({ heading, subheading }: { heading: string; subheading: strin
   const SidebarContent = (
     <>
       <div className="nf-sidebar-head">
-        <span className="nf-sidebar-title">Filters</span>
+        <h3 className="nf-sidebar-title">Filters</h3>
         {hasActive && (
           <button className="nf-clear-all" onClick={allClear}>Clear all ({totalActive})</button>
         )}
@@ -596,8 +600,8 @@ function ShopInner({ heading, subheading }: { heading: string; subheading: strin
 
       <nav className="csp-breadcrumb" aria-label="Breadcrumb">
         <div className="csp-breadcrumb-left">
-          <span className="csp-breadcrumb-title">Shop</span>
-          <span className="csp-breadcrumb-sub">Explore our all collections</span>
+          <h1 className="csp-breadcrumb-title">Drinkware</h1>
+          <h6 className="csp-breadcrumb-sub">Explore our Drinkware collection</h6>
         </div>
         <div className="csp-breadcrumb-right">
           <Link href="/">Home</Link>
