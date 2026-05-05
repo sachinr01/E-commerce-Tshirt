@@ -17,6 +17,9 @@ function ProductCard({ p, idx }: { p: Product; idx: number }) {
   const { hasItem, addItem, removeItem } = useWishlist();
   const PLACEHOLDER = usePlaceholderImage();
   const inWishlist = hasItem(p.ID);
+  const isOutOfStock =
+    (p.stock_status !== 'instock' && p.stock_status !== 'onbackorder') ||
+    (p.stock_qty !== null && p.stock_qty !== undefined && Number(p.stock_qty) <= 0);
 
   const priceMin = Number(p.price_min ?? 0);
   const priceMax = Number(p.price_max ?? p.price_min ?? 0);
@@ -47,7 +50,7 @@ function ProductCard({ p, idx }: { p: Product; idx: number }) {
         </Link>
         <div className="na-badges">
           {isOnSale && <span className="na-badge sale">Sale</span>}
-          {p.stock_status !== 'instock' && p.stock_status !== 'onbackorder' && (
+          {isOutOfStock && (
             <span className="na-badge oos">Sold Out</span>
           )}
         </div>
@@ -57,7 +60,7 @@ function ProductCard({ p, idx }: { p: Product; idx: number }) {
           onClick={e => {
             e.preventDefault();
             if (inWishlist) removeItem(p.ID);
-            else addItem({ id: p.ID, title: p.title, price: displayPrice, image: getImageUrl(p.thumbnail_url), inStock: p.stock_status === 'instock' || p.stock_status === 'onbackorder' });
+            else addItem({ id: p.ID, title: p.title, price: displayPrice, image: getImageUrl(p.thumbnail_url), inStock: !isOutOfStock });
           }}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"
@@ -80,7 +83,7 @@ function ProductCard({ p, idx }: { p: Product; idx: number }) {
           </span>
           {discountPercent !== null && <span className="na-save-badge">{discountPercent}% off</span>}
         </div>
-        {p.stock_status !== 'instock' && p.stock_status !== 'onbackorder' && (
+        {isOutOfStock && (
           <span className="na-stock-label out">Out of Stock</span>
         )}
       </div>

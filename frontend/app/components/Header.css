@@ -158,8 +158,8 @@
 .nh-km-price { font-size: 13px; font-weight: 700; color: #1b1b1b; margin: 0; }
 .nh-km-shop { font-size: 11px; color: #555; text-decoration: underline; text-underline-offset: 2px; }
 .nh-km-card:hover .nh-km-shop { color: #111; }
-.nh-km-promos { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr; gap: 8px; align-self: stretch; height: 100%; }
-.nh-km-promo { position: relative; overflow: hidden; display: block; text-decoration: none; background: #f5ede4; width: 100%; height: 100%; min-height: 0; aspect-ratio: 3/4; }
+.nh-km-promos { display: flex; gap: 8px; align-self: stretch; height: 100%; }
+.nh-km-promo { position: relative; overflow: hidden; display: block; text-decoration: none; background: #f5ede4; width: 100%; flex-shrink: 0; height: 100%; min-height: 0; }
 .nh-km-promo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: left top; display: block; transition: transform 0.4s ease; }
 .nh-km-promo:hover img { transform: scale(1.05); }
 .nh-km-promo-badge { position: absolute; top: 8px; left: 8px; background: #1a5fd4; color: #fff; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; padding: 2px 7px; z-index: 2; text-transform: uppercase; }

@@ -44,7 +44,7 @@ export const metadata: Metadata = {
     title: `${SITE_NAME} | Hoodies, Mugs, Decals & More`,
     description:
       'Shop custom hoodies, tumblers, mugs, decals and more. Free shipping on orders above $99.',
-    images: [`${SITE_URL}/images/logo/Nestcase_Logo.png`],
+    images: [`${SITE_URL}/images/Netcase.webp`],
   },
   robots: { index: true, follow: true },
 };

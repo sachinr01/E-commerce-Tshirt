@@ -42,6 +42,10 @@ function ShopProductCard({ product, idx, listMode }: { product: Product; idx: nu
   const PLACEHOLDER = usePlaceholderImage();
   const inWishlist = hasItem(product.ID);
 
+  const isOutOfStock =
+    (product.stock_status !== 'instock' && product.stock_status !== 'onbackorder') ||
+    (product.stock_qty !== null && product.stock_qty !== undefined && Number(product.stock_qty) <= 0);
+
   const slugBase = toSlug(product.slug || product.title) || 'product';
   const productHref = `/shop/product/${slugBase}`;
 
@@ -75,7 +79,7 @@ function ShopProductCard({ product, idx, listMode }: { product: Product; idx: nu
 
         <div className="csp-badges">
           {isOnSale && <span className="csp-badge sale">Sale</span>}
-          {product.stock_status !== 'instock' && product.stock_status !== 'onbackorder' && <span className="csp-badge oos">Sold Out</span>}
+          {isOutOfStock && <span className="csp-badge oos">Sold Out</span>}
         </div>
 
         <button
@@ -91,7 +95,7 @@ function ShopProductCard({ product, idx, listMode }: { product: Product; idx: nu
                 title: product.title,
                 price: displayPrice ?? 0,
                 image: getImageUrl(product.thumbnail_url, PLACEHOLDER),
-                inStock: product.stock_status === 'instock' || product.stock_status === 'onbackorder',
+                inStock: !isOutOfStock,
               });
             }
           }}
@@ -122,7 +126,7 @@ function ShopProductCard({ product, idx, listMode }: { product: Product; idx: nu
             <span className="csp-save-badge">{discountPercent}% off</span>
           )}
         </div>
-        {product.stock_status !== 'instock' && product.stock_status !== 'onbackorder' && (
+        {isOutOfStock && (
           <span className="csp-stock-label out">Out of Stock</span>
         )}
         {listMode && product.short_description && (

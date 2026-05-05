@@ -136,7 +136,7 @@ export default function Footer() {
   const returnsHref = resolvePageHref(pages, ['refund', 'return']);
   const privacyHref = resolvePageHref(pages, ['privacy']);
   const termsHref   = resolvePageHref(pages, ['terms', 'conditions']);
-  const b2bHref     = resolvePageHref(pages, ['b2b', 'b2b connect']) || '/b2b-connect';
+  const b2bHref     = resolvePageHref(pages, ['b2b', 'b2b connect']);
 
   return (
     <footer className="okab-footer">
