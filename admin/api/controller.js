@@ -79,6 +79,7 @@ const normalizePage = (row) => {
         content:              safeContent,
         summary:              safeSummary,
         date:                 formatPostDate(row.post_date),
+        menu_order:           row.menu_order ?? 0,
         // Page image — fetched from tbl_media where media_type='blog_image' AND parent_id=page.ID
         // Same mechanism as blog images; admin uploads via Page Image section
         image:                row.page_img_path || null,
@@ -1140,7 +1141,7 @@ const getBlogs = async (req, res) => {
                       FROM tbl_posts_category_link fl
                       WHERE fl.post_id = p.ID AND fl.category_id = ?
                   )
-                ORDER BY p.post_date DESC
+                ORDER BY p.menu_order ASC, p.post_date DESC
                 ${limitClause}
             `, params));
         } else {
@@ -1148,7 +1149,7 @@ const getBlogs = async (req, res) => {
             [rows] = await withRetry(() => db.query(`
                 ${POST_WITH_CATEGORY_SQL}
                 WHERE p.post_type = 'post' AND p.post_status = 'publish'
-                ORDER BY p.post_date DESC
+                ORDER BY p.menu_order ASC, p.post_date DESC
                 ${limitClause}
             `, params));
         }
@@ -1210,6 +1211,7 @@ const getPages = async (_req, res) => {
         const [rows] = await withRetry(() => db.query(`
             SELECT
                 p.post_slug, p.post_title, p.post_content, p.post_short_desc, p.post_date,
+                p.menu_order,
                 (
                     SELECT m.media_path FROM tbl_media m
                     WHERE m.parent_id = p.ID AND m.media_type = 'blog_image'
@@ -1221,7 +1223,7 @@ const getPages = async (_req, res) => {
                 (SELECT pm4.meta_value FROM tbl_postmeta pm4 WHERE pm4.post_id = p.ID AND pm4.meta_key = 'meta_index'       ORDER BY pm4.meta_id DESC LIMIT 1) AS seo_meta_index
             FROM tbl_posts p
             WHERE p.post_type = 'page' AND p.post_status = 'publish'
-            ORDER BY p.post_date DESC
+            ORDER BY p.menu_order ASC, p.post_date DESC
         `));
         const data = rows.map((row) => normalizePage(row));
         res.json({ success: true, count: data.length, data });

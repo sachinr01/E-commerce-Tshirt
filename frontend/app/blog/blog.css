@@ -590,3 +590,111 @@
     grid-template-columns: 1fr;
   }
 }
+/* ═══════════════════════════════════════════════════════════════
+   CKEditor 5 image alignment — FINAL CORRECT VERSION
+   CKEditor 5 class mapping:
+   (no extra class)              = centered block (DEFAULT)
+   image-style-side              = float right, ~35% width
+   image-style-align-left        = float left, inline with text
+   image-style-align-right       = float right, inline with text
+   image-style-block-align-center = explicit centered block
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── DEFAULT: figure.image with NO extra class = centered block ── */
+.blog-content figure.image {
+  display: block;
+  margin: 1.5rem auto;   /* auto left/right = centered */
+  clear: both;
+  max-width: 100%;
+}
+
+.blog-content figure.image img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;        /* center the img inside figure too */
+}
+
+.blog-content figure.image figcaption {
+  font-size: 13px;
+  color: #666;
+  text-align: center;
+  padding: 4px 0;
+  font-style: italic;
+}
+
+/* ── SIDE: float right, constrained width ── */
+.blog-content figure.image.image-style-side {
+  float: right;
+  clear: right;
+  margin: 0.25rem 0 1rem 1.5rem;
+  max-width: 35%;        /* small, like it looks in editor */
+  width: 35%;
+}
+
+.blog-content figure.image.image-style-side img {
+  width: 100%;
+  height: auto;
+  margin: 0;
+}
+
+/* ── ALIGN LEFT: float left, inline with text ── */
+.blog-content figure.image.image-style-align-left {
+  float: left;
+  clear: left;
+  margin: 0.25rem 1.5rem 1rem 0;
+  max-width: 50%;
+}
+
+.blog-content figure.image.image-style-align-left img {
+  margin: 0;
+}
+
+/* ── ALIGN RIGHT: float right, inline with text ── */
+.blog-content figure.image.image-style-align-right {
+  float: right;
+  clear: right;
+  margin: 0.25rem 0 1rem 1.5rem;
+  max-width: 50%;
+}
+
+.blog-content figure.image.image-style-align-right img {
+  margin: 0;
+}
+
+/* ── EXPLICIT CENTER BLOCK ── */
+.blog-content figure.image.image-style-block-align-center {
+  float: none;
+  clear: both;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+
+/* ── FULL WIDTH BLOCK ── */
+.blog-content figure.image.image-style-block-align-left {
+  float: none;
+  clear: both;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* ── Clearfix so floated images don't overflow container ── */
+.blog-content::after {
+  content: '';
+  display: table;
+  clear: both;
+}
+
+/* ── Mobile: remove all floats ── */
+@media (max-width: 640px) {
+  .blog-content figure.image.image-style-side,
+  .blog-content figure.image.image-style-align-left,
+  .blog-content figure.image.image-style-align-right {
+    float: none;
+    clear: both;
+    margin: 1rem auto;
+    max-width: 100%;
+    width: 100%;
+  }
+}
