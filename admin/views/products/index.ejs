@@ -58,10 +58,7 @@
                               </th>
                               <th width="70">Image</th>
                               <th>Product Name</th>
-                              <th>SKU</th>
-                              <th>Type</th>
                               <th>Price</th>
-                              <th>Stock</th>
                               <th>Status</th>
                               <th>Date</th>
                               <th width="120">Actions</th>
@@ -89,22 +86,43 @@
                                         <% } %>
                                   </td>
                                   <td>
-                                    <strong>
-                                      <%= product.product_title %>
-                                    </strong>
-                                    <% if (product.parent_id> 0) { %>
-                                      <br><small class="text-muted">Variation of #<%= product.parent_id %></small>
-                                      <% } %>
-                                  </td>
-                                  <td><span class="text-muted">
-                                      <%= product.sku || '—' %>
-                                    </span></td>
-                                  <td>
-                                    <% if (product.product_type=='product_variation' ) { %>
-                                      <span class="badge bg-light-info text-info">Variable</span>
-                                      <% } else { %>
-                                        <span class="badge bg-light-primary text-primary">Simple</span>
+                                    <div class="d-flex flex-column gap-1">
+
+                                      <!-- Title -->
+                                      <strong class="text-dark">
+                                        <%= product.product_title %>
+                                      </strong>
+
+                                      <!-- Variation -->
+                                      <% if (product.parent_id> 0) { %>
+                                        <small class="text-muted">
+                                          Variation of #<%= product.parent_id %>
+                                        </small>
                                         <% } %>
+
+                                          <!-- SKU -->
+                                          <small class="text-secondary">
+                                            SKU: <%= product.sku || '—' %>
+                                          </small>
+
+                                          <!-- Stock Status -->
+                                          <div>
+                                            <% if (product.stock_status==='instock' ) { %>
+                                              <span class="badge bg-success-subtle text-success">
+                                                In Stock (<%= product.stock || 0 %>)
+                                              </span>
+                                              <% } else if (product.stock_status==='outofstock' ) { %>
+                                                <span class="badge bg-danger-subtle text-danger">
+                                                  Out of Stock
+                                                </span>
+                                                <% } else { %>
+                                                  <span class="badge bg-warning-subtle text-warning">
+                                                    Backorder
+                                                  </span>
+                                                  <% } %>
+                                          </div>
+
+                                    </div>
                                   </td>
                                   <td>
                                     <% if (product.sale_price) { %>
@@ -114,16 +132,6 @@
                                       <% } else { %>
                                         <span>₹<%= product.regular_price || '—' %></span>
                                         <% } %>
-                                  </td>
-                                  <td>
-                                    <% if (product.stock_status==='instock' ) { %>
-                                      <span class="badge bg-light-success text-success">In Stock (<%= product.stock || 0
-                                          %>)</span>
-                                      <% } else if (product.stock_status==='outofstock' ) { %>
-                                        <span class="badge bg-light-danger text-danger">Out of Stock</span>
-                                        <% } else { %>
-                                          <span class="badge bg-light-warning text-warning">Backorder</span>
-                                          <% } %>
                                   </td>
                                   <td>
                                     <% if (product.product_status==='publish' ) { %>
