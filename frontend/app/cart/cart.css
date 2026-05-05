@@ -2,14 +2,29 @@
   padding: 0 0 48px;
 }
 
+/* Override any padding from external styles-shop.css on these wrappers */
+.cart-page .section,
+.cart-page .page-section-content,
+.cart-page .overflow-hidden,
+.cart-page .cart-content {
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+
 .cart-content {
-  padding-top: 24px;
+  padding-top: 0;
+}
+
+.cart-content .container {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 24px 40px 80px;
 }
 
 .cart-grid {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr);
-  gap: 32px;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 1fr);
+  gap: 40px;
   align-items: start;
 }
 
@@ -217,8 +232,8 @@
 }
 
 @media (max-width: 991px) {
-  .cart-content {
-    padding-top: 20px;
+  .cart-content .container {
+    padding: 20px 20px 60px;
   }
 
   .cart-grid {
