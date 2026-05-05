@@ -397,6 +397,7 @@ const getProducts = async (req, res) => {
         if (sortBy === 'price-descending') orderBy = 'price_min DESC, p.menu_order ASC';
         if (sortBy === 'title-ascending') orderBy = 'p.product_title ASC';
         if (sortBy === 'newest') orderBy = 'p.product_date_added DESC, p.ID DESC';
+        if (sortBy === 'menu-order') orderBy = 'p.menu_order ASC';
 
         const extraWhere = whereParts.length ? `\n          ${whereParts.join('\n          ')}` : '';
 

@@ -293,7 +293,7 @@ function ShopInner({ heading, subheading }: { heading: string; subheading: strin
   useEffect(() => {
     setLoading(true);
     setError(null);
-    getProducts(new URLSearchParams())
+    getProducts(new URLSearchParams({ sort_by: 'menu-order' }))
       .then(data => {
         setProducts(data);
         const rawMax = data.length
