@@ -11,7 +11,7 @@ export default function TrustBar() {
       ),
       title: 'Easy returns',
       desc: 'Return within 15 days of order delivery.',
-      link: { label: 'See T&Cs', href: 'terms-conditions' },
+      link: null,
     },
     {
       icon: (
@@ -61,10 +61,7 @@ export default function TrustBar() {
               <div className="tb-icon">{f.icon}</div>
               <div className="tb-text">
                 <h4>{f.title}</h4>
-                <p>
-                  {f.desc}
-                  {f.link && <> <a href={f.link.href}>{f.link.label}</a></>}
-                </p>
+                <h6>{f.desc}</h6>
               </div>
             </div>
           ))}

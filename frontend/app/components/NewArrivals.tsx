@@ -107,7 +107,7 @@ function SkeletonCard() {
 function ProductGrid({ title, products, loading }: { title: string; products: Product[]; loading: boolean }) {
   return (
     <div className="na-section">
-      <h2 className="na-section-title">{title}</h2>
+      <h3 className="na-section-title">{title}</h3>
       <div className="na-grid">
         {loading
           ? Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)
@@ -131,7 +131,7 @@ export default function NewArrivals() {
 
   return (
     <section className="na-outer na-outer-top">
-      <ProductGrid title="Newly Launched" products={products} loading={loading} />
+      <ProductGrid title="Newly Launched Products" products={products} loading={loading} />
       <div className="na-view-all-wrap btn-view-product-wrap">
         <Link href="/shop" className="na-view-all-btn btn-view-product btn-view-product--inline">View All Products</Link>
       </div>
@@ -152,7 +152,7 @@ export function BestSellers() {
 
   return (
     <section className="na-outer na-outer-bs">
-      <ProductGrid title="Best Sellers" products={products} loading={loading} />
+      <ProductGrid title="Best Sellers Products" products={products} loading={loading} />
       <div className="na-view-all-wrap btn-view-product-wrap">
         <Link href="/shop" className="na-view-all-btn btn-view-product btn-view-product--inline">View All Products</Link>
       </div>

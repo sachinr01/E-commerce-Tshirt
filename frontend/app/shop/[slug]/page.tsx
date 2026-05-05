@@ -289,7 +289,7 @@ export default function CategoryPage() {
       <nav className="csp-breadcrumb" aria-label="Breadcrumb">
         <div className="csp-breadcrumb-left">
           <span className="csp-breadcrumb-title">{pageLabel}</span>
-          <span className="csp-breadcrumb-sub">Explore our {pageLabel} collection</span>
+          <h1 className="csp-breadcrumb-sub">Explore our {pageLabel} collection</h1>
         </div>
         <div className="csp-breadcrumb-right">
           <Link href="/">Home</Link>

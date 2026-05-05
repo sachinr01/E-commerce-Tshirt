@@ -25,10 +25,12 @@
 }
 
 .static-title {
-  margin: 0 0 6px;
+  margin: 0 0 16px;
   font-size: 28px;
   font-weight: 700;
   color: #1a1a1a;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .static-date {
@@ -69,7 +71,7 @@
 .static-content p {
   font-size: 14px;
   line-height: 1.9;
-  color: #444;
+  color: #343434;
   margin: 0 0 16px;
 }
 
@@ -78,31 +80,42 @@
 .static-content h3,
 .static-content h4 {
   color: #1a1a1a;
-  margin: 18px 0 10px;
   line-height: 1.4;
   font-weight: 700;
 }
 
 .static-content h1 {
-  font-size: 22px;
+  font-size: 24px;
+  margin: 28px 0 12px;
 }
 
 .static-content h2 {
-  font-size: 18px;
+  font-size: 20px;
+  margin: 24px 0 10px;
 }
 
 .static-content h3 {
-  font-size: 16px;
+  font-size: 17px;
+  margin: 20px 0 8px;
 }
 
 .static-content h4 {
   font-size: 15px;
+  margin: 16px 0 6px;
+}
+
+/* Remove top margin when heading is the first element */
+.static-content h1:first-child,
+.static-content h2:first-child,
+.static-content h3:first-child,
+.static-content h4:first-child {
+  margin-top: 0;
 }
 
 .static-content ul {
   padding-left: 18px;
   margin: 0 0 16px;
-  color: #444;
+  color: #343434;
 }
 
 .static-content li {
@@ -320,10 +333,20 @@
   color: #e4572e;
 }
 
+.featured-link-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  line-height: 1.5;
+  margin: 0;
+  color: inherit;
+}
+
 .featured-meta {
   display: block;
   font-size: 11px;
-  color: #9a948c;
+  color: #343434;
   margin-top: 4px;
 }
 

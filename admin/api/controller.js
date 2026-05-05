@@ -828,6 +828,7 @@ const getAttributesByTaxonomy = async (req, res) => {
 // Adding a new taxonomy to tbl_attributes_lookup automatically shows it here.
 const getAllAttributeGroups = async (req, res) => {
     try {
+        const taxPh = [...ATTRIBUTE_TAXONOMIES].map(() => '?').join(',');
         const [rows] = await withRetry(() => db.query(`
             SELECT
                 al.taxonomy,
@@ -838,9 +839,10 @@ const getAllAttributeGroups = async (req, res) => {
             JOIN tbl_attributes_lookup al ON al.attr_id = a.attr_id
             JOIN tbl_products p ON p.ID = al.product_or_parent_id
             WHERE p.product_status = 'publish'
+              AND al.taxonomy IN (${taxPh})
             GROUP BY al.taxonomy, a.attr_name
             ORDER BY al.taxonomy ASC, a.attr_name ASC
-        `));
+        `, [...ATTRIBUTE_TAXONOMIES]));
 
         // Group by taxonomy
         const grouped = {};

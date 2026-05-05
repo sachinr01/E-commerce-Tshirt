@@ -181,7 +181,7 @@ export async function renderStaticPage(slug: string) {
                         href={getBlogDetailHref(blog, '/blog')}
                         className="featured-title"
                       >
-                        {blog.title}
+                        <h6 className="featured-link-title">{blog.title}</h6>
                       </Link>
                       {blog.date && (
                         <span className="featured-meta">
@@ -207,7 +207,9 @@ export async function renderStaticPage(slug: string) {
                 {featuredPages.length > 0 ? (
                   featuredPages.map((p) => (
                     <li key={p.slug} className="featured-item">
-                      <Link href={`/${p.slug}`} className="featured-title">{p.title}</Link>
+                      <Link href={`/${p.slug}`} className="featured-title">
+                        <h6 className="featured-link-title">{p.title}</h6>
+                      </Link>
                     </li>
                   ))
                 ) : (

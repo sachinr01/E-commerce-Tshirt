@@ -131,7 +131,7 @@
   height: 42px;
   border: none;
   background: #f8f8f8;
-  color: #444;
+  color: #343434;
   font-size: 20px;
   cursor: pointer;
   flex-shrink: 0;
@@ -214,7 +214,7 @@
   justify-content: space-between;
   gap: 16px;
   font-size: 15px;
-  color: #444;
+  color: #343434;
 }
 
 .cart-summary-row.total {

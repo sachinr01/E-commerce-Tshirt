@@ -450,7 +450,7 @@ function ShopInner({ heading, subheading }: { heading: string; subheading: strin
   const SidebarContent = (
     <>
       <div className="nf-sidebar-head">
-        <span className="nf-sidebar-title">Filters</span>
+        <h3 className="nf-sidebar-title">Filters</h3>
         {hasActive && (
           <button className="nf-clear-all" onClick={allClear}>Clear all ({totalActive})</button>
         )}
@@ -600,8 +600,8 @@ function ShopInner({ heading, subheading }: { heading: string; subheading: strin
 
       <nav className="csp-breadcrumb" aria-label="Breadcrumb">
         <div className="csp-breadcrumb-left">
-          <span className="csp-breadcrumb-title">Shop</span>
-          <span className="csp-breadcrumb-sub">Explore our all collections</span>
+          <h1 className="csp-breadcrumb-title">Drinkware</h1>
+          <h6 className="csp-breadcrumb-sub">Explore our Drinkware collection</h6>
         </div>
         <div className="csp-breadcrumb-right">
           <Link href="/">Home</Link>

@@ -238,7 +238,7 @@ export default function Header() {
     <>
       <div className="nh-sticky-wrap">
         <div className="nh-announcement">
-          FREE SHIPPING ON ORDERS ABOVE $99 &nbsp;|&nbsp; ✦ SPRING SUMMER 2026: NOW LIVE ✦
+          Trend-Driven Design. Quality-First Craftsmanship.
         </div>
         <header className="nh-header" ref={headerRef}>
         <div className="nh-inner">
@@ -393,7 +393,7 @@ export default function Header() {
                             <div className="nh-km-layout">
                               <div className="nh-km-products">
                                 <div className="nh-km-section">
-                                  <p className="nh-km-section-title">NEW ARRIVALS</p>
+                                  <h5 className="nh-km-section-title">NEW ARRIVALS</h5>
                                   <div className="nh-km-grid">
                                     {(products.length ? products.slice(0, 2) : Array(2).fill(null)).map((p, i) => (
                                       <Link key={p?.id ?? i} href={p ? `/shop/product/${p.slug}` : shopHref} className="nh-km-card" onClick={closeOverlays}>
@@ -406,7 +406,7 @@ export default function Header() {
                                   </div>
                                 </div>
                                 <div className="nh-km-section">
-                                  <p className="nh-km-section-title">BEST SELLER</p>
+                                  <h5 className="nh-km-section-title">BEST SELLER</h5>
                                   <div className="nh-km-grid">
                                     {(bestSellers.length ? bestSellers.slice(0, 2) : Array(2).fill(null)).map((p, i) => (
                                       <Link key={p?.id ?? i} href={p ? `/shop/product/${p.slug}` : shopHref} className="nh-km-card" onClick={closeOverlays}>

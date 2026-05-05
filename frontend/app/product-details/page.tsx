@@ -146,7 +146,7 @@ function AccordionItem({ label, content }: { label: string; content: string }) {
   return (
     <div className={`cpd-acc-item${open ? ' open' : ''}`}>
       <button className="cpd-acc-header" onClick={() => setOpen(o => !o)} aria-expanded={open}>
-        <span className="cpd-acc-label">{label}</span>
+        <h5 className="cpd-acc-label">{label}</h5>
         <svg className="cpd-acc-chevron" width="14" height="14" viewBox="0 0 24 24"
           fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
           <polyline points="6 9 12 15 18 9"/>
@@ -666,7 +666,7 @@ function ProductDetailsInner({ id, slug }: { id?: string; slug?: string }) {
 
           {/* ── Description ── */}
           <div className="cpd-tabs-section cpd-tabs-section-inline">
-            <div className="cpd-section-heading">Description</div>
+            <h5 className="cpd-section-heading">Description</h5>
             <div className="cpd-tab-content">
               <div className="cpd-desc-panel">
                 <div
