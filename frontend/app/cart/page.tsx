@@ -83,9 +83,11 @@ export default function CartPage() {
                           <div className="cart-item-main">
                             <div className="cart-item-top">
                               <div className="cart-item-title-wrap">
-                                <Link href={`/shop/product/${toSlug(item.title)}`} className="cart-item-title">
-                                  {item.title}
-                                </Link>
+                                <h5 className="cart-item-title">
+                                  <Link href={`/shop/product/${toSlug(item.title)}`} className="cart-item-title-link">
+                                    {item.title}
+                                  </Link>
+                                </h5>
                                 {(item.color || item.size) && (
                                   <div className="cart-item-meta">
                                     {item.color && <div>Color: {item.color}</div>}
@@ -107,8 +109,7 @@ export default function CartPage() {
 
                             <div className="cart-item-details">
                               <div className="cart-detail">
-                                <span className="cart-detail-label">Price</span>
-                                <span className="cart-detail-value">{formatPrice(item.price)}</span>
+                                <h6 className="cart-detail-price">{formatPrice(item.price)}</h6>
                               </div>
 
                               <div className="cart-detail">
@@ -156,9 +157,9 @@ export default function CartPage() {
                   </div>
 
                   <aside className="cart-summary">
-                    <h3 className="cart-summary-title">Your Order</h3>
+                    <h4 className="cart-summary-title">Your Order</h4>
 
-                    <p className="cart-coupon-label">Have a coupon?</p>
+                    <h4 className="cart-coupon-label">Have a coupon?</h4>
                     <div className="cart-coupon">
                       <input
                         type="text"

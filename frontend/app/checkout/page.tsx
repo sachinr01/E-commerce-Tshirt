@@ -713,7 +713,7 @@ export default function CheckoutPage() {
           </nav>
           <section className="section">
             <div className="page-section-content overflow-hidden checkout-content">
-              <div className="container" style={{ textAlign: 'center', padding: '64px 20px' }}>
+              <div className="checkout-container" style={{ textAlign: 'center', padding: '64px 20px' }}>
                 <p style={{ fontSize: 18, marginBottom: 20 }}>Your cart is empty.</p>
                 <Link href="/shop" className="btn-view-product btn-view-product--inline">Go to Shop</Link>
               </div>
@@ -749,7 +749,7 @@ export default function CheckoutPage() {
 
         <section className="section">
           <div className="page-section-content overflow-hidden checkout-content">
-            <div className="container">
+            <div className="checkout-container">
               <div className="dima-alert dima-alert-info fade in checkout-alert">
                 <i className="fa fa-info" />
                 <p>Returning customer? <a href="#" onClick={(e) => { e.preventDefault(); setShowLogin((v) => !v); }}>Click here to login</a></p>
@@ -1130,27 +1130,29 @@ export default function CheckoutPage() {
                         </div>
                       </div>
 
-                      <div className="checkout-order-items">
-                        <h4 className="checkout-subsection-title" style={{ marginTop: 0 }}>Your Items</h4>
-                        {items.map((item) => (
-                          <div key={item.cartItemId} className="checkout-order-item">
-                            <img
-                              src={item.image || PLACEHOLDER}
-                              alt={item.title}
-                              className="checkout-order-thumb"
-                            />
-                            <div className="checkout-order-meta">
-                              {item.title}
-                              {(item.color || item.size) && (
-                                <span>{[item.color, item.size].filter(Boolean).join(' / ')}</span>
-                              )}
-                              <span>Qty: {item.quantity}</span>
+                      <div className="checkout-order-items-card">
+                        <h4 className="checkout-subsection-title checkout-order-items-title" style={{ marginTop: 0 }}>Your Items</h4>
+                        <div className="checkout-order-items">
+                          {items.map((item) => (
+                            <div key={item.cartItemId} className="checkout-order-item">
+                              <img
+                                src={item.image || PLACEHOLDER}
+                                alt={item.title}
+                                className="checkout-order-thumb"
+                              />
+                              <div className="checkout-order-meta">
+                                {item.title}
+                                {(item.color || item.size) && (
+                                  <span>{[item.color, item.size].filter(Boolean).join(' / ')}</span>
+                                )}
+                                <span>Qty: {item.quantity}</span>
+                              </div>
+                              <div className="checkout-order-price">
+                                &#8377;{(item.price * item.quantity).toFixed(2)}
+                              </div>
                             </div>
-                            <div className="checkout-order-price">
-                              &#8377;{(item.price * item.quantity).toFixed(2)}
-                            </div>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
 
                       <div className="checkout-cta">
