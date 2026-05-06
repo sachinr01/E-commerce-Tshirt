@@ -21,9 +21,7 @@ const showDashboard = async (req, res) => {
     // ORDER STATS
     // =========================
     const [[{ totalOrders }]] = await db.query(
-      `SELECT COUNT(*) AS totalOrders
-             FROM tbl_orders
-             WHERE order_type = 'shop_order'`,
+      `SELECT COUNT(*) AS totalOrders FROM tbl_orders WHERE order_type = 'shop_order'`,
     );
 
     // =========================
@@ -31,107 +29,149 @@ const showDashboard = async (req, res) => {
     // =========================
     const [[{ totalRevenue }]] = await db.query(
       `SELECT IFNULL(SUM(CAST(meta_value AS DECIMAL(10,2))),0) AS totalRevenue
-             FROM tbl_ordermeta
-             WHERE meta_key = '_order_total'`,
+       FROM tbl_ordermeta WHERE meta_key = '_order_total'`,
     );
 
     // =========================
-    // BEST SELLER PRODUCTS
+    // BEST SELLER PRODUCTS (top 5)
     // =========================
-    const [bestSellers] = await db.query(`
-            SELECT
-                p.ID,
-                p.product_title,
-                COUNT(oim.meta_value) AS totalSold,
-                (SELECT m.media_path FROM tbl_media m 
-                 WHERE m.parent_id = p.ID AND m.media_type = 'product_image'
-                 ORDER BY m.media_id ASC LIMIT 1) AS thumbnail
-            FROM tbl_order_itemmeta oim
-            INNER JOIN tbl_order_items oi ON oi.order_item_id = oim.order_item_id
-            INNER JOIN tbl_products p ON p.ID = oim.meta_value
-            WHERE oim.meta_key = '_product_id'
-            GROUP BY p.ID
-            ORDER BY totalSold DESC
-            LIMIT 5
-        `);
+    const [bestSellers] = await db.query(
+      `SELECT
+          p.ID,
+          p.product_title,
+          COUNT(oim.meta_value) AS totalSold,
+          (
+            SELECT m.media_path FROM tbl_media m
+            WHERE m.parent_id = p.ID AND m.media_type = 'product_image'
+            ORDER BY m.media_id ASC LIMIT 1
+          ) AS thumbnail
+        FROM tbl_order_itemmeta oim
+        INNER JOIN tbl_order_items oi ON oi.order_item_id = oim.order_item_id
+        INNER JOIN tbl_products p ON p.ID = oim.meta_value
+        WHERE oim.meta_key = '_product_id'
+        GROUP BY p.ID
+        ORDER BY totalSold DESC
+        LIMIT 5`,
+      [],
+    );
 
     // =========================
-    // LATEST ORDERS
+    // LATEST ORDERS (top 5)
     // =========================
     const [latestOrders] = await db.query(`
-            SELECT order_id, order_status, order_date
-            FROM tbl_orders
-            WHERE order_type = 'shop_order'
-            ORDER BY order_date DESC
-            LIMIT 5
-        `);
+      SELECT
+        o.order_id,
+        o.order_status,
+        o.order_date,
+
+        u.display_name AS customer_name,
+
+        MAX(CASE WHEN om.meta_key = '_billing_phone' THEN om.meta_value END) AS phone,
+
+        CONCAT_WS(', ',
+          NULLIF(MAX(CASE WHEN um.meta_key = 'billing_address_1' THEN um.meta_value END), ''),
+          NULLIF(MAX(CASE WHEN um.meta_key = 'billing_address_2' THEN um.meta_value END), ''),
+          NULLIF(MAX(CASE WHEN um.meta_key = 'billing_city' THEN um.meta_value END), ''),
+          NULLIF(MAX(CASE WHEN um.meta_key = 'billing_state' THEN um.meta_value END), ''),
+          NULLIF(MAX(CASE WHEN um.meta_key = 'billing_postcode' THEN um.meta_value END), ''),
+          NULLIF(MAX(CASE WHEN um.meta_key = 'billing_country' THEN um.meta_value END), '')
+        ) AS address,
+
+        MAX(CASE WHEN om.meta_key = '_order_total' THEN om.meta_value END) AS total
+
+      FROM tbl_orders o
+
+      LEFT JOIN tbl_users u 
+        ON u.ID = o.user_id   
+
+      LEFT JOIN tbl_ordermeta om 
+        ON om.order_id = o.order_id
+
+      LEFT JOIN tbl_usermeta um 
+        ON um.user_id = u.ID
+
+      WHERE o.order_type = 'shop_order'
+
+      GROUP BY o.order_id
+
+      ORDER BY o.order_date DESC
+      LIMIT 5
+    `);
 
     // =========================
-    // CATEGORY PRODUCTS
+    // RECENT USERS (top 5)
+    // =========================
+    const [recentUsers] = await db.query(`
+        SELECT 
+          u.ID, 
+          u.display_name, 
+          u.user_email, 
+          u.user_registered,
+
+          -- Phone
+          (SELECT meta_value 
+          FROM tbl_usermeta 
+          WHERE user_id = u.ID AND meta_key = 'phone' 
+          LIMIT 1) AS phone,
+
+          -- Full Address
+          CONCAT_WS(', ',
+            NULLIF((SELECT meta_value FROM tbl_usermeta WHERE user_id = u.ID AND meta_key = 'billing_address_1' LIMIT 1), ''),
+            NULLIF((SELECT meta_value FROM tbl_usermeta WHERE user_id = u.ID AND meta_key = 'billing_address_2' LIMIT 1), ''),
+            NULLIF((SELECT meta_value FROM tbl_usermeta WHERE user_id = u.ID AND meta_key = 'billing_city' LIMIT 1), ''),
+            NULLIF((SELECT meta_value FROM tbl_usermeta WHERE user_id = u.ID AND meta_key = 'billing_state' LIMIT 1), ''),
+            NULLIF((SELECT meta_value FROM tbl_usermeta WHERE user_id = u.ID AND meta_key = 'billing_postcode' LIMIT 1), ''),
+            NULLIF((SELECT meta_value FROM tbl_usermeta WHERE user_id = u.ID AND meta_key = 'billing_country' LIMIT 1), '')
+          ) AS address
+
+        FROM tbl_users u
+        ORDER BY u.user_registered DESC
+        LIMIT 5
+      `);
+
+    // =========================
+    // PRODUCT CATEGORIES with count (top 5)
     // =========================
     const [categoryProducts] = await db.query(`
-            SELECT
-                c.category_name,
-                p.ID,
-                p.product_title
-            FROM tbl_products_category_link pcl
-            INNER JOIN tbl_products_category c ON c.category_id = pcl.category_id
-            INNER JOIN tbl_products p ON p.ID = pcl.product_id
-            WHERE p.parent_id = 0
-            ORDER BY c.category_name ASC
-            LIMIT 12
-        `);
+      SELECT
+        c.category_id,
+        c.category_name,
+        COUNT(pcl.product_id) AS product_count
+      FROM tbl_products_category c
+      LEFT JOIN tbl_products_category_link pcl ON pcl.category_id = c.category_id
+      LEFT JOIN tbl_products p ON p.ID = pcl.product_id AND p.parent_id = 0
+      GROUP BY c.category_id, c.category_name
+      ORDER BY product_count DESC
+      LIMIT 5
+    `);
 
     // =========================
-    // RECENT USERS
-    // =========================
-    const [recentUsers] = await db.query(
-      `SELECT ID, display_name, user_email, user_registered
-             FROM tbl_users
-             ORDER BY user_registered DESC
-             LIMIT 5`,
-    );
-
-    // =========================
-    // LOW STOCK PRODUCTS
+    // LOW STOCK PRODUCTS (top 5)
     // =========================
     const [lowStockProducts] = await db.query(`
-    SELECT 
+      SELECT
         p.ID,
         p.product_title,
-
         (
-            SELECT pm.meta_value
-            FROM tbl_productmeta pm
-            WHERE pm.product_id = p.ID
-              AND pm.meta_key = '_stock'
-            ORDER BY pm.meta_id DESC
-            LIMIT 1
+          SELECT pm.meta_value FROM tbl_productmeta pm
+          WHERE pm.product_id = p.ID AND pm.meta_key = '_stock'
+          ORDER BY pm.meta_id DESC LIMIT 1
         ) AS stock,
-
         (
-            SELECT m.media_path
-            FROM tbl_media m
-            WHERE m.parent_id = p.ID
-              AND m.media_type = 'product_image'
-            ORDER BY m.media_id ASC
-            LIMIT 1
+          SELECT m.media_path FROM tbl_media m
+          WHERE m.parent_id = p.ID AND m.media_type = 'product_image'
+          ORDER BY m.media_id ASC LIMIT 1
         ) AS thumbnail
-
-    FROM tbl_products p
-    WHERE p.parent_id = 0
-      AND CAST((
-            SELECT pm.meta_value
-            FROM tbl_productmeta pm
-            WHERE pm.product_id = p.ID
-              AND pm.meta_key = '_stock'
-            ORDER BY pm.meta_id DESC
-            LIMIT 1
+      FROM tbl_products p
+      WHERE p.parent_id = 0
+        AND CAST((
+          SELECT pm.meta_value FROM tbl_productmeta pm
+          WHERE pm.product_id = p.ID AND pm.meta_key = '_stock'
+          ORDER BY pm.meta_id DESC LIMIT 1
         ) AS UNSIGNED) <= 5
-
-    ORDER BY stock ASC
-    LIMIT 10
-`);
+      ORDER BY stock ASC
+      LIMIT 5
+    `);
 
     res.render("dashboard/index", {
       title: "Dashboard",
@@ -155,4 +195,164 @@ const showDashboard = async (req, res) => {
   }
 };
 
-module.exports = { showDashboard };
+// =========================
+// AJAX: Load More Best Sellers
+// =========================
+const loadMoreBestSellers = async (req, res) => {
+  try {
+    const offset = parseInt(req.query.offset) || 5;
+    const limit = parseInt(req.query.limit) || 10;
+
+    const [rows] = await db.query(
+      `SELECT
+          p.ID,
+          p.product_title,
+          COUNT(oim.meta_value) AS totalSold,
+          (
+            SELECT m.media_path FROM tbl_media m
+            WHERE m.parent_id = p.ID AND m.media_type = 'product_image'
+            ORDER BY m.media_id ASC LIMIT 1
+          ) AS thumbnail
+        FROM tbl_order_itemmeta oim
+        INNER JOIN tbl_order_items oi ON oi.order_item_id = oim.order_item_id
+        INNER JOIN tbl_products p ON p.ID = oim.meta_value
+        WHERE oim.meta_key = '_product_id'
+        GROUP BY p.ID
+        ORDER BY totalSold DESC
+        LIMIT ? OFFSET ?`,
+      [limit, offset],
+    );
+
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    res.json({ success: false, message: error.message });
+  }
+};
+
+// =========================
+// AJAX: Load More Latest Orders
+// =========================
+const loadMoreOrders = async (req, res) => {
+  try {
+    const offset = parseInt(req.query.offset) || 5;
+    const limit = parseInt(req.query.limit) || 10;
+
+    const [rows] = await db.query(
+      `
+      SELECT
+        o.order_id,
+        o.order_status,
+        o.order_date,
+        MAX(CASE WHEN om.meta_key = '_billing_first_name' THEN om.meta_value END) AS first_name,
+        MAX(CASE WHEN om.meta_key = '_billing_last_name'  THEN om.meta_value END) AS last_name,
+        MAX(CASE WHEN om.meta_key = '_billing_phone'      THEN om.meta_value END) AS phone,
+        MAX(CASE WHEN om.meta_key = '_billing_address_1'  THEN om.meta_value END) AS address,
+        MAX(CASE WHEN om.meta_key = '_order_total'        THEN om.meta_value END) AS total
+      FROM tbl_orders o
+      LEFT JOIN tbl_ordermeta om ON om.order_id = o.order_id
+      WHERE o.order_type = 'shop_order'
+      GROUP BY o.order_id
+      ORDER BY o.order_date DESC
+      LIMIT ? OFFSET ?
+    `,
+      [limit, offset],
+    );
+
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    res.json({ success: false, message: error.message });
+  }
+};
+
+// =========================
+// AJAX: Load More Recent Users
+// =========================
+const loadMoreUsers = async (req, res) => {
+  try {
+    const offset = parseInt(req.query.offset) || 5;
+    const limit = parseInt(req.query.limit) || 5;
+
+    const [rows] = await db.query(
+      `
+      SELECT 
+        u.ID,
+        u.display_name,
+        u.user_email,
+        u.user_registered,
+
+        MAX(CASE WHEN um.meta_key = 'phone' THEN um.meta_value END) AS phone,
+
+        CONCAT_WS(', ',
+          NULLIF(MAX(CASE WHEN um.meta_key = 'billing_address_1' THEN um.meta_value END), ''),
+          NULLIF(MAX(CASE WHEN um.meta_key = 'billing_address_2' THEN um.meta_value END), ''),
+          NULLIF(MAX(CASE WHEN um.meta_key = 'billing_city' THEN um.meta_value END), ''),
+          NULLIF(MAX(CASE WHEN um.meta_key = 'billing_state' THEN um.meta_value END), ''),
+          NULLIF(MAX(CASE WHEN um.meta_key = 'billing_postcode' THEN um.meta_value END), ''),
+          NULLIF(MAX(CASE WHEN um.meta_key = 'billing_country' THEN um.meta_value END), '')
+        ) AS address
+
+      FROM tbl_users u
+      LEFT JOIN tbl_usermeta um ON um.user_id = u.ID
+
+      GROUP BY u.ID
+      ORDER BY u.user_registered DESC
+      LIMIT ? OFFSET ?
+    `,
+      [limit, offset],
+    );
+
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    res.json({ success: false, message: error.message });
+  }
+};
+
+// =========================
+// AJAX: Load More Low Stock Products
+// =========================
+const loadMoreLowStock = async (req, res) => {
+  try {
+    const offset = parseInt(req.query.offset) || 5;
+    const limit = parseInt(req.query.limit) || 10;
+
+    const [rows] = await db.query(
+      `
+      SELECT
+        p.ID,
+        p.product_title,
+        (
+          SELECT pm.meta_value FROM tbl_productmeta pm
+          WHERE pm.product_id = p.ID AND pm.meta_key = '_stock'
+          ORDER BY pm.meta_id DESC LIMIT 1
+        ) AS stock,
+        (
+          SELECT m.media_path FROM tbl_media m
+          WHERE m.parent_id = p.ID AND m.media_type = 'product_image'
+          ORDER BY m.media_id ASC LIMIT 1
+        ) AS thumbnail
+      FROM tbl_products p
+      WHERE p.parent_id = 0
+        AND CAST((
+          SELECT pm.meta_value FROM tbl_productmeta pm
+          WHERE pm.product_id = p.ID AND pm.meta_key = '_stock'
+          ORDER BY pm.meta_id DESC LIMIT 1
+        ) AS UNSIGNED) <= 5
+      ORDER BY stock ASC
+      LIMIT ? OFFSET ?
+    `,
+      [limit, offset],
+    );
+
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    res.json({ success: false, message: error.message });
+  }
+};
+
+module.exports = {
+  showDashboard,
+  loadMoreBestSellers,
+  loadMoreOrders,
+  loadMoreUsers,
+  loadMoreLowStock,
+};
