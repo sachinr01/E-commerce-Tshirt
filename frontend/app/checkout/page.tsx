@@ -165,7 +165,7 @@ export default function CheckoutPage() {
 
   // ─── UI state ───────────────────────────────────────────────────────────────
   const [showLogin, setShowLogin] = useState(false);
-  const [showCoupon, setShowCoupon] = useState(false);
+  const [showCoupon, setShowCoupon] = useState(true);
   const [billingSameAsShipping, setBillingSameAsShipping] = useState(true);
   const [loginLoading, setLoginLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -786,52 +786,6 @@ export default function CheckoutPage() {
                 </div>
               )}
 
-              <div className="dima-alert dima-alert-info fade in checkout-alert">
-                <i className="fa fa-info" />
-                <p>Have a coupon? <a href="#" onClick={(e) => { e.preventDefault(); setShowCoupon((v) => !v); }}>Click here to enter your code</a></p>
-              </div>
-
-              {showCoupon && (
-                <div className="checkout-coupon-box checkout-box">
-                  <div className="checkout-coupon-grid">
-                    <div className="field last">
-                      <label>Coupon Code</label>
-                      <input
-                        type="text"
-                        placeholder="Coupon Code"
-                        value={couponInput}
-                        onChange={(e) => setCouponInput(e.target.value)}
-                        disabled={!!appliedCoupon}
-                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void handleApplyCoupon(); } }}
-                      />
-                    </div>
-                    {appliedCoupon ? (
-                      <button
-                        type="button"
-                        className="btn-view-product btn-view-product--inline"
-                        onClick={handleRemoveCoupon}
-                      >
-                        Remove
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        className="btn-view-product btn-view-product--inline"
-                        onClick={() => void handleApplyCoupon()}
-                        disabled={couponLoading}
-                      >
-                        {couponLoading ? '...' : 'Apply'}
-                      </button>
-                    )}
-                  </div>
-                  {couponMsg && (
-                    <p style={{ marginTop: 8, fontSize: 13, color: couponMsg.ok ? '#2e7d32' : '#c62828' }}>
-                      {couponMsg.text}
-                    </p>
-                  )}
-                </div>
-              )}
-
               <form onSubmit={handlePlaceOrder} noValidate className="form-small form">
                 <div className="checkout-grid">
                   <div className="checkout-main">
@@ -1110,6 +1064,47 @@ export default function CheckoutPage() {
                     <div className="box order-products dima-box">
                       <div className="checkout-summary-card">
                         <h4 className="checkout-summary-title">Order Summary</h4>
+                        {showCoupon && (
+                          <div className="checkout-summary-coupon">
+                            <h5 className="checkout-coupon-title">Have a coupon?</h5>
+                            <div className="checkout-coupon-grid">
+                              <div className="field last">
+                                <label>Coupon Code</label>
+                                <input
+                                  type="text"
+                                  placeholder="Coupon Code"
+                                  value={couponInput}
+                                  onChange={(e) => setCouponInput(e.target.value)}
+                                  disabled={!!appliedCoupon}
+                                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void handleApplyCoupon(); } }}
+                                />
+                              </div>
+                              {appliedCoupon ? (
+                                <button
+                                  type="button"
+                                  className="btn-view-product btn-view-product--inline"
+                                  onClick={handleRemoveCoupon}
+                                >
+                                  Remove
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  className="btn-view-product btn-view-product--inline"
+                                  onClick={() => void handleApplyCoupon()}
+                                  disabled={couponLoading}
+                                >
+                                  {couponLoading ? '...' : 'Apply'}
+                                </button>
+                              )}
+                            </div>
+                            {couponMsg && (
+                              <p className="checkout-coupon-msg" style={{ color: couponMsg.ok ? '#2e7d32' : '#c62828' }}>
+                                {couponMsg.text}
+                              </p>
+                            )}
+                          </div>
+                        )}
                         <div className="checkout-summary-row">
                           <span>Cart Subtotal</span>
                           <strong>{formatPrice(total)}</strong>
