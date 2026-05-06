@@ -165,7 +165,7 @@ export default function CheckoutPage() {
 
   // ─── UI state ───────────────────────────────────────────────────────────────
   const [showLogin, setShowLogin] = useState(false);
-  const [showCoupon, setShowCoupon] = useState(false);
+  const [showCoupon, setShowCoupon] = useState(true);
   const [billingSameAsShipping, setBillingSameAsShipping] = useState(true);
   const [loginLoading, setLoginLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -713,7 +713,7 @@ export default function CheckoutPage() {
           </nav>
           <section className="section">
             <div className="page-section-content overflow-hidden checkout-content">
-              <div className="container" style={{ textAlign: 'center', padding: '64px 20px' }}>
+              <div className="checkout-container" style={{ textAlign: 'center', padding: '64px 20px' }}>
                 <p style={{ fontSize: 18, marginBottom: 20 }}>Your cart is empty.</p>
                 <Link href="/shop" className="btn-view-product btn-view-product--inline">Go to Shop</Link>
               </div>
@@ -749,7 +749,7 @@ export default function CheckoutPage() {
 
         <section className="section">
           <div className="page-section-content overflow-hidden checkout-content">
-            <div className="container">
+            <div className="checkout-container">
               <div className="dima-alert dima-alert-info fade in checkout-alert">
                 <i className="fa fa-info" />
                 <p>Returning customer? <a href="#" onClick={(e) => { e.preventDefault(); setShowLogin((v) => !v); }}>Click here to login</a></p>
@@ -783,52 +783,6 @@ export default function CheckoutPage() {
                     <div ref={googleButtonRef} className="checkout-google-button" />
                     {googleLoading && <p className="checkout-auth-feedback">Completing Google sign-in...</p>}
                   </div>
-                </div>
-              )}
-
-              <div className="dima-alert dima-alert-info fade in checkout-alert">
-                <i className="fa fa-info" />
-                <p>Have a coupon? <a href="#" onClick={(e) => { e.preventDefault(); setShowCoupon((v) => !v); }}>Click here to enter your code</a></p>
-              </div>
-
-              {showCoupon && (
-                <div className="checkout-coupon-box checkout-box">
-                  <div className="checkout-coupon-grid">
-                    <div className="field last">
-                      <label>Coupon Code</label>
-                      <input
-                        type="text"
-                        placeholder="Coupon Code"
-                        value={couponInput}
-                        onChange={(e) => setCouponInput(e.target.value)}
-                        disabled={!!appliedCoupon}
-                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void handleApplyCoupon(); } }}
-                      />
-                    </div>
-                    {appliedCoupon ? (
-                      <button
-                        type="button"
-                        className="btn-view-product btn-view-product--inline"
-                        onClick={handleRemoveCoupon}
-                      >
-                        Remove
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        className="btn-view-product btn-view-product--inline"
-                        onClick={() => void handleApplyCoupon()}
-                        disabled={couponLoading}
-                      >
-                        {couponLoading ? '...' : 'Apply'}
-                      </button>
-                    )}
-                  </div>
-                  {couponMsg && (
-                    <p style={{ marginTop: 8, fontSize: 13, color: couponMsg.ok ? '#2e7d32' : '#c62828' }}>
-                      {couponMsg.text}
-                    </p>
-                  )}
                 </div>
               )}
 
@@ -1110,6 +1064,47 @@ export default function CheckoutPage() {
                     <div className="box order-products dima-box">
                       <div className="checkout-summary-card">
                         <h4 className="checkout-summary-title">Order Summary</h4>
+                        {showCoupon && (
+                          <div className="checkout-summary-coupon">
+                            <h5 className="checkout-coupon-title">Have a coupon?</h5>
+                            <div className="checkout-coupon-grid">
+                              <div className="field last">
+                                <label>Coupon Code</label>
+                                <input
+                                  type="text"
+                                  placeholder="Coupon Code"
+                                  value={couponInput}
+                                  onChange={(e) => setCouponInput(e.target.value)}
+                                  disabled={!!appliedCoupon}
+                                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void handleApplyCoupon(); } }}
+                                />
+                              </div>
+                              {appliedCoupon ? (
+                                <button
+                                  type="button"
+                                  className="btn-view-product btn-view-product--inline"
+                                  onClick={handleRemoveCoupon}
+                                >
+                                  Remove
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  className="btn-view-product btn-view-product--inline"
+                                  onClick={() => void handleApplyCoupon()}
+                                  disabled={couponLoading}
+                                >
+                                  {couponLoading ? '...' : 'Apply'}
+                                </button>
+                              )}
+                            </div>
+                            {couponMsg && (
+                              <p className="checkout-coupon-msg" style={{ color: couponMsg.ok ? '#2e7d32' : '#c62828' }}>
+                                {couponMsg.text}
+                              </p>
+                            )}
+                          </div>
+                        )}
                         <div className="checkout-summary-row">
                           <span>Cart Subtotal</span>
                           <strong>{formatPrice(total)}</strong>
@@ -1130,27 +1125,29 @@ export default function CheckoutPage() {
                         </div>
                       </div>
 
-                      <div className="checkout-order-items">
-                        <h4 className="checkout-subsection-title" style={{ marginTop: 0 }}>Your Items</h4>
-                        {items.map((item) => (
-                          <div key={item.cartItemId} className="checkout-order-item">
-                            <img
-                              src={item.image || PLACEHOLDER}
-                              alt={item.title}
-                              className="checkout-order-thumb"
-                            />
-                            <div className="checkout-order-meta">
-                              {item.title}
-                              {(item.color || item.size) && (
-                                <span>{[item.color, item.size].filter(Boolean).join(' / ')}</span>
-                              )}
-                              <span>Qty: {item.quantity}</span>
+                      <div className="checkout-order-items-card">
+                        <h4 className="checkout-subsection-title checkout-order-items-title" style={{ marginTop: 0 }}>Your Items</h4>
+                        <div className="checkout-order-items">
+                          {items.map((item) => (
+                            <div key={item.cartItemId} className="checkout-order-item">
+                              <img
+                                src={item.image || PLACEHOLDER}
+                                alt={item.title}
+                                className="checkout-order-thumb"
+                              />
+                              <div className="checkout-order-meta">
+                                {item.title}
+                                {(item.color || item.size) && (
+                                  <span>{[item.color, item.size].filter(Boolean).join(' / ')}</span>
+                                )}
+                                <span>Qty: {item.quantity}</span>
+                              </div>
+                              <div className="checkout-order-price">
+                                &#8377;{(item.price * item.quantity).toFixed(2)}
+                              </div>
                             </div>
-                            <div className="checkout-order-price">
-                              &#8377;{(item.price * item.quantity).toFixed(2)}
-                            </div>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
 
                       <div className="checkout-cta">

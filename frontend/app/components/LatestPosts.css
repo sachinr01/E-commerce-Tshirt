@@ -1,3 +1,10 @@
+.H1, H2, H3, H4, H5, H6{
+  color: #22311d;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+
 .blog-section {
   padding: 56px 0 64px;
   background: #f7f5f2;
@@ -13,19 +20,19 @@
 }
 .blog-section-label {
   display: block;
-  font-size: 10px;
+  font-size: 15px;
   font-weight: 700;
   letter-spacing: 3px;
   text-transform: uppercase;
-  color: #aaa;
+  color: #22311d;
   margin-bottom: 10px;
 }
 .blog-section-title {
-  font-size: 28px;
   font-weight: 700;
-  color: #1a1a1a;
-  letter-spacing: -0.5px;
+  color: #22311d;
   margin: 0;
+  text-transform: uppercase;
+
 }
 .blog-grid {
   display: grid;
@@ -65,20 +72,18 @@
 .blog-card-date {
   display: block;
   font-size: 11px;
-  color: #aaa;
+  color: #22311d;
   margin-bottom: 8px;
-  letter-spacing: 0.3px;
+  letter-spacing: 1px;
 }
 .blog-card-title {
-  font-size: 14px;
   font-weight: 700;
-  color: #1a1a1a;
-  line-height: 1.45;
+  color: #22311d;
   margin: 0 0 14px;
 }
 .blog-card-summary {
-  font-size: 12px;
-  color: #888;
+  font-size: 15px;
+  color: #22311d;
   line-height: 1.6;
   margin: 0 0 16px;
   display: -webkit-box;

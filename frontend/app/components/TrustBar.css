@@ -2,15 +2,18 @@
   background: #fff;
   border-top: 1px solid #efefef;
 }
+
+H1, H2, H3, H4, H5, H6{ 
+  color: #22311d;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
 .tb-tagline {
   text-align: center;
   padding: 14px 20px 0;
-  font-size: 12.5px;
-  color: #aaa;
   letter-spacing: 0.02em;
-  font-style: italic;
 }
-.tb-heart { color: #e8a0a8; font-style: normal; }
 .tb-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -29,19 +32,18 @@
 .tb-item:last-child::after { display: none; }
 .tb-stripe-bar { display: none; }
 .tb-icon { flex-shrink: 0; }
+
 .tb-text h4 {
   font-size: 19px;
-  font-weight: 600;
-  color: #1a1a1a;
+  line-height: 26px;
   margin: 0 0 4px;
 }
 .tb-text h6 {
-  font-size: 11.5px;
-  color: #aaa;
+  font-size: 15px;
   margin: 0;
-  line-height: 1.6;
-  font-weight: 400;
+  line-height: 18px;
 }
+
 @media (max-width: 900px) {
   .tb-grid { grid-template-columns: repeat(2, 1fr); }
   .tb-item:nth-child(2)::after { display: none; }

@@ -26,11 +26,7 @@
 
 .static-title {
   margin: 0 0 16px;
-  font-size: 28px;
-  font-weight: 700;
-  color: #1a1a1a;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 .static-date {
@@ -75,40 +71,55 @@
   margin: 0 0 16px;
 }
 
-.static-content h1,
-.static-content h2,
-.static-content h3,
-.static-content h4 {
-  color: #1a1a1a;
-  line-height: 1.4;
+.H1, H2, H3, H4, H5, H6{
+  color: #22311d;
   font-weight: 700;
+  letter-spacing: 1px;
 }
 
 .static-content h1 {
-  font-size: 24px;
+  font-size: 30px;
+  line-height: 40px;
   margin: 28px 0 12px;
 }
 
 .static-content h2 {
-  font-size: 20px;
+  font-size: 26px;
+  line-height: 34px;
   margin: 24px 0 10px;
 }
 
 .static-content h3 {
-  font-size: 17px;
+  font-size: 22px;
+  line-height: 30px;
   margin: 20px 0 8px;
 }
 
 .static-content h4 {
-  font-size: 15px;
+  font-size: 19px;
+  line-height: 26px;
   margin: 16px 0 6px;
+}
+
+.static-content h5 {
+  font-size: 17px;
+  line-height: 22px;
+  margin: 14px 0 6px;
+}
+
+.static-content h6 {
+  font-size: 15px;
+  line-height: 18px;
+  margin: 12px 0 6px;
 }
 
 /* Remove top margin when heading is the first element */
 .static-content h1:first-child,
 .static-content h2:first-child,
 .static-content h3:first-child,
-.static-content h4:first-child {
+.static-content h4:first-child,
+.static-content h5:first-child,
+.static-content h6:first-child {
   margin-top: 0;
 }
 
@@ -211,7 +222,6 @@
 
 .b2b-track h4 {
   margin: 0 0 6px;
-  font-size: 14px;
 }
 
 .b2b-track p {
@@ -269,11 +279,7 @@
 
 .sidebar-title {
   margin: 0 0 14px;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: #1a1a1a;
 }
 
 .sidebar-list {
@@ -334,13 +340,8 @@
 }
 
 .featured-link-title {
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.4px;
   text-transform: uppercase;
-  line-height: 1.5;
   margin: 0;
-  color: inherit;
 }
 
 .featured-meta {

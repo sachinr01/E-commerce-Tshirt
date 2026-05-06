@@ -148,9 +148,7 @@
 
 .blog-detail-title {
   margin: 10px 0 8px;
-  font-size: 28px;
-  font-weight: 700;
-  color: #1a1a1a;
+  color: #22311d;
 }
 
 .blog-byline {
@@ -211,7 +209,7 @@
 
 .blog-content p {
   font-size: 15px;
-  color: #343434;
+  color: #22311d;
   line-height: 1.85;
   margin: 0 0 22px;
 }
@@ -219,17 +217,21 @@
 .blog-content h1,
 .blog-content h2,
 .blog-content h3,
-.blog-content h4 {
+.blog-content h4,
+.blog-content h5,
+.blog-content h6 {
   color: #1a1a1a;
   margin: 18px 0 10px;
   line-height: 1.4;
   font-weight: 700;
 }
 
-.blog-content h1 { font-size: 24px; }
-.blog-content h2 { font-size: 20px; }
-.blog-content h3 { font-size: 18px; }
-.blog-content h4 { font-size: 16px; }
+.blog-content h1 { font-size: 30px; line-height: 40px; }
+.blog-content h2 { font-size: 26px; line-height: 34px; }
+.blog-content h3 { font-size: 22px; line-height: 30px; }
+.blog-content h4 { font-size: 19px; line-height: 26px; }
+.blog-content h5 { font-size: 17px; line-height: 22px; }
+.blog-content h6 { font-size: 15px; line-height: 18px; }
 
 .blog-content ul {
   padding-left: 18px;
@@ -420,11 +422,7 @@
 .widgetTitle,
 .sidebarTitle {
   margin: 0 0 16px;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 1.4px;
   text-transform: uppercase;
-  color: #6a625a;
 }
 
 .widgetContent {
@@ -471,18 +469,11 @@
 
 .featuredPosts h6 {
   margin: 0 0 6px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 1.1px;
   text-transform: uppercase;
-  color: #3f3a33;
 }
 
 .featuredItem h6,
 .featured-link-title {
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.4px;
   text-transform: uppercase;
   line-height: 1.5;
   margin: 0;

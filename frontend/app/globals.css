@@ -54,6 +54,7 @@ html, body {
 
 .page-section-content {
   display: block !important;
+  padding: 0 !important;
 }
 
 .ok-row {

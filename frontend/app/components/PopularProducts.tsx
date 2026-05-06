@@ -10,10 +10,12 @@ export default function CuratedGifting() {
     <section style={{ padding: '56px 0', background: '#fff' }}>
       <div style={{ maxWidth: 1360, margin: '0 auto', padding: '0 45px' }}>
         <h1 className="collection-hero-title">Welcome to nestcase, where modern style meets local excellence.</h1>
-        <h2 className="section-title" style={{ marginTop: '32px' }}>Our Collection</h2>
+        <h2 className="section-title" style={{ marginTop: '1px' }}>Our Collection</h2>
         <div className="collection-grid-2x2">
           {collectionImages.map((src, i) => (
-            <div key={i} className="collection-grid-item" style={{ backgroundImage: `url('${src}')` }} />
+            <div key={i} className="collection-grid-item">
+              <img src={src} alt={`Collection ${i + 1}`} loading="lazy" />
+            </div>
           ))}
         </div>
       </div>

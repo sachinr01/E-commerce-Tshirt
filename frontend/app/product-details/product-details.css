@@ -9,8 +9,8 @@
   --cpd-bg:          #fafafa;
   --cpd-white:       #ffffff;
   --cpd-sale:        #22311d;
-  --font-head: 'Lato', Helvetica, Arial, sans-serif;
-  --font-body: 'Lato', Helvetica, Arial, sans-serif;
+  --font-head: 'Lato';
+  --font-body: 'Lato';
   --radius: 12px;
   --shadow: 0 4px 20px rgba(0,0,0,.09);
 }

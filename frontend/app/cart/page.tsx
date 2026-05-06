@@ -82,18 +82,6 @@ export default function CartPage() {
 
                           <div className="cart-item-main">
                             <div className="cart-item-top">
-                              <div className="cart-item-title-wrap">
-                                <Link href={`/shop/product/${toSlug(item.title)}`} className="cart-item-title">
-                                  {item.title}
-                                </Link>
-                                {(item.color || item.size) && (
-                                  <div className="cart-item-meta">
-                                    {item.color && <div>Color: {item.color}</div>}
-                                    {item.size && <div>Size: {item.size}</div>}
-                                  </div>
-                                )}
-                              </div>
-
                               <button
                                 type="button"
                                 className="cart-remove"
@@ -106,13 +94,22 @@ export default function CartPage() {
                             </div>
 
                             <div className="cart-item-details">
-                              <div className="cart-detail">
-                                <span className="cart-detail-label">Price</span>
-                                <span className="cart-detail-value">{formatPrice(item.price)}</span>
+                              <div className="cart-detail cart-detail--product">
+                                <h5 className="cart-item-title">
+                                  <Link href={`/shop/product/${toSlug(item.title)}`} className="cart-item-title-link">
+                                    {item.title}
+                                  </Link>
+                                </h5>
+                                {(item.color || item.size) && (
+                                  <div className="cart-item-meta">
+                                    {item.color && <div>Color: {item.color}</div>}
+                                    {item.size && <div>Size: {item.size}</div>}
+                                  </div>
+                                )}
+                                <h6 className="cart-detail-price">{formatPrice(item.price)}</h6>
                               </div>
 
-                              <div className="cart-detail">
-                                <span className="cart-detail-label">Quantity</span>
+                              <div className="cart-detail cart-detail--qty">
                                 <div className="cart-qty">
                                   <button
                                     type="button"
@@ -138,8 +135,7 @@ export default function CartPage() {
                                 </div>
                               </div>
 
-                              <div className="cart-detail">
-                                <span className="cart-detail-label">Total</span>
+                              <div className="cart-detail cart-detail--total">
                                 <span className="cart-detail-value">{formatPrice(item.price * item.quantity)}</span>
                               </div>
                             </div>
@@ -156,9 +152,9 @@ export default function CartPage() {
                   </div>
 
                   <aside className="cart-summary">
-                    <h3 className="cart-summary-title">Your Order</h3>
+                    <h4 className="cart-summary-title">Your Order</h4>
 
-                    <p className="cart-coupon-label">Have a coupon?</p>
+                    <h5 className="cart-coupon-label">Have a coupon?</h5>
                     <div className="cart-coupon">
                       <input
                         type="text"
