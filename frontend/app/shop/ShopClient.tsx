@@ -211,7 +211,7 @@ function FilterSection({
         aria-controls={panelId}
         onClick={onToggle}
       >
-        <span className="nf-section-label">{label}</span>
+        <h3 className="nf-section-label">{label}</h3>
         <svg
           className="nf-chevron"
           width="12" height="12" viewBox="0 0 12 12"
@@ -632,7 +632,7 @@ function ShopInner({ heading, subheading }: { heading: string; subheading: strin
           aria-modal="true"
         >
           <div className="csp-drawer-head">
-            <span className="csp-drawer-title">Filters</span>
+            <h3 className="csp-drawer-title">Filters</h3>
             <button
               className="csp-drawer-close"
               onClick={() => setSidebarOpen(false)}

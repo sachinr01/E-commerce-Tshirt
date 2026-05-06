@@ -249,7 +249,7 @@ export default function CategoryPage() {
   const SidebarContent = (
     <>
       <div className="nf-sidebar-head">
-        <span className="nf-sidebar-title">Filters</span>
+        <h3 className="nf-sidebar-title">Filters</h3>
         {totalActive > 0 && <button className="nf-clear-all" onClick={clearAll}>Clear all ({totalActive})</button>}
       </div>
       <FilterSection
@@ -288,8 +288,8 @@ export default function CategoryPage() {
       <Header/>
       <nav className="csp-breadcrumb" aria-label="Breadcrumb">
         <div className="csp-breadcrumb-left">
-          <span className="csp-breadcrumb-title">{pageLabel}</span>
-          <h1 className="csp-breadcrumb-sub">Explore our {pageLabel} collection</h1>
+          <h1 className="csp-breadcrumb-title">{pageLabel}</h1>
+          <h6 className="csp-breadcrumb-sub">Explore our {pageLabel} collection</h6>
         </div>
         <div className="csp-breadcrumb-right">
           <Link href="/">Home</Link>
