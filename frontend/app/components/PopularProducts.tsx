@@ -1,8 +1,10 @@
+import Link from 'next/link';
+
 const collectionImages = [
-  '/store/images/category_images/CC_TUMBLERS.png',
-  '/store/images/category_images/CC_GLASSWARE.png',
-  '/store/images/category_images/CC_KITCHEN_ORGANISERS.png',
-  '/store/images/category_images/CC_TUMBLERS.png',
+  { src: '/store/images/category_images/tumblers.png',  alt: 'drinkware',   href: '/shop/drinkware' },
+  { src: '/store/images/category_images/glassware.png', alt: 'glassware',  href: '/shop/glassware' },
+  { src: '/store/images/category_images/kitchen.png',   alt: 'Kitchen',    href: '/shop/jars-and-containers' },
+  { src: '/store/images/category_images/all_in_one.png',alt: 'All in One', href: '/shop' },
 ];
 
 export default function CuratedGifting() {
@@ -12,10 +14,10 @@ export default function CuratedGifting() {
         <h1 className="collection-hero-title">Welcome to nestcase, where modern style meets local excellence.</h1>
         <h2 className="section-title" style={{ marginTop: '1px' }}>Our Collection</h2>
         <div className="collection-grid-2x2">
-          {collectionImages.map((src, i) => (
-            <div key={i} className="collection-grid-item">
-              <img src={src} alt={`Collection ${i + 1}`} loading="lazy" />
-            </div>
+          {collectionImages.map((item, i) => (
+            <Link key={i} href={item.href} className="collection-grid-item">
+              <img src={item.src} alt={item.alt} loading="lazy" />
+            </Link>
           ))}
         </div>
       </div>

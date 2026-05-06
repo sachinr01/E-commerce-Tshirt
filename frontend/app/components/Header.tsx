@@ -379,14 +379,14 @@ export default function Header() {
                           const shopHref = link.href;
                           const promos = link.mega.isKitchen
                             ? [
-                                { img: '/store/images/category_images/CC_KITCHEN_ORGANISERS.png', title: 'OUR KITCHEN COLLECTION', sub: '150+ Products Available', badge: false, cta: false },
+                                { img: '/store/images/category_images/kitchen.png', title: 'OUR KITCHEN COLLECTION', sub: '150+ Products Available', badge: false, cta: false },
                               ]
                             : link.mega.isDrinkware
                             ? [
-                                { img: '/store/images/category_images/CC_TUMBLERS.png', title: 'OUR DRINKWARE COLLECTION', sub: '150+ Products Available', badge: false, cta: false },
+                                { img: '/store/images/category_images/tumblers.png', title: 'OUR DRINKWARE COLLECTION', sub: '150+ Products Available', badge: false, cta: false },
                               ]
                             : [
-                                { img: '/store/images/category_images/CC_GLASSWARE.png', title: 'OUR GLASSWARE COLLECTION', sub: '150+ Products Available', badge: false, cta: false },
+                                { img: '/store/images/category_images/glassware.png', title: 'OUR GLASSWARE COLLECTION', sub: '150+ Products Available', badge: false, cta: false },
                               ];
                           const placeholder = <span className="nh-km-placeholder"><svg viewBox="0 0 48 48" fill="none"><rect width="48" height="48" fill="#e8e8e8"/><path d="M14 34l8-10 6 7 4-5 6 8H14z" fill="#bbb"/><circle cx="30" cy="20" r="4" fill="#bbb"/></svg></span>;
                           return (
