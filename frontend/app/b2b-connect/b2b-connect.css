@@ -1,0 +1,455 @@
+.b2b-page {
+  --b2b-ink: #11130f;
+  --b2b-green: #17331d;
+  --b2b-muted: #605c54;
+  --b2b-line: #ded8cd;
+  --b2b-paper: #fbfaf6;
+  --b2b-warm: #f1eee8;
+  background: var(--b2b-paper);
+  color: var(--b2b-ink);
+  overflow: hidden;
+}
+
+.b2b-page *,
+.b2b-page *::before,
+.b2b-page *::after {
+  box-sizing: border-box;
+}
+
+.b2b-page h1,
+.b2b-page h2,
+.b2b-page h3 {
+  font-family: Georgia, "Times New Roman", serif !important;
+  color: var(--b2b-ink);
+  letter-spacing: 0;
+  font-weight: 400;
+}
+
+.b2b-page p,
+.b2b-page a,
+.b2b-page input,
+.b2b-page textarea,
+.b2b-page button,
+.b2b-page span {
+  font-family: Lato, Arial, sans-serif !important;
+}
+
+.b2b-hero {
+  min-height: 575px;
+  display: grid;
+  grid-template-columns: minmax(320px, 44%) minmax(0, 56%);
+  align-items: stretch;
+  background:
+    radial-gradient(circle at 65% 20%, rgba(255, 255, 255, 0.8), transparent 32%),
+    linear-gradient(102deg, #fbfaf6 0%, #fbfaf6 39%, #eee9df 100%);
+}
+
+.b2b-hero-copy {
+  position: relative;
+  z-index: 2;
+  padding: clamp(56px, 7vw, 108px) 7vw 64px;
+  max-width: 620px;
+}
+
+.b2b-eyebrow {
+  margin: 0 0 20px;
+  color: #6d665d;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.b2b-hero h1 {
+  margin: 0;
+  max-width: 560px;
+  font-size: clamp(45px, 5.2vw, 72px);
+  line-height: 1.15;
+}
+
+.b2b-hero-text {
+  max-width: 410px;
+  margin: 30px 0 28px;
+  color: #1e211b;
+  font-size: 19px;
+  line-height: 1.8;
+}
+
+.b2b-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-width: 190px;
+  min-height: 56px;
+  border: 1px solid var(--b2b-green);
+  border-radius: 2px;
+  background: var(--b2b-green);
+  color: #fff !important;
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.b2b-hero-art {
+  position: relative;
+  min-height: 575px;
+  overflow: hidden;
+}
+
+.b2b-hero-art::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    linear-gradient(90deg, var(--b2b-paper) 0%, rgba(251, 250, 246, 0.9) 11%, rgba(251, 250, 246, 0.15) 36%),
+    linear-gradient(180deg, rgba(251, 250, 246, 0.15), rgba(251, 250, 246, 0.4));
+}
+
+.b2b-hero-art img {
+  width: 100%;
+  height: 100%;
+  min-height: 575px;
+  object-fit: cover;
+  object-position: 66% center;
+  display: block;
+  filter: saturate(0.85) brightness(1.05);
+  transform: scale(1.04);
+}
+
+.b2b-section {
+  padding: 52px clamp(24px, 5.5vw, 72px) 38px;
+}
+
+.b2b-section-heading {
+  text-align: center;
+  margin: 0 auto 34px;
+}
+
+.b2b-section-heading .b2b-eyebrow {
+  margin-bottom: 10px;
+}
+
+.b2b-section h2,
+.b2b-contact h2 {
+  margin: 0;
+  font-size: clamp(34px, 3.2vw, 46px);
+  line-height: 1.2;
+}
+
+.b2b-section-heading::after {
+  content: "";
+  display: block;
+  width: 42px;
+  height: 1px;
+  margin: 20px auto 0;
+  background: #bfb7aa;
+}
+
+.b2b-category-grid {
+  max-width: 1150px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: clamp(18px, 2.5vw, 30px);
+}
+
+.b2b-category-card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  border: 1px solid var(--b2b-line);
+  background: #fff;
+  color: var(--b2b-ink) !important;
+  text-decoration: none;
+}
+
+.b2b-category-image {
+  display: block;
+  aspect-ratio: 1 / 1.13;
+  background: #ede9e1;
+  overflow: hidden;
+}
+
+.b2b-category-image img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  transition: transform 0.35s ease;
+}
+
+.b2b-category-card:hover .b2b-category-image img {
+  transform: scale(1.04);
+}
+
+.b2b-category-name {
+  min-height: 62px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 16px;
+  color: var(--b2b-ink);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.b2b-quote-band {
+  display: grid;
+  grid-template-columns: minmax(40px, 220px) auto minmax(40px, 220px);
+  align-items: center;
+  justify-content: center;
+  gap: 42px;
+  padding: 34px 7vw;
+  background: var(--b2b-warm);
+  text-align: center;
+}
+
+.b2b-quote-band span {
+  width: 100%;
+  height: 1px;
+  background: #c9c1b4;
+}
+
+.b2b-quote-band p {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif !important;
+  font-size: clamp(22px, 2.3vw, 30px);
+  line-height: 1.4;
+  color: #25231f;
+}
+
+.b2b-benefits {
+  background: #fff;
+  padding-bottom: 58px;
+}
+
+.b2b-benefit-grid {
+  max-width: 1080px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.b2b-benefit {
+  min-width: 0;
+  padding: 12px 28px 10px;
+  text-align: center;
+  border-right: 1px solid var(--b2b-line);
+}
+
+.b2b-benefit:last-child {
+  border-right: 0;
+}
+
+.b2b-benefit-icon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 18px;
+}
+
+.b2b-benefit-icon svg {
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: #11130f;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.b2b-benefit h3 {
+  margin: 0 0 12px;
+  font-family: Lato, Arial, sans-serif !important;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.b2b-benefit p {
+  max-width: 190px;
+  margin: 0 auto;
+  color: #35342f;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.b2b-contact {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(260px, 34%) minmax(0, 1fr);
+  gap: clamp(28px, 6vw, 90px);
+  align-items: center;
+  padding: 46px clamp(24px, 8vw, 112px) 58px;
+  background: #f1eee8;
+}
+
+.b2b-leaf {
+  position: absolute;
+  left: -28px;
+  bottom: -30px;
+  width: 190px;
+  height: 250px;
+  opacity: 0.22;
+  background:
+    radial-gradient(ellipse at 55% 12%, #7f826c 0 12px, transparent 13px),
+    radial-gradient(ellipse at 64% 29%, #7f826c 0 17px, transparent 18px),
+    radial-gradient(ellipse at 41% 36%, #7f826c 0 19px, transparent 20px),
+    radial-gradient(ellipse at 66% 54%, #7f826c 0 20px, transparent 21px),
+    radial-gradient(ellipse at 36% 66%, #7f826c 0 19px, transparent 20px),
+    linear-gradient(60deg, transparent 45%, #7f826c 46% 48%, transparent 49%);
+  transform: rotate(-22deg);
+}
+
+.b2b-contact-copy {
+  position: relative;
+  z-index: 1;
+  max-width: 360px;
+}
+
+.b2b-contact-copy p {
+  margin: 28px 0 0;
+  color: #272822;
+  font-size: 17px;
+  line-height: 1.8;
+}
+
+.b2b-form {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 14px;
+}
+
+.b2b-form-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.b2b-form label {
+  display: block;
+}
+
+.b2b-form label span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+.b2b-form input,
+.b2b-form textarea {
+  width: 100%;
+  border: 0;
+  border-radius: 0;
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--b2b-ink);
+  font-size: 13px;
+  outline: none;
+}
+
+.b2b-form input {
+  height: 50px;
+  padding: 0 20px;
+}
+
+.b2b-form textarea {
+  min-height: 74px;
+  resize: vertical;
+  padding: 18px 20px;
+}
+
+.b2b-form .b2b-button {
+  width: fit-content;
+  min-width: 220px;
+  margin-top: 2px;
+}
+
+@media (max-width: 1100px) {
+  .b2b-category-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .b2b-benefit-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 28px 0;
+  }
+
+  .b2b-benefit:nth-child(2) {
+    border-right: 0;
+  }
+}
+
+@media (max-width: 820px) {
+  .b2b-hero {
+    min-height: auto;
+    grid-template-columns: 1fr;
+  }
+
+  .b2b-hero-copy {
+    padding: 48px 24px 38px;
+  }
+
+  .b2b-hero-art,
+  .b2b-hero-art img {
+    min-height: 320px;
+  }
+
+  .b2b-section {
+    padding: 42px 18px 32px;
+  }
+
+  .b2b-category-grid,
+  .b2b-benefit-grid,
+  .b2b-contact,
+  .b2b-form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .b2b-quote-band {
+    grid-template-columns: 1fr;
+    gap: 18px;
+    padding: 30px 24px;
+  }
+
+  .b2b-quote-band span {
+    max-width: 180px;
+    margin: 0 auto;
+  }
+
+  .b2b-benefit {
+    border-right: 0;
+    border-bottom: 1px solid var(--b2b-line);
+    padding: 4px 24px 26px;
+  }
+
+  .b2b-benefit:last-child {
+    border-bottom: 0;
+  }
+
+  .b2b-contact {
+    padding: 44px 22px 52px;
+  }
+}
+
+@media (max-width: 520px) {
+  .b2b-hero h1 {
+    font-size: 40px;
+  }
+
+  .b2b-hero-text {
+    font-size: 16px;
+  }
+
+  .b2b-category-grid {
+    gap: 16px;
+  }
+}

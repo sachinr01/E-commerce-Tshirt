@@ -1,7 +1,7 @@
 import Link from 'next/link';
 
 const collectionImages = [
-  { src: '/store/images/category_images/CC_TUMBLERS.png',  alt: 'drinkware',   href: '/shop/drinkware' },
+  { src: '/store/images/category_images/CC_TUMBLERS_NEW.png',  alt: 'drinkware',   href: '/shop/drinkware' },
   { src: '/store/images/category_images/CC_GLASSWARE.png', alt: 'glassware',  href: '/shop/glassware' },
   { src: '/store/images/category_images/CC_KITCHEN_ORGANISERS.png',   alt: 'Kitchen',    href: '/shop/jars-and-containers' },
   { src: '/store/images/category_images/CC_KITCHEN_ORGANISERS.png',alt: 'All in One', href: '/shop' },

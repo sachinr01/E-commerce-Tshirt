@@ -162,7 +162,7 @@ export default function Header() {
   };
 
   const [aboutHref, setAboutHref] = useState("#");
-  const [b2bHref, setB2bHref] = useState("#");
+  const [b2bHref, setB2bHref] = useState("/b2b-connect");
 
   useEffect(() => {
     fetch('/store/api/pages?limit=100', { cache: 'no-store' })

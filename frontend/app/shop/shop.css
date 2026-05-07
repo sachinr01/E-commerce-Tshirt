@@ -726,9 +726,12 @@
   position: relative;
   overflow: hidden;
   background: #f3f4f6;
+  aspect-ratio: 1 / 1;
 }
 .csp-img {
   width: 100%;
+  object-fit: fill;
+  object-position: center;
   transition: transform 500ms ease;
 }
 .csp-img.zoomed { transform: scale(1.05); }

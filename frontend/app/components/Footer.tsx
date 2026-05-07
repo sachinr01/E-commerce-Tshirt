@@ -152,6 +152,7 @@ export default function Footer() {
               {aboutHref && <li><Link href={aboutHref} className="link-faded">About Us</Link></li>}
               {contactHref && <li><Link href={contactHref} className="link-faded">Contact Us</Link></li>}
               <li><a href="/store/orders" className="link-faded">Track Order</a></li>
+              <li><Link href="/careers" className="link-faded">Careers</Link></li>
             </ul>
           </div>
           <div>
@@ -160,6 +161,8 @@ export default function Footer() {
               {returnsHref && <li><Link href={returnsHref} className="link-faded">Return & Exchange</Link></li>}
               {privacyHref && <li><Link href={privacyHref} className="link-faded">Privacy Policy</Link></li>}
               {termsHref && <li><Link href={termsHref} className="link-faded">Terms Of Use</Link></li>}
+              <li><Link href="/shipping-policy" className="link-faded">Shipping Policy</Link></li>
+              <li><Link href="/faqs" className="link-faded">FAQs</Link></li>
             </ul>
           </div>
           <div>
