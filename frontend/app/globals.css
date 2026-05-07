@@ -12,6 +12,11 @@
   --font-head: 'Lato';
 }
 
+img, video {
+  max-width: 100%;
+  /* height: auto; */
+}
+
 /* Single source of truth for fonts — overrides everything */
 *, *::before, *::after {
   font-family: 'Lato';
@@ -83,7 +88,6 @@ html, body {
 /* Ensure banner images fit properly */
 .banner img {
   width: 100% !important;
-  height: 100% !important;
   object-fit: cover !important;
   object-position: center !important;
   display: block !important;

@@ -49,7 +49,7 @@
 .checkout-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr); gap: 32px; align-items: start; }
 .checkout-main, .checkout-side { min-width: 0; }
 .checkout-side .order-products { padding: 22px; border: 1px solid #ece7dc; background: #fff; position: sticky; top: 96px; }
-.checkout-summary-card { padding: 18px; border: 1px solid #e9e1d5; border-radius: 8px; background: #fff; margin-bottom: 18px; }
+.checkout-summary-card { padding: 18px; border: 1px solid #e9e1d5; background: #fff; margin-bottom: 18px; }
 .checkout-page :is(h1, h2, h3, h4, h5, h6) {
   color: #22311d;
   font-weight: 700;
@@ -98,12 +98,12 @@
 .checkout-summary-row { display: flex; align-items: center; justify-content: space-between; font-size: 14px; color: #343434; padding: 8px 0; border-bottom: 1px solid #f1ece4; }
 .checkout-summary-row:last-child { border-bottom: none; }
 .checkout-summary-total { display: flex; align-items: center; justify-content: space-between; font-size: 18px; font-weight: 700; padding-top: 12px; }
-.checkout-order-items-card { padding: 18px; border: 1px solid #e9e1d5; border-radius: 8px; background: #fff; }
+.checkout-order-items-card { padding: 18px; border: 1px solid #e9e1d5; background: #fff; }
 .checkout-order-items-title { margin-bottom: 14px; }
 .checkout-order-items { margin-top: 6px; }
 .checkout-order-item { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 12px 0; border-bottom: 1px solid #f1ece4; }
 .checkout-order-item:last-child { border-bottom: none; }
-.checkout-order-thumb { width: 64px; height: 64px; border-radius: 8px; object-fit: cover; border: 1px solid #eee3d6; background: #faf6f0; }
+.checkout-order-thumb { width: 64px; height: 64px; object-fit: cover; border: 1px solid #eee3d6; background: #faf6f0; }
 .checkout-order-meta { font-size: 14px; color: #222; }
 .checkout-order-meta span { display: block; font-size: 12px; color: #777; margin-top: 4px; }
 .checkout-order-price { font-weight: 700; font-size: 14px; color: #222; }

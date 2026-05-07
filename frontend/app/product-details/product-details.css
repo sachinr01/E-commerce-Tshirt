@@ -53,7 +53,7 @@
 .cpd-gallery-col { display: flex; gap: 14px; position: sticky; top: 76px; }
 .cpd-thumbs-strip { display: flex; flex-direction: column; gap: 9px; width: 74px; flex-shrink: 0; min-width: 0; }
 .cpd-thumb {
-  width: 74px; height: 74px; border: 2px solid transparent; border-radius: 8px;
+  width: 74px; height: 74px; border: 2px solid transparent;
   overflow: hidden; padding: 0; cursor: pointer; background: #f4f4f4;
   position: relative; transition: border-color .2s, transform .15s;
 }
@@ -65,8 +65,8 @@
   background: rgba(255,255,255,0.72); backdrop-filter: blur(2px);
   font-size: 18px; font-weight: 700; color: #343434; border-radius: 6px; pointer-events: none;
 }
-.cpd-main-img-wrap { flex: 1; position: relative; border-radius: 14px; overflow: hidden; background: #f6f6f6; aspect-ratio: 4/5; }
-.cpd-main-img { width: 100%; height: 100%; object-fit: fill; display: block; transition: transform .5s ease; }
+.cpd-main-img-wrap { flex: 1; position: relative; overflow: hidden; background: #f6f6f6; }
+.cpd-main-img { width: 100%; object-fit: fill; display: block; transition: transform .5s ease; }
 .cpd-main-img-wrap:hover .cpd-main-img { transform: scale(1.04); }
 .cpd-img-arrow {
   display: none; position: absolute; top: 50%; transform: translateY(-50%);
@@ -82,7 +82,7 @@
 .cpd-sale-badge {
   position: absolute; top: 14px; left: 14px; z-index: 10;
   background: var(--cpd-sale); color: #fff; font-family: var(--font-body); font-size: 11px; font-weight: 700;
-  letter-spacing: .8px; text-transform: uppercase; padding: 3px 10px; border-radius: 4px;
+  letter-spacing: .8px; text-transform: uppercase; padding: 3px 10px;
 }
 .cpd-img-wishlist {
   position: absolute; top: 14px; right: 14px; z-index: 10; width: 34px; height: 34px; border-radius: 50%;
@@ -102,7 +102,7 @@
 .cpd-rating-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
 .cpd-rating-num { font-family: var(--font-body); font-weight: 600; font-size: 14px; }
 .cpd-review-count { background: none; border: none; cursor: pointer; padding: 0; font-family: var(--font-body); font-size: 13px; color: var(--cpd-brand); text-decoration: underline; }
-.cpd-stock-badge { flex-shrink: 0; white-space: nowrap; font-family: var(--font-body); font-size: 12px; font-weight: 600; padding: 7px 14px; border-radius: 20px; }
+.cpd-stock-badge { flex-shrink: 0; white-space: nowrap; font-family: var(--font-body); font-size: 12px; font-weight: 600; padding: 7px 14px; }
 .cpd-stock-badge.in  { background: var(--cpd-brand-light); color: var(--cpd-brand); }
 .cpd-stock-badge.out { background: #fdecea; color: var(--cpd-sale); }
 .cpd-stock-badge.backorder { background: #fff8e1; color: #b45309; }
@@ -165,7 +165,7 @@
 
 /* Cart row */
 .cpd-cart-row { display: flex; gap: 10px; align-items: center; margin-bottom: 24px; flex-wrap: wrap; }
-.cpd-qty-wrap { display: flex; align-items: center; border: 1.5px solid var(--cpd-border); border-radius: 8px; overflow: hidden; flex-shrink: 0; }
+.cpd-qty-wrap { display: flex; align-items: center; border: 1.5px solid var(--cpd-border); overflow: hidden; flex-shrink: 0; }
 .cpd-qty-btn { width: 38px; height: 46px; border: none; background: #f6f6f6; cursor: pointer; font-size: 18px; font-weight: 300; color: var(--cpd-text); transition: background .15s; }
 .cpd-qty-btn:hover { background: var(--cpd-brand-light); }
 .cpd-qty-input { width: 44px; text-align: center; border: none; outline: none; font-family: var(--font-body); font-size: 15px; font-weight: 500; height: 46px; -moz-appearance: textfield; appearance: textfield; }
@@ -175,7 +175,7 @@
 .cpd-atc-btn.ready:hover { background: var(--cpd-brand-mid); transform: translateY(-1px); }
 .cpd-atc-btn.ready:active { transform: translateY(0); }
 .cpd-atc-btn.flash { background: #2ecc71; }
-.cpd-wishlist-btn { width: 46px; height: 46px; border-radius: 8px; border: 1.5px solid var(--cpd-border); background: var(--cpd-white); cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--cpd-muted); transition: all .2s; flex-shrink: 0; }
+.cpd-wishlist-btn { width: 46px; height: 46px; border: 1.5px solid var(--cpd-border); background: var(--cpd-white); cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--cpd-muted); transition: all .2s; flex-shrink: 0; }
 .cpd-wishlist-btn:hover { border-color: var(--cpd-sale); color: var(--cpd-sale); background: #fff5f5; }
 .cpd-wishlist-btn.active { border-color: var(--cpd-sale); background: #fff5f5; }
 
@@ -190,7 +190,7 @@
 
 /* Trust badges */
 .cpd-trust-row { display: flex; gap: 10px; flex-wrap: wrap; padding-top: 16px; border-top: 1px solid var(--cpd-border); }
-.cpd-trust-badge { flex: 1; min-width: 90px; display: flex; align-items: center; gap: 9px; padding: 11px 13px; border-radius: 10px; background: #f9f9f9; border: 1px solid var(--cpd-border); }
+.cpd-trust-badge { flex: 1; min-width: 90px; display: flex; align-items: center; gap: 9px; padding: 11px 13px; background: #f9f9f9; border: 1px solid var(--cpd-border); }
 .cpd-trust-icon { font-size: 20px; flex-shrink: 0; }
 .cpd-trust-label { font-family: var(--font-body); font-size: 12px; font-weight: 600; color: var(--cpd-text); line-height: 1.3; }
 .cpd-trust-sub { font-family: var(--font-body); font-size: 11px; color: var(--cpd-muted); }
@@ -200,11 +200,11 @@
 .cpd-acc-item { border-bottom: 1px solid var(--cpd-border); }
 .cpd-acc-header { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 14px 0; background: none; border: none; cursor: pointer; text-align: left; gap: 12px; }
 .cpd-acc-header:hover .cpd-acc-label { color: var(--cpd-brand); }
-.cpd-acc-label { font-family: var(--font-body); font-size: 15px; font-weight: 600; color: var(--cpd-text); letter-spacing: 0.01em; margin: 0; }
+.cpd-acc-label { font-family: var(--font-body); margin: 0; }
 .cpd-acc-chevron { flex-shrink: 0; color: var(--cpd-muted); transition: transform 0.25s ease; }
 .cpd-acc-item.open .cpd-acc-chevron { transform: rotate(180deg); }
-.cpd-acc-body { padding: 0 0 18px; font-family: var(--font-body); font-size: 15px; line-height: 1.75; color: #555; }
-.cpd-acc-body p { margin: 0 0 10px; font-size: 15px; line-height: 1.75; color: #555; }
+.cpd-acc-body { padding: 0 0 18px; font-family: var(--font-body); }
+.cpd-acc-body p { margin: 0 0 10px; }
 .cpd-acc-body p:last-child { margin-bottom: 0; }
 .cpd-acc-body strong, .cpd-acc-body b { font-weight: 700 !important; color: #333; }
 .cpd-acc-body em, .cpd-acc-body i { font-style: italic !important; }
@@ -251,7 +251,7 @@
 /* Tabs */
 .cpd-tabs-section { max-width: 1240px; margin: 0 auto 80px; padding: 0 48px; }
 .cpd-tabs-section-inline { max-width: none; margin: 24px 0 20px; padding: 0; }
-.cpd-section-heading { border-bottom: 2px solid var(--cpd-border); padding: 0 0 14px; font-family: var(--font-body); font-size: 15px; font-weight: 700; color: var(--cpd-brand); letter-spacing: .3px; margin: 0; }
+.cpd-section-heading { border-bottom: 2px solid var(--cpd-border); padding: 0 0 14px; font-family: var(--font-body); font-size: 15px; font-weight: 700; margin: 0; }
 .cpd-tab-content { padding: 36px 0; font-family: var(--font-body); font-size: 15px; line-height: 1.8; color: #343434; }
 
 /* Description */

@@ -160,7 +160,6 @@
   flex-shrink: 0;
   background: var(--cs-white);
   border: 1px solid var(--cs-border);
-  border-radius: var(--sidebar-radius);
   overflow: hidden;
   position: static;
   max-height: none;
@@ -339,7 +338,6 @@
   text-align: center;
   padding: 5px 8px;
   border: 1.5px solid var(--cs-border);
-  border-radius: 6px;
   font-family: var(--font-body);
   font-size: 12px;
   font-weight: 600;
@@ -605,7 +603,6 @@
   gap: 3px;
   background: var(--cs-bg);
   border: 1px solid var(--cs-border);
-  border-radius: 8px;
   padding: 3px;
 }
 .csp-view-btn {
@@ -708,7 +705,6 @@
 
 .csp-card {
   background: var(--cs-white);
-  border-radius: var(--card-radius);
   overflow: hidden;
   border: 1px solid var(--cs-border);
   display: flex;
@@ -728,16 +724,11 @@
 }
 .csp-img-wrap {
   position: relative;
-  aspect-ratio: 4/5;
   overflow: hidden;
   background: #f3f4f6;
 }
 .csp-img {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  display: block;
   transition: transform 500ms ease;
 }
 .csp-img.zoomed { transform: scale(1.05); }
@@ -757,7 +748,6 @@
   letter-spacing: 0.6px;
   text-transform: uppercase;
   padding: 3px 7px;
-  border-radius: 4px;
 }
 .csp-badge.sale { background: var(--cs-sale); color: #fff; }
 .csp-badge.oos  { background: #6b7280; color: #fff; }
@@ -973,7 +963,6 @@
 }
 @media (max-width: 600px) {
   .csp-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
-  .csp-img-wrap { aspect-ratio: 3/4; }
   .csp-page-title { font-size: 26px; }
   .csp-sort-label { display: none; }
   .csp-cat-strip { justify-content: flex-start; overflow-x: auto; flex-wrap: nowrap; padding-bottom: 16px; scrollbar-width: none; }

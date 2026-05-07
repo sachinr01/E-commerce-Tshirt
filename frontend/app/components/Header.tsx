@@ -253,7 +253,7 @@ export default function Header() {
 
             <div className="nh-top-center">
               <Link href="/" className="nh-logo-link" onClick={closeOverlays}>
-                <Image src="/store/images/Netcase.webp" alt="Nestcase" width={220} height={80} priority className="nh-logo-image" />
+                <Image src="/store/images/nestcase-logo-optimized.png" alt="Nestcase" width={220} height={80} priority className="nh-logo-image" />
               </Link>
             </div>
 
@@ -379,14 +379,14 @@ export default function Header() {
                           const shopHref = link.href;
                           const promos = link.mega.isKitchen
                             ? [
-                                { img: '/store/images/category_images/kitchen.png', title: 'OUR KITCHEN COLLECTION', sub: '150+ Products Available', badge: false, cta: false },
+                                { img: '/store/images/category_images/CC_KITCHEN_ORGANISERS.png', title: 'OUR KITCHEN COLLECTION', sub: '150+ Products Available', badge: false, cta: false },
                               ]
                             : link.mega.isDrinkware
                             ? [
-                                { img: '/store/images/category_images/tumblers.png', title: 'OUR DRINKWARE COLLECTION', sub: '150+ Products Available', badge: false, cta: false },
+                                { img: '/store/images/category_images/CC_TUMBLERS.png', title: 'OUR DRINKWARE COLLECTION', sub: '150+ Products Available', badge: false, cta: false },
                               ]
                             : [
-                                { img: '/store/images/category_images/glassware.png', title: 'OUR GLASSWARE COLLECTION', sub: '150+ Products Available', badge: false, cta: false },
+                                { img: '/store/images/category_images/CC_GLASSWARE.png', title: 'OUR GLASSWARE COLLECTION', sub: '150+ Products Available', badge: false, cta: false },
                               ];
                           const placeholder = <span className="nh-km-placeholder"><svg viewBox="0 0 48 48" fill="none"><rect width="48" height="48" fill="#e8e8e8"/><path d="M14 34l8-10 6 7 4-5 6 8H14z" fill="#bbb"/><circle cx="30" cy="20" r="4" fill="#bbb"/></svg></span>;
                           return (
@@ -530,7 +530,7 @@ export default function Header() {
       {mobileMenuOpen && <div className="nh-drawer-overlay" onClick={() => setMobileMenuOpen(false)} />}
       <aside className={`nh-drawer${mobileMenuOpen ? ' open' : ''}`} aria-hidden={!mobileMenuOpen}>
         <div className="nh-drawer-head">
-          <Image src="/store/images/Netcase.webp" alt="Nestcase" width={200} height={60} style={{ width: 'auto', height: '60px' }}/>
+          <Image src="/store/images/nestcase-logo-optimized.png" alt="Nestcase" width={200} height={53} style={{ width: 'auto', height: '60px' }}/>
           <button type="button" className="nh-search-close" onClick={() => setMobileMenuOpen(false)} aria-label="Close menu">×</button>
         </div>
         <ul className="nh-drawer-nav">

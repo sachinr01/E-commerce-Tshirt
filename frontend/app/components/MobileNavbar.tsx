@@ -43,7 +43,7 @@ export default function MobileNavbar() {
           {/* Centered logo */}
           <Link href="/" onClick={closeMenu} className="mn-logo-center">
             <span className="mn-logo-center-inner">
-              <Image src="/store/images/logo-white.png" alt="Okab Logo" width={160} height={44} className="mn-logo-img" />
+              <Image src="/store/images/nestcase-logo-optimized.png" alt="Logo" width={160} height={44} className="mn-logo-img" />
             </span>
           </Link>
 
@@ -66,7 +66,7 @@ export default function MobileNavbar() {
           {/* Drawer header */}
           <div className="mn-drawer-head">
             <Link href="/" onClick={closeMenu} className="mn-drawer-logo">
-              <Image src="/store/images/logo-white.png" alt="Okab Logo" width={160} height={44} className="mn-logo-img" />
+              <Image src="/store/images/nestcase-logo-optimized.png" alt="Logo" width={160} height={44} className="mn-logo-img" />
             </Link>
             <button type="button" onClick={closeMenu} className="mn-close-btn" aria-label="Close menu">×</button>
           </div>
