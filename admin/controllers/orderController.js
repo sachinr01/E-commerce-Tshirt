@@ -44,7 +44,6 @@ const statusBadge = {
 };
 
 // ─── LIST ORDERS ──────────────────────────────────────────────────────────────
-// ─── LIST ORDERS ──────────────────────────────────────────────────────────────
 const showOrders = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;

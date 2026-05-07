@@ -59,44 +59,51 @@ const showDashboard = async (req, res) => {
     // LATEST ORDERS (top 5)
     // =========================
     const [latestOrders] = await db.query(`
-      SELECT
-        o.order_id,
-        o.order_status,
-        o.order_date,
+  SELECT
+    o.order_id,
+    o.order_status,
+    o.order_date,
 
-        u.display_name AS customer_name,
+    CONCAT_WS(' ',
+      NULLIF(ua.first_name, ''),
+      NULLIF(ua.last_name, '')
+    ) AS customer_name,
 
-        MAX(CASE WHEN om.meta_key = '_billing_phone' THEN om.meta_value END) AS phone,
+    ua.phone AS phone,
 
-        CONCAT_WS(', ',
-          NULLIF(MAX(CASE WHEN um.meta_key = 'billing_address_1' THEN um.meta_value END), ''),
-          NULLIF(MAX(CASE WHEN um.meta_key = 'billing_address_2' THEN um.meta_value END), ''),
-          NULLIF(MAX(CASE WHEN um.meta_key = 'billing_city' THEN um.meta_value END), ''),
-          NULLIF(MAX(CASE WHEN um.meta_key = 'billing_state' THEN um.meta_value END), ''),
-          NULLIF(MAX(CASE WHEN um.meta_key = 'billing_postcode' THEN um.meta_value END), ''),
-          NULLIF(MAX(CASE WHEN um.meta_key = 'billing_country' THEN um.meta_value END), '')
-        ) AS address,
+    CONCAT_WS(', ',
+      NULLIF(ua.address_line1, ''),
+      NULLIF(ua.address_line2, ''),
+      NULLIF(ua.city, ''),
+      NULLIF(ua.state_name, ''),
+      NULLIF(ua.zipcode, '')
+    ) AS address,
 
-        MAX(CASE WHEN om.meta_key = '_order_total' THEN om.meta_value END) AS total
+    MAX(
+      CASE
+        WHEN om.meta_key = '_order_total'
+        THEN om.meta_value
+      END
+    ) AS total
 
-      FROM tbl_orders o
+  FROM tbl_orders o
 
-      LEFT JOIN tbl_users u 
-        ON u.ID = o.user_id   
+  LEFT JOIN tbl_user_address ua
+    ON ua.order_id = o.order_id
+   AND ua.address_billing = 'yes'
 
-      LEFT JOIN tbl_ordermeta om 
-        ON om.order_id = o.order_id
+  LEFT JOIN tbl_ordermeta om
+    ON om.order_id = o.order_id
 
-      LEFT JOIN tbl_usermeta um 
-        ON um.user_id = u.ID
+  WHERE o.order_type = 'shop_order'
+    AND o.parent_id = 0
 
-      WHERE o.order_type = 'shop_order'
+  GROUP BY o.order_id
 
-      GROUP BY o.order_id
+  ORDER BY o.order_date DESC
 
-      ORDER BY o.order_date DESC
-      LIMIT 5
-    `);
+  LIMIT 5
+`);
 
     // =========================
     // RECENT USERS (top 5)
@@ -235,7 +242,7 @@ const loadMoreBestSellers = async (req, res) => {
 const loadMoreOrders = async (req, res) => {
   try {
     const offset = parseInt(req.query.offset) || 5;
-    const limit = parseInt(req.query.limit) || 10;
+    const limit = parseInt(req.query.limit) || 5;
 
     const [rows] = await db.query(
       `
@@ -243,24 +250,59 @@ const loadMoreOrders = async (req, res) => {
         o.order_id,
         o.order_status,
         o.order_date,
-        MAX(CASE WHEN om.meta_key = '_billing_first_name' THEN om.meta_value END) AS first_name,
-        MAX(CASE WHEN om.meta_key = '_billing_last_name'  THEN om.meta_value END) AS last_name,
-        MAX(CASE WHEN om.meta_key = '_billing_phone'      THEN om.meta_value END) AS phone,
-        MAX(CASE WHEN om.meta_key = '_billing_address_1'  THEN om.meta_value END) AS address,
-        MAX(CASE WHEN om.meta_key = '_order_total'        THEN om.meta_value END) AS total
+
+        CONCAT_WS(' ',
+          NULLIF(ua.first_name, ''),
+          NULLIF(ua.last_name, '')
+        ) AS customer_name,
+
+        ua.phone AS phone,
+
+        CONCAT_WS(', ',
+          NULLIF(ua.address_line1, ''),
+          NULLIF(ua.address_line2, ''),
+          NULLIF(ua.city, ''),
+          NULLIF(ua.state_name, ''),
+          NULLIF(ua.zipcode, '')
+        ) AS address,
+
+        MAX(
+          CASE
+            WHEN om.meta_key = '_order_total'
+            THEN om.meta_value
+          END
+        ) AS total
+
       FROM tbl_orders o
-      LEFT JOIN tbl_ordermeta om ON om.order_id = o.order_id
+
+      LEFT JOIN tbl_user_address ua
+        ON ua.order_id = o.order_id
+       AND ua.address_billing = 'yes'
+
+      LEFT JOIN tbl_ordermeta om
+        ON om.order_id = o.order_id
+
       WHERE o.order_type = 'shop_order'
+        AND o.parent_id = 0
+
       GROUP BY o.order_id
+
       ORDER BY o.order_date DESC
+
       LIMIT ? OFFSET ?
-    `,
+      `,
       [limit, offset],
     );
 
-    res.json({ success: true, data: rows });
+    res.json({
+      success: true,
+      data: rows,
+    });
   } catch (error) {
-    res.json({ success: false, message: error.message });
+    res.json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 
