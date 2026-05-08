@@ -24,12 +24,9 @@
 
 .careers-hero h1 {
   margin: 0;
-  font-family: Georgia, "Times New Roman", serif !important;
-  color: #030303;
   font-size: 69px;
   font-weight: 400;
-  line-height: 1.05;
-  letter-spacing: -0.045em;
+  line-height: 1;
 }
 
 .careers-title-rule {

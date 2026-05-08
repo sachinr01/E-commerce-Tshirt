@@ -21,12 +21,9 @@
 
 .contact-hero h1 {
   margin: 0;
-  font-family: Georgia, "Times New Roman", serif !important;
-  color: #050505;
   font-size: 88px;
   font-weight: 400;
-  line-height: 1.05;
-  letter-spacing: -0.045em;
+  line-height: 1;
 }
 
 .contact-hero span {
@@ -40,9 +37,8 @@
 .contact-hero p {
   margin: 0;
   font-family: Lato, Arial, sans-serif !important;
-  color: #101010;
-  font-size: 16.5px;
-  line-height: 1.55;
+  font-size: 15px;
+  line-height: 1;
   font-weight: 500;
 }
 
@@ -76,11 +72,8 @@
 .contact-form-section h2 {
   margin: 0;
   font-family: Lato, Arial, sans-serif !important;
-  color: #0b0b0b;
-  font-size: 15px;
   font-weight: 900;
-  line-height: 1.1;
-  letter-spacing: 0.39em;
+  line-height: 1;
   text-transform: uppercase;
 }
 
@@ -126,11 +119,8 @@
 .contact-row h3 {
   margin: 0 0 6px;
   font-family: Lato, Arial, sans-serif !important;
-  color: #0d0d0d;
-  font-size: 14px;
   font-weight: 900;
-  line-height: 1.1;
-  letter-spacing: 0;
+  line-height: 1;
 }
 
 .contact-row p,
@@ -139,11 +129,9 @@
 .contact-email,
 .contact-form-section p {
   font-family: Lato, Arial, sans-serif !important;
-  color: #090909;
   font-size: 14px;
   font-weight: 500;
-  line-height: 1.48;
-  letter-spacing: 0;
+  line-height: 1;
 }
 
 .contact-row p {
@@ -164,8 +152,8 @@
 
 .contact-form-section p {
   margin: -5px 0 37px;
-  font-size: 16px;
-  line-height: 1.55;
+  font-size: 15px;
+  line-height: 1;
 }
 
 .contact-form {

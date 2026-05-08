@@ -9,7 +9,7 @@ const collectionImages = [
 
 export default function CuratedGifting() {
   return (
-    <section style={{ padding: '30px 0', background: '#fff' }}>
+    <section style={{ padding: '50px 0', background: '#fff' }}>
       <div style={{ maxWidth: 1360, margin: '0 auto', padding: '0 45px' }}>
         <h1 className="collection-hero-title">Welcome to nestcase, where modern style meets local excellence.</h1>
         <h2 className="section-title">Our Collection</h2>
