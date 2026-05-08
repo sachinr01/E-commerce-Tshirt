@@ -87,7 +87,11 @@ export default function B2BConnectPage() {
     <>
       <Header />
       <main className="b2b-page">
-        <section className="b2b-hero" aria-labelledby="b2b-hero-title">
+        <div className="b2b-hero-art">
+          <img src="/store/images/b2b_images/b2b-new-banner.jpeg" alt="new-banner" />
+        </div>
+        
+        {/* <section className="b2b-hero" aria-labelledby="b2b-hero-title">
           <div className="b2b-hero-copy">
             <p className="b2b-eyebrow">B2B Connect</p>
             <h1 id="b2b-hero-title">Crafted for Modern Businesses</h1>
@@ -105,7 +109,7 @@ export default function B2BConnectPage() {
               alt=""
             />
           </div>
-        </section>
+        </section> */}
 
         <section className="b2b-section b2b-categories" aria-labelledby="b2b-categories-title">
           <div className="b2b-section-heading">

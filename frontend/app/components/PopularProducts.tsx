@@ -9,10 +9,10 @@ const collectionImages = [
 
 export default function CuratedGifting() {
   return (
-    <section style={{ padding: '56px 0', background: '#fff' }}>
+    <section style={{ padding: '30px 0', background: '#fff' }}>
       <div style={{ maxWidth: 1360, margin: '0 auto', padding: '0 45px' }}>
         <h1 className="collection-hero-title">Welcome to nestcase, where modern style meets local excellence.</h1>
-        <h2 className="section-title" style={{ marginTop: '1px' }}>Our Collection</h2>
+        <h2 className="section-title">Our Collection</h2>
         <div className="collection-grid-2x2">
           {collectionImages.map((item, i) => (
             <Link key={i} href={item.href} className="collection-grid-item">

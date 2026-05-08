@@ -18,7 +18,7 @@
 .section-title {
   text-transform: uppercase;
   text-align: center;
-  margin: 0 0 32px;
+  padding-bottom: 20px;
 }
 
 /* ─── TRENDING CATEGORIES ─── */
@@ -129,7 +129,6 @@
 /* ─── COLLECTION HERO ─── */
 .collection-hero-title {
   text-align: center;
-  margin: 0 0 8px;
   text-transform: uppercase;
 }
 
@@ -137,7 +136,7 @@
 .collection-grid-2x2 {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  grid-template-rows: repeat(2, );
+  grid-template-rows: repeat(2, 543.23px);
   gap: 15px;
 }
 .collection-grid-item {
@@ -230,8 +229,7 @@
   .home-section-alt,
   .home-section-gray { padding: 36px 4%; }
   .section-title { margin-bottom: 22px; }
-  .collection-hero-title { font-size: 20px; }
-  .collection-grid-2x2 { grid-template-rows: repeat(2, 200px); gap: 10px; }
+  .collection-grid-2x2 { grid-template-rows: repeat(2, 150px); gap: 10px; }
   .cat-grid     { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .product-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .pop-cat-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
@@ -241,7 +239,7 @@
     grid-template-rows: 260px 200px 200px;
   }
   .gift-panel-tall { grid-row: span 1; }
-  .video-banner { height: 280px; }
+  .video-banner { height: 158px; }
   .video-banner-btn { padding: 10px 28px; font-size: 12px; }
   .ann-bar { font-size: 10px; letter-spacing: 0.5px; padding: 7px 12px; }
   .pop-cat-item { height: 200px; }
@@ -253,7 +251,7 @@
   .cat-grid     { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .product-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .blog-grid    { grid-template-columns: 1fr; }
-  .video-banner { height: 240px; }
+  .video-banner { height: 158px; }
   .gifting-collage { grid-template-rows: 220px 180px 180px; }
   .pop-cat-item { height: 160px; }
   .product-card-img-wrap { height: 160px; }

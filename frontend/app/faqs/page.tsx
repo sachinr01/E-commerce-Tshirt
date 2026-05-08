@@ -9,7 +9,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3001";
 export const metadata: Metadata = {
   title: `FAQs | ${SITE_NAME}`,
   description:
-    "Find answers to common questions about Nestcase orders, shipping, returns, payments, products, and support.",
+    "Find answers to the most common questions about orders, shipping, returns, and more.",
   alternates: { canonical: `${SITE_URL}/faqs` },
 };
 
@@ -20,17 +20,17 @@ const faqGroups = [
       {
         question: "How long does delivery take?",
         answer:
-          "Most orders are delivered within 5 to 7 business days after dispatch, depending on your location.",
+          "Orders are usually delivered within 2–7 business days depending on your location.",
       },
       {
         question: "Do you offer free shipping?",
         answer:
-          "Yes, free shipping is available on eligible orders and promotions shown at checkout.",
+          "Yes, we currently offer free shipping across India on prepaid orders.",
       },
       {
         question: "How can I track my order?",
         answer:
-          "Once your order ships, you will receive tracking details by email or SMS.",
+          "Once your order is shipped, tracking details will be shared via email or SMS.",
       },
     ],
   },
@@ -40,17 +40,17 @@ const faqGroups = [
       {
         question: "What if I receive a damaged product?",
         answer:
-          "Please contact us with your order details and product photos so our team can help with a replacement or resolution.",
+          "Please contact us within 24 hours of delivery with product and packaging images for assistance.",
       },
       {
         question: "Do you offer returns?",
         answer:
-          "Returns are accepted for eligible products according to our return policy.",
+          "Yes, eligible returns can be initiated within 7 days of delivery.",
       },
       {
         question: "How long do refunds take?",
         answer:
-          "Approved refunds are usually processed within 5 to 7 business days to the original payment method.",
+          "Eligible refunds are usually processed within 5–7 business days after approval.",
       },
     ],
   },
@@ -60,7 +60,7 @@ const faqGroups = [
       {
         question: "What payment methods do you accept?",
         answer:
-          "We accept major online payment methods, including cards, UPI, wallets, and net banking where available.",
+          "We accept UPI, credit cards, debit cards, net banking, and selected wallets.",
       },
     ],
   },
@@ -70,7 +70,7 @@ const faqGroups = [
       {
         question: "Are your products dishwasher safe?",
         answer:
-          "Product care varies by item. Please check the product page or packaging for exact care instructions.",
+          "Product care instructions may vary by item. Please refer to the product description for details.",
       },
     ],
   },
@@ -80,7 +80,12 @@ const faqGroups = [
       {
         question: "How can I contact nestcase?",
         answer:
-          "You can reach us at support@nestcase.in and our support team will help you.",
+          "You can reach us at: support@nestcase.in",
+      },
+      {
+        question: "Still have a question?",
+        answer:
+          "We’re here to help. Reach out to us at: support@nestcase.in",
       },
     ],
   },

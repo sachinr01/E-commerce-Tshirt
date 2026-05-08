@@ -132,7 +132,7 @@ export default function Footer() {
   }, []);
 
   const aboutHref   = resolvePageHref(pages, ['about us', 'our story', 'about']) || '/about-us';
-  const contactHref = resolvePageHref(pages, ['contact us', 'contact']);
+  const contactHref = resolvePageHref(pages, ['contact us', 'contact']) || '/contact-us';
   const returnsHref = resolvePageHref(pages, ['refund', 'return']);
   const privacyHref = resolvePageHref(pages, ['privacy']);
   const termsHref   = resolvePageHref(pages, ['terms', 'conditions']);
@@ -151,7 +151,7 @@ export default function Footer() {
               {b2bHref && <li><Link href={b2bHref} className="link-faded">B2B Connect</Link></li>}
               {aboutHref && <li><Link href={aboutHref} className="link-faded">About Us</Link></li>}
               {contactHref && <li><Link href={contactHref} className="link-faded">Contact Us</Link></li>}
-              <li><a href="/store/orders" className="link-faded">Track Order</a></li>
+              <li><Link href="/orders" className="link-faded">Track Order</Link></li>
               <li><Link href="/careers" className="link-faded">Careers</Link></li>
             </ul>
           </div>

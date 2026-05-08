@@ -198,7 +198,7 @@ input[type="tel"] {
   width: 100%;
   margin: 0;
   padding: 16px;
-  background-color: transparent;
+  /* background-color: transparent; */
   border: 1px solid #d0cdbc;
   outline: none;
   color: #727272;
