@@ -21,7 +21,7 @@
 .b2b-page h3 {
   font-family: Georgia, "Times New Roman", serif !important;
   color: var(--b2b-ink);
-  letter-spacing: 0;
+  letter-spacing: -0.01em;
   font-weight: 400;
 }
 
@@ -35,7 +35,7 @@
 }
 
 .b2b-hero {
-  min-height: 575px;
+  min-height: 520px;
   display: grid;
   grid-template-columns: minmax(320px, 44%) minmax(0, 56%);
   align-items: stretch;
@@ -47,8 +47,8 @@
 .b2b-hero-copy {
   position: relative;
   z-index: 2;
-  padding: clamp(56px, 7vw, 108px) 7vw 64px;
-  max-width: 620px;
+  padding: clamp(44px, 6vw, 92px) 6vw 56px;
+  max-width: 560px;
 }
 
 .b2b-eyebrow {
@@ -62,16 +62,16 @@
 
 .b2b-hero h1 {
   margin: 0;
-  max-width: 560px;
-  font-size: clamp(45px, 5.2vw, 72px);
-  line-height: 1.15;
+  max-width: 520px;
+  font-size: clamp(36px, 4.2vw, 58px);
+  line-height: 1.08;
 }
 
 .b2b-hero-text {
-  max-width: 410px;
-  margin: 30px 0 28px;
+  max-width: 440px;
+  margin: 24px 0 26px;
   color: #1e211b;
-  font-size: 19px;
+  font-size: 17px;
   line-height: 1.8;
 }
 
@@ -96,7 +96,7 @@
 
 .b2b-hero-art {
   position: relative;
-  min-height: 575px;
+  min-height: 520px;
   overflow: hidden;
 }
 
@@ -113,7 +113,7 @@
 .b2b-hero-art img {
   width: 100%;
   height: 100%;
-  min-height: 575px;
+  min-height: 520px;
   object-fit: cover;
   object-position: 66% center;
   display: block;
@@ -122,7 +122,7 @@
 }
 
 .b2b-section {
-  padding: 52px clamp(24px, 5.5vw, 72px) 38px;
+  padding: 44px clamp(20px, 4.8vw, 60px) 32px;
 }
 
 .b2b-section-heading {
@@ -137,8 +137,8 @@
 .b2b-section h2,
 .b2b-contact h2 {
   margin: 0;
-  font-size: clamp(34px, 3.2vw, 46px);
-  line-height: 1.2;
+  font-size: clamp(30px, 2.8vw, 40px);
+  line-height: 1.15;
 }
 
 .b2b-section-heading::after {
@@ -151,11 +151,11 @@
 }
 
 .b2b-category-grid {
-  max-width: 1150px;
+  max-width: 1180px;
   margin: 0 auto;
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: clamp(18px, 2.5vw, 30px);
+  gap: clamp(16px, 2vw, 24px);
 }
 
 .b2b-category-card {
@@ -230,7 +230,7 @@
 }
 
 .b2b-benefit-grid {
-  max-width: 1080px;
+  max-width: 1180px;
   margin: 0 auto;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -238,7 +238,7 @@
 
 .b2b-benefit {
   min-width: 0;
-  padding: 12px 28px 10px;
+  padding: 12px 22px 10px;
   text-align: center;
   border-right: 1px solid var(--b2b-line);
 }
@@ -266,7 +266,7 @@
 .b2b-benefit h3 {
   margin: 0 0 12px;
   font-family: Lato, Arial, sans-serif !important;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
   line-height: 1.3;
 }
@@ -275,7 +275,7 @@
   max-width: 190px;
   margin: 0 auto;
   color: #35342f;
-  font-size: 13px;
+  font-size: 12.5px;
   line-height: 1.8;
 }
 
@@ -285,7 +285,7 @@
   grid-template-columns: minmax(260px, 34%) minmax(0, 1fr);
   gap: clamp(28px, 6vw, 90px);
   align-items: center;
-  padding: 46px clamp(24px, 8vw, 112px) 58px;
+  padding: 42px clamp(20px, 7vw, 96px) 52px;
   background: #f1eee8;
 }
 
@@ -313,9 +313,9 @@
 }
 
 .b2b-contact-copy p {
-  margin: 28px 0 0;
+  margin: 22px 0 0;
   color: #272822;
-  font-size: 17px;
+  font-size: 16px;
   line-height: 1.8;
 }
 
@@ -395,16 +395,16 @@
   }
 
   .b2b-hero-copy {
-    padding: 48px 24px 38px;
+    padding: 42px 22px 34px;
   }
 
   .b2b-hero-art,
   .b2b-hero-art img {
-    min-height: 320px;
+    min-height: 300px;
   }
 
   .b2b-section {
-    padding: 42px 18px 32px;
+    padding: 38px 18px 28px;
   }
 
   .b2b-category-grid,
@@ -436,17 +436,17 @@
   }
 
   .b2b-contact {
-    padding: 44px 22px 52px;
+    padding: 40px 20px 48px;
   }
 }
 
 @media (max-width: 520px) {
   .b2b-hero h1 {
-    font-size: 40px;
+    font-size: 34px;
   }
 
   .b2b-hero-text {
-    font-size: 16px;
+    font-size: 15px;
   }
 
   .b2b-category-grid {

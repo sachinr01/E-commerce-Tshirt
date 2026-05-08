@@ -1,32 +1,32 @@
 .static-page {
-  background: #f7f5f2;
+  background: #fbfaf7;
   min-height: 70vh;
 }
 
 .static-body {
-  width: min(100%, 1360px);
-  max-width: 1360px;
+  width: min(100%, 1180px);
+  max-width: 1180px;
   margin: 0 auto;
-  padding: 44px 32px 84px;
+  padding: 36px 24px 72px;
   box-sizing: border-box;
   display: block;
 }
 
 .static-body--wide {
-  max-width: 1360px;
+  max-width: 1180px;
 }
 
 .static-title {
-  margin: 0 auto 18px;
-  max-width: 980px;
+  margin: 0 auto 14px;
+  max-width: 900px;
   text-align: center;
   text-transform: none;
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: clamp(44px, 5.3vw, 74px);
-  line-height: 1.02;
-  font-weight: 400;
-  letter-spacing: -0.03em;
-  color: #111;
+  font-family: Lato, Helvetica, Arial, sans-serif !important;
+  font-size: 30px;
+  line-height: 40px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #22311d;
 }
 
 .static-date {
@@ -38,7 +38,7 @@
 .static-breadcrumb {
   font-size: 12px;
   color: #888;
-  margin: 0 0 18px;
+  margin: 0 0 16px;
   width: auto;
   display: flex;
   gap: 6px;
@@ -56,88 +56,88 @@
 }
 
 .static-summary {
-  max-width: 980px;
-  margin: 18px 0 34px;
+  max-width: 700px;
+  margin: 16px auto 30px;
   padding: 0;
-  font-size: 18px;
-  color: #2f2f2f;
+  font-size: 15px;
+  color: #333;
   line-height: 1.7;
-  text-align: left;
+  text-align: center;
 }
 
 .static-content {
-  max-width: 1180px;
+  max-width: 100%;
   margin: 0;
+  font-family: Lato, Helvetica, Arial, sans-serif !important;
+  color: #222;
 }
 
 .static-content p {
-  font-size: 16px;
-  line-height: 1.9;
-  color: #2f2f2f;
+  font-size: 15px;
+  line-height: 1.8;
+  color: #333;
   margin: 0 0 16px;
-}
-
-.H1, H2, H3, H4, H5, H6{
-  color: #22311d;
-  font-weight: 700;
-  letter-spacing: 1px;
+  font-family: Lato, Helvetica, Arial, sans-serif !important;
 }
 
 .static-content h1 {
-  font-size: 32px;
-  line-height: 1.25;
-  margin: 30px 0 14px;
-  font-family: Georgia, 'Times New Roman', serif;
-  font-weight: 400;
-  letter-spacing: -0.02em;
-  color: #111;
+  font-size: 30px;
+  line-height: 40px;
+  margin: 24px 0 12px;
+  font-family: Lato, Helvetica, Arial, sans-serif !important;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #22311d;
 }
 
 .static-content h2 {
   font-size: 26px;
-  line-height: 1.3;
-  margin: 26px 0 10px;
-  font-family: Georgia, 'Times New Roman', serif;
-  font-weight: 400;
-  letter-spacing: -0.015em;
-  color: #111;
+  line-height: 34px;
+  margin: 22px 0 10px;
+  font-family: Lato, Helvetica, Arial, sans-serif !important;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #22311d;
 }
 
 .static-content h3 {
   font-size: 22px;
-  line-height: 1.3;
-  margin: 22px 0 8px;
-  font-family: Georgia, 'Times New Roman', serif;
-  font-weight: 400;
-  letter-spacing: -0.01em;
-  color: #111;
+  line-height: 30px;
+  margin: 18px 0 8px;
+  font-family: Lato, Helvetica, Arial, sans-serif !important;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #22311d;
 }
 
 .static-content h4 {
   font-size: 19px;
-  line-height: 1.3;
-  margin: 18px 0 6px;
-  font-family: Georgia, 'Times New Roman', serif;
-  font-weight: 400;
-  color: #111;
+  line-height: 26px;
+  margin: 16px 0 6px;
+  font-family: Lato, Helvetica, Arial, sans-serif !important;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #22311d;
 }
 
 .static-content h5 {
   font-size: 17px;
-  line-height: 1.35;
+  line-height: 22px;
   margin: 14px 0 6px;
-  font-family: Georgia, 'Times New Roman', serif;
-  font-weight: 400;
-  color: #111;
+  font-family: Lato, Helvetica, Arial, sans-serif !important;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #22311d;
 }
 
 .static-content h6 {
   font-size: 15px;
-  line-height: 1.35;
+  line-height: 18px;
   margin: 12px 0 6px;
-  font-family: Georgia, 'Times New Roman', serif;
-  font-weight: 400;
-  color: #111;
+  font-family: Lato, Helvetica, Arial, sans-serif !important;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #22311d;
 }
 
 /* Remove top margin when heading is the first element */
@@ -151,33 +151,52 @@
 }
 
 .static-content ul {
-  padding-left: 22px;
+  padding-left: 20px;
   margin: 0 0 18px;
-  color: #2f2f2f;
+  color: #333;
 }
 
 .static-content li {
   margin-bottom: 8px;
-  font-size: 16px;
-  line-height: 1.7;
+  font-size: 15px;
+  line-height: 1.8;
 }
 
 .static-content table {
   width: 100%;
-  border-collapse: collapse;
-  margin: 12px 0 18px;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin: 0 0 18px;
   font-size: 14px;
+  border: 0 !important;
+  background: transparent !important;
 }
 
 .static-content th,
 .static-content td {
-  border: 1px solid #e6dfd6;
-  padding: 8px 10px;
+  border: 0 !important;
+  border-top: 0 !important;
+  border-right: 0 !important;
+  border-bottom: 0 !important;
+  border-left: 0 !important;
+  border-color: transparent !important;
+  background: transparent !important;
+  padding: 0;
   text-align: left;
+  vertical-align: top;
+}
+
+.static-content table,
+.static-content thead,
+.static-content tbody,
+.static-content tr,
+.static-content th,
+.static-content td {
+  box-shadow: none !important;
 }
 
 .static-content th {
-  background: #f2ece4;
+  background: transparent;
   font-weight: 700;
 }
 
@@ -303,16 +322,17 @@
   }
 
   .static-title {
-    font-size: 24px;
+    font-size: 30px;
+    line-height: 40px;
   }
 }
 
 .static-page-image {
   width: 100%;
-  max-width: 1180px;
+  max-width: 100%;
   max-height: 520px;
   overflow: hidden;
-  border-radius: 12px;
+  border-radius: 10px;
   margin: 8px 0 28px;
 }
 
@@ -322,7 +342,7 @@
   object-fit: cover;
   object-position: center;
   display: block;
-  border-radius: 12px;
+  border-radius: 10px;
 }
 
 .static-content img {
