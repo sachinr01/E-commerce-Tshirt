@@ -13,7 +13,6 @@ import { htmlToText, sanitizeHtml } from '../lib/helpers/html';
 import { useCart } from '../lib/cartContext';
 import { useWishlist } from '../lib/wishlistContext';
 import { usePlaceholderImage } from '../lib/siteSettingsContext';
-import './product-details.css';
 
 type SwatchStyle = { style: { background?: string }; isLight: boolean };
 

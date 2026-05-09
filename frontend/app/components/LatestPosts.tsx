@@ -5,7 +5,6 @@ import Image from 'next/image';
 import type { Blog } from '../blog/types';
 import { BLOG_HOME_LIMIT } from '../blog/utils/config';
 import { getBlogDetailHref } from '../blog/utils/links';
-import "./LatestPosts.css";
 
 export default function LatestPosts({ posts }: { posts: Blog[] }) {
   const visiblePosts = posts.slice(0, BLOG_HOME_LIMIT);

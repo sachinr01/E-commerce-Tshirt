@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useCart } from "../lib/cartContext";
-import "./MobileNavbar.css";
 
 const ChevronDown = ({ open }: { open: boolean }) => (
   <svg

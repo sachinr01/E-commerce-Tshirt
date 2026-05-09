@@ -10,7 +10,6 @@ import { useAuth } from "../lib/authContext";
 import { formatPrice } from "../lib/price";
 import { usePlaceholderImage } from "../lib/siteSettingsContext";
 import { getImageUrl } from "../lib/api";
-import "./Header.css";
 
 const CATEGORY_PAGE_SLUGS: Record<string, string> = {
   'drinkware': '/shop/drinkware',

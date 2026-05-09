@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import "./careers.css";
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? "NESTCASE";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3001";
@@ -55,20 +54,10 @@ export default function CareersPage() {
             </div>
             <div className="careers-socials">
               <a href="#" target="_blank" rel="noreferrer" aria-label="Instagram">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <rect x="5" y="5" width="14" height="14" rx="4" />
-                  <circle cx="12" cy="12" r="3.2" />
-                  <path d="M16.4 7.7h.01" />
-                </svg>
+                <i className="fa fa-instagram" aria-hidden="true" />
               </a>
               <a href="#" target="_blank" rel="noreferrer" aria-label="LinkedIn">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <rect x="4.8" y="4.8" width="14.4" height="14.4" rx="1.8" />
-                  <path d="M8.4 10.2v6.1" />
-                  <path d="M8.4 7.8h.01" />
-                  <path d="M11.4 16.3v-6.1" />
-                  <path d="M11.4 12.9c0-1.7 1-2.8 2.6-2.8 1.7 0 2.7 1.1 2.7 3v3.2" />
-                </svg>
+                <i className="fa fa-linkedin" aria-hidden="true" />
               </a>
             </div>
           </div>

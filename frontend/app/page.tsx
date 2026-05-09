@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import './home.css';
 import Header from './components/Header';
 import Slider from './components/Slider';
 import NewlyLaunched, { BestSellers } from './components/NewArrivals';

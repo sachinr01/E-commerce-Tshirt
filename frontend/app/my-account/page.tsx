@@ -7,7 +7,6 @@ import Footer from '../components/Footer';
 import { authLogin, authRegister } from '../lib/api';
 import { useCart } from '../lib/cartContext';
 import { useAuth } from '../lib/authContext';
-import './my-account.css';
 
 export default function MyAccountPage() {
   const { user, isLoggedIn, isLoading, setUser, logout } = useAuth();
@@ -216,4 +215,3 @@ export default function MyAccountPage() {
     </>
   );
 }
-

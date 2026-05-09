@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import "./faqs.css";
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? "NESTCASE";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3001";
@@ -115,9 +114,11 @@ export default function FAQsPage() {
                 {group.items.map((item) => (
                   <details className="faqs-item" key={item.question}>
                     <summary>
-                      <span className="faqs-question-icon">?</span>
+                      <span className="faqs-question-icon">
+                        <i className="fa fa-question" aria-hidden="true" />
+                      </span>
                       <span className="faqs-question">{item.question}</span>
-                      <span className="faqs-chevron" aria-hidden="true" />
+                      <i className="fa fa-chevron-down faqs-chevron" aria-hidden="true" />
                     </summary>
                     <p>{item.answer}</p>
                   </details>
@@ -129,10 +130,7 @@ export default function FAQsPage() {
 
         <section className="faqs-contact" aria-label="Still have a question">
           <div className="faqs-mail-icon" aria-hidden="true">
-            <svg viewBox="0 0 28 28">
-              <path d="M4 7h20v14H4V7z" />
-              <path d="M4 8l10 8 10-8" />
-            </svg>
+            <i className="fa fa-envelope" aria-hidden="true" />
           </div>
           <div>
             <h2>Still have a question?</h2>

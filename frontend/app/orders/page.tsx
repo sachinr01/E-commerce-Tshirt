@@ -7,7 +7,6 @@ import Footer from '../components/Footer';
 import { getMyOrders, type OrderSummary } from '../lib/api';
 import { useAuth } from '../lib/authContext';
 import { formatPrice } from '../lib/price';
-import './orders.css';
 
 type OrderCard = {
   id: number;

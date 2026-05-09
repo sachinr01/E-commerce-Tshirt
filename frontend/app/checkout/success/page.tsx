@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
-import '../checkout.css';
 
 function OrderSuccessContent() {
   const searchParams = useSearchParams();

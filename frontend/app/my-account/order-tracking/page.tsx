@@ -6,7 +6,6 @@ import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import { getMyOrderById } from '../../lib/api';
 import { useAuth } from '../../lib/authContext';
-import './order-tracking.css';
 
 function formatDate(value: string) {
   const d = new Date(value);

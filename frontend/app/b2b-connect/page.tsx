@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import "./b2b-connect.css";
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? "NESTCASE";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3001";
@@ -41,44 +40,22 @@ const benefits = [
   {
     title: "Premium Quality",
     copy: "Finest materials and craftsmanship for lasting impressions.",
-    icon: (
-      <svg viewBox="0 0 48 48" aria-hidden="true">
-        <path d="M24 4l5.2 5.8 7.8.2 1.6 7.6 5 6-4 6.8.8 7.8-7.4 2.8-4.8 6.2L24 43.8l-4.2 3.4-4.8-6.2-7.4-2.8.8-7.8-4-6.8 5-6L11 10l7.8-.2L24 4z" />
-        <path d="M24 15l2.7 5.5 6.1.9-4.4 4.3 1 6-5.4-2.8-5.4 2.8 1-6-4.4-4.3 6.1-.9L24 15z" />
-      </svg>
-    ),
+    iconClass: "fa-certificate",
   },
   {
     title: "Bulk Order Support",
     copy: "Flexible solutions for businesses of all sizes.",
-    icon: (
-      <svg viewBox="0 0 48 48" aria-hidden="true">
-        <path d="M24 5l11 6v12l-11 6-11-6V11l11-6z" />
-        <path d="M13 23L4 28v11l10 5 10-5V28l-11-5zM35 23l9 5v11l-10 5-10-5V28l11-5zM13 11l11 6 11-6M24 17v12M4 28l10 5 10-5M14 33v11M24 28l10 5 10-5M34 33v11" />
-      </svg>
-    ),
+    iconClass: "fa-cubes",
   },
   {
     title: "Custom Branding",
     copy: "Personalized options to reflect your brand identity.",
-    icon: (
-      <svg viewBox="0 0 48 48" aria-hidden="true">
-        <path d="M5 28L25 8h14v14L19 42 5 28z" />
-        <circle cx="34" cy="14" r="2.5" />
-        <path d="M14 29l7 7" />
-      </svg>
-    ),
+    iconClass: "fa-tag",
   },
   {
     title: "Reliable Delivery",
     copy: "Timely and secure delivery, every time.",
-    icon: (
-      <svg viewBox="0 0 48 48" aria-hidden="true">
-        <path d="M4 13h25v23H4V13zM29 22h8l7 8v6H29V22z" />
-        <circle cx="14" cy="39" r="4" />
-        <circle cx="36" cy="39" r="4" />
-      </svg>
-    ),
+    iconClass: "fa-truck",
   },
 ];
 
@@ -145,7 +122,9 @@ export default function B2BConnectPage() {
           <div className="b2b-benefit-grid">
             {benefits.map((benefit) => (
               <article className="b2b-benefit" key={benefit.title}>
-                <div className="b2b-benefit-icon">{benefit.icon}</div>
+                <div className="b2b-benefit-icon">
+                  <i className={`fa ${benefit.iconClass}`} aria-hidden="true" />
+                </div>
                 <h3>{benefit.title}</h3>
                 <p>{benefit.copy}</p>
               </article>

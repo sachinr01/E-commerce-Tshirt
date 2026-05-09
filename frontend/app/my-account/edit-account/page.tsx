@@ -6,7 +6,6 @@ import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import { updateProfile } from '../../lib/api';
 import { useAuth } from '../../lib/authContext';
-import './edit-account.css';
 
 export default function EditAccountPage() {
   const { user, isLoggedIn, isLoading, setUser, logout } = useAuth();

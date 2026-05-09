@@ -23,7 +23,6 @@ import { useAuth } from '../lib/authContext';
 import { formatPrice } from '../lib/price';
 import { usePlaceholderImage } from '../lib/siteSettingsContext';
 import Script from 'next/script';
-import './checkout.css';
 declare global {
   interface Window {
     Razorpay: RazorpayConstructor;

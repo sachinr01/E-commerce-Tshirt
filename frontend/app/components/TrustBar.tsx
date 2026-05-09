@@ -1,5 +1,3 @@
-import "./TrustBar.css";
-
 export default function TrustBar() {
   const features = [
     {

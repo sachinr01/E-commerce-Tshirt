@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import TrustBar from "./TrustBar";
-import "./Footer.css";
 
 type FooterPage = {
   slug: string;

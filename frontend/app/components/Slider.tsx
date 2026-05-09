@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import "./Slider.css";
 
 export default function Slider() {
   const [currentSlide, setCurrentSlide] = useState(0);

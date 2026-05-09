@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import "./GiftingWorld.css";
 
 const panels = [
   {

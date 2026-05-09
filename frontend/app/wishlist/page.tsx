@@ -10,8 +10,6 @@ import { getProductById } from '../lib/api';
 import type { ProductDetail } from '../lib/api';
 import { formatPrice } from '../lib/price';
 import { usePlaceholderImage } from '../lib/siteSettingsContext';
-import '../shop/shop.css';
-import './wishlist.css';
 
 export default function WishlistPage() {
   const { items, removeItem } = useWishlist();

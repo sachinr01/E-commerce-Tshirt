@@ -7,7 +7,6 @@ import { formatPrice, formatPriceRange } from '../lib/price';
 import { getDiscountPercent } from '../lib/helpers/pricing';
 import { useWishlist } from '../lib/wishlistContext';
 import { usePlaceholderImage } from '../lib/siteSettingsContext';
-import './NewArrivals.css';
 
 const toSlug = (s: string) =>
   s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');

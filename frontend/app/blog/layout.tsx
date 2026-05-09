@@ -3,7 +3,6 @@
 
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
-import './blog.css';
 
 export const metadata: Metadata = {
   // metadataBase is required so that relative canonical/og:url values resolve correctly.

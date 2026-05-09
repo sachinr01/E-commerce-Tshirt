@@ -6,7 +6,6 @@ import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import { getProfileAddresses, type ProfileAddressForm } from '../../lib/api';
 import { useAuth } from '../../lib/authContext';
-import './edit-address.css';
 
 type AddressBlock = {
   name: string;

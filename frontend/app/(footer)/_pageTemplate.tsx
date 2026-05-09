@@ -4,7 +4,6 @@ import { notFound } from 'next/navigation';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import PdfDownloadButton from './PdfDownloadButton';
-import './footepages.css';
 
 type StaticPage = {
   slug: string;

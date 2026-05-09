@@ -10,7 +10,6 @@ import { formatPrice, formatPriceRange, CURRENCY } from '../../lib/price';
 import { getDiscountPercent } from '../../lib/helpers/pricing';
 import { useWishlist } from '../../lib/wishlistContext';
 import { usePlaceholderImage } from '../../lib/siteSettingsContext';
-import '../shop.css';
 
 const toSlug = (s: string) => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 const normalizeList = (v: string | null | undefined) =>

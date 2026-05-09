@@ -8,7 +8,6 @@ import { useCart } from '../lib/cartContext';
 import { formatPrice } from '../lib/price';
 import { applyCoupon, removeCoupon, getImageUrl, type AppliedCoupon } from '../lib/api';
 import { usePlaceholderImage } from '../lib/siteSettingsContext';
-import './cart.css';
 
 export default function CartPage() {
   const PLACEHOLDER = usePlaceholderImage();

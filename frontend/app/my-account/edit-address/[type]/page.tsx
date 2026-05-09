@@ -7,7 +7,6 @@ import Header from '../../../components/Header';
 import Footer from '../../../components/Footer';
 import { getProfileAddresses, updateProfileAddress, type ProfileAddressForm } from '../../../lib/api';
 import { useAuth } from '../../../lib/authContext';
-import './type-details.css';
 
 const EMPTY_FORM: ProfileAddressForm = {
   firstName: '',
