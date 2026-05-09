@@ -489,8 +489,8 @@ input[type="tel"] {
 
 /* â”€â”€â”€ GLOBAL FONT TOKENS â”€â”€â”€ */
 :root {
-  --font-body: 'Lato';
-  --font-head: 'Lato';
+  --font-body: Lato, Helvetica, Arial, sans-serif !important;
+  --font-head: Lato, Helvetica, Arial, sans-serif !important;
 }
 
 img, video {
@@ -500,7 +500,7 @@ img, video {
 
 /* Single source of truth for fonts â€” overrides everything */
 *, *::before, *::after {
-  font-family: 'Lato';
+  font-family: Lato, Helvetica, Arial, sans-serif !important;
 }
 
 /* Heading styles */
@@ -515,6 +515,8 @@ h3 { font-size: 22px; line-height: 30px; }
 h4 { font-size: 19px; line-height: 26px; }
 h5 { font-size: 17px; line-height: 22px; }
 h6 { font-size: 15px; line-height: 18px; }
+
+p { font-size: 15px; line-height: 1.7; color: #343434; }
 
 /* Ensure full viewport height for slider */
 html, body {
@@ -1415,11 +1417,6 @@ H1, H2, H3, H4, H5, H6{
 }
 
 /* ===== frontend/app/components/NewArrivals.css ===== */
-.H1, H2, H3, H4, H5, H6{ 
-  color: #22311d;
-  font-weight: 700;
-  letter-spacing: 1px;
-}
 
 .na-outer { max-width: 1360px; margin: 0 auto; padding: 60px 45px; }
 .na-section { margin-bottom: 56px; }
@@ -6855,14 +6852,6 @@ H1, H2, H3, H4, H5, H6{
   background: #c6a77d;
 }
 
-.contact-hero p {
-  margin: 0;
-  font-family: Lato, Arial, sans-serif !important;
-  font-size: 15px;
-  line-height: 1;
-  font-weight: 500;
-}
-
 .contact-layout {
   width: min(871px, calc(100% - 48px));
   margin: 0 auto;
@@ -6887,15 +6876,6 @@ H1, H2, H3, H4, H5, H6{
 .contact-divider {
   padding-top: 25px;
   border-top: 1px solid #e5e2de;
-}
-
-.contact-block h2,
-.contact-form-section h2 {
-  margin: 0;
-  font-family: Lato, Arial, sans-serif !important;
-  font-weight: 900;
-  line-height: 1;
-  text-transform: uppercase;
 }
 
 .contact-rule {
@@ -6940,20 +6920,6 @@ H1, H2, H3, H4, H5, H6{
 
 .contact-row h3 {
   margin: 0 0 6px;
-  font-family: Lato, Arial, sans-serif !important;
-  font-weight: 900;
-  line-height: 1;
-}
-
-.contact-row p,
-.contact-row a,
-.contact-copy,
-.contact-email,
-.contact-form-section p {
-  font-family: Lato, Arial, sans-serif !important;
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1;
 }
 
 .contact-row p {
@@ -6974,8 +6940,6 @@ H1, H2, H3, H4, H5, H6{
 
 .contact-form-section p {
   margin: -5px 0 37px;
-  font-size: 15px;
-  line-height: 1;
 }
 
 .contact-form {
@@ -7078,10 +7042,6 @@ H1, H2, H3, H4, H5, H6{
     font-size: 47px;
   }
 
-  .contact-hero p {
-    font-size: 15px;
-  }
-
   .contact-layout {
     width: calc(100% - 30px);
   }
@@ -7115,13 +7075,6 @@ H1, H2, H3, H4, H5, H6{
   box-sizing: border-box;
 }
 
-.faqs-shell a,
-.faqs-shell p,
-.faqs-shell span,
-.faqs-shell summary {
-  font-family: Lato, Arial, sans-serif !important;
-}
-
 .faqs-main {
   padding: 0 0 62px;
 }
@@ -7129,13 +7082,6 @@ H1, H2, H3, H4, H5, H6{
 .faqs-hero {
   text-align: center;
   padding: 90px 24px 58px;
-}
-
-.faqs-hero h1 {
-  margin: 0;
-  font-size: clamp(34px, 4vw, 54px);
-  font-weight: 400;
-  line-height: 1.08;
 }
 
 .faqs-title-rule {
@@ -7147,14 +7093,12 @@ H1, H2, H3, H4, H5, H6{
 }
 
 .faqs-hero p {
-  margin: 0;
-  color: #232421;
-  font-size: 17px;
+  font-size: 15px;
   line-height: 1.7;
 }
 
 .faqs-list {
-  width: min(1120px, calc(100% - 48px));
+  max-width: 700px;
   margin: 0 auto;
 }
 
@@ -7164,10 +7108,6 @@ H1, H2, H3, H4, H5, H6{
 
 .faqs-group h2 {
   margin: 0 0 10px;
-  font-family: Lato !important;
-  font-weight: 900;
-  line-height: 1;
-  text-transform: uppercase;
 }
 
 .faqs-group-rule {
@@ -7193,7 +7133,6 @@ H1, H2, H3, H4, H5, H6{
   align-items: center;
   gap: 18px;
   padding: 0 10px 0 0;
-  color: #10110f;
   cursor: pointer;
   list-style: none;
 }
@@ -7222,7 +7161,7 @@ H1, H2, H3, H4, H5, H6{
 
 .faqs-question {
   font-size: 15px;
-  line-height: 1.3;
+  line-height: 1.7;
 }
 
 .faqs-chevron {
@@ -7245,17 +7184,17 @@ H1, H2, H3, H4, H5, H6{
 .faqs-item p {
   margin: 0;
   padding: 0 34px 18px 46px;
-  color: #4b4b47;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.7;
 }
 
 .faqs-contact {
-  width: min(760px, calc(100% - 48px));
-  margin: 44px auto 0;
-  display: grid;
-  grid-template-columns: 60px 1fr;
+  width: 100%;
+  margin: 44px 0 0;
+  display: flex;
+  flex-direction: row;
   align-items: center;
+  justify-content: center;
   gap: 24px;
 }
 
@@ -7282,8 +7221,6 @@ H1, H2, H3, H4, H5, H6{
 
 .faqs-contact h2 {
   margin: 0 0 6px;
-  font-family: Lato, Arial, sans-serif !important;
-  font-weight: 900;
 }
 
 .faqs-contact p {
@@ -7302,22 +7239,9 @@ H1, H2, H3, H4, H5, H6{
   .faqs-hero {
     padding-top: 66px;
   }
-
-  .faqs-hero h1 {
-    font-size: 38px;
-  }
-
 }
 
 @media (max-width: 560px) {
-  .faqs-hero h1 {
-    font-size: 32px;
-  }
-
-  .faqs-hero p {
-    font-size: 15px;
-  }
-
   .faqs-item summary {
     grid-template-columns: 22px 1fr 18px;
     gap: 12px;
@@ -7364,13 +7288,6 @@ H1, H2, H3, H4, H5, H6{
   text-align: center;
 }
 
-.careers-hero h1 {
-  margin: 0;
-  font-size: 69px;
-  font-weight: 400;
-  line-height: 1;
-}
-
 .careers-title-rule {
   display: block;
   width: 56px;
@@ -7382,23 +7299,15 @@ H1, H2, H3, H4, H5, H6{
 .careers-copy,
 .careers-email-block {
   font-family: Lato, Arial, sans-serif !important;
-  color: #070707;
-  font-size: 17px;
+  color: #343434;
+  font-size: 15px;
   font-weight: 500;
-  line-height: 1.45;
-}
-
-.careers-copy {
-  margin: 0 0 49px;
+  line-height: 1.7;
 }
 
 .careers-copy p,
 .careers-email-block p {
   margin: 0;
-}
-
-.careers-copy p + p {
-  margin-top: 12px;
 }
 
 .careers-copy a,
@@ -7411,11 +7320,6 @@ H1, H2, H3, H4, H5, H6{
 
 .careers-email-block {
   margin: 0 0 57px;
-}
-
-.careers-email-block a {
-  display: inline-block;
-  margin-top: 14px;
 }
 
 .careers-button {
@@ -7454,17 +7358,6 @@ H1, H2, H3, H4, H5, H6{
   background: #111;
 }
 
-.careers-connect-title p {
-  margin: 0;
-  font-family: Lato, Arial, sans-serif !important;
-  color: #050505;
-  font-size: 14px;
-  font-weight: 900;
-  line-height: 1;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-}
-
 .careers-socials {
   display: flex;
   justify-content: center;
@@ -7497,20 +7390,12 @@ H1, H2, H3, H4, H5, H6{
     min-height: 760px;
     padding-top: 150px;
   }
-
-  .careers-hero h1 {
-    font-size: 58px;
-  }
 }
 
 @media (max-width: 560px) {
   .careers-main {
     min-height: 680px;
     padding: 92px 18px 70px;
-  }
-
-  .careers-hero h1 {
-    font-size: 46px;
   }
 
   .careers-title-rule {
@@ -7530,9 +7415,6 @@ H1, H2, H3, H4, H5, H6{
     gap: 16px;
   }
 
-  .careers-connect-title p {
-    font-size: 12px;
-  }
 }
 
 /* ===== frontend/app/b2b-connect/b2b-connect.css ===== */
@@ -7554,22 +7436,13 @@ H1, H2, H3, H4, H5, H6{
   box-sizing: border-box;
 }
 
-.b2b-page h1,
-.b2b-page h2,
-.b2b-page h3 {
-  font-family: Georgia, "Times New Roman", serif !important;
-  color: var(--b2b-ink);
-  letter-spacing: -0.01em;
-  font-weight: 400;
-}
-
 .b2b-page p,
 .b2b-page a,
 .b2b-page input,
 .b2b-page textarea,
 .b2b-page button,
 .b2b-page span {
-  font-family: Lato, Arial, sans-serif !important;
+  font-family: Lato, Helvetica, Arial, sans-serif !important;
 }
 
 .b2b-hero {
@@ -7590,19 +7463,8 @@ H1, H2, H3, H4, H5, H6{
 }
 
 .b2b-eyebrow {
-  margin: 0 0 20px;
-  color: #6d665d;
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 700;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-}
-
-.b2b-hero h1 {
-  margin: 0;
-  max-width: 520px;
-  font-size: clamp(36px, 4.2vw, 58px);
-  line-height: 1.08;
 }
 
 .b2b-hero-text {
@@ -7666,13 +7528,6 @@ H1, H2, H3, H4, H5, H6{
   margin-bottom: 10px;
 }
 
-.b2b-section h2,
-.b2b-contact h2 {
-  margin: 0;
-  font-size: clamp(30px, 2.8vw, 40px);
-  line-height: 1.15;
-}
-
 .b2b-section-heading::after {
   content: "";
   display: block;
@@ -7727,7 +7582,7 @@ H1, H2, H3, H4, H5, H6{
   gap: 12px;
   padding: 0 16px;
   color: var(--b2b-ink);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 800;
 }
 
@@ -7746,14 +7601,6 @@ H1, H2, H3, H4, H5, H6{
   width: 100%;
   height: 1px;
   background: #c9c1b4;
-}
-
-.b2b-quote-band p {
-  margin: 0;
-  font-family: Georgia, "Times New Roman", serif !important;
-  font-size: clamp(22px, 2.3vw, 30px);
-  line-height: 1.4;
-  color: #25231f;
 }
 
 .b2b-benefits {
@@ -7811,11 +7658,9 @@ H1, H2, H3, H4, H5, H6{
 }
 
 .b2b-benefit p {
-  max-width: 190px;
   margin: 0 auto;
-  color: #35342f;
-  font-size: 12.5px;
-  line-height: 1.8;
+  font-size: 15px;
+  line-height: 1.7;
 }
 
 .b2b-contact {
@@ -7849,13 +7694,6 @@ H1, H2, H3, H4, H5, H6{
   position: relative;
   z-index: 1;
   max-width: 360px;
-}
-
-.b2b-contact-copy p {
-  margin: 22px 0 0;
-  color: #272822;
-  font-size: 16px;
-  line-height: 1.8;
 }
 
 .b2b-form {

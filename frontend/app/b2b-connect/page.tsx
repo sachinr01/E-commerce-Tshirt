@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Header from "../components/Header";
+import Slider from "../components/Slider";
 import Footer from "../components/Footer";
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? "NESTCASE";
@@ -64,29 +65,7 @@ export default function B2BConnectPage() {
     <>
       <Header />
       <main className="b2b-page">
-        <div className="b2b-hero-art">
-          <img src="/store/images/b2b_images/b2b-new-banner.jpeg" alt="new-banner" />
-        </div>
-        
-        {/* <section className="b2b-hero" aria-labelledby="b2b-hero-title">
-          <div className="b2b-hero-copy">
-            <p className="b2b-eyebrow">B2B Connect</p>
-            <h1 id="b2b-hero-title">Crafted for Modern Businesses</h1>
-            <p className="b2b-hero-text">
-              Premium glassware, drinkware & lifestyle essentials for
-              hospitality, gifting, retail & modern spaces.
-            </p>
-            <a className="b2b-button" href="#b2b-contact">
-              Get In Touch <span aria-hidden="true">-&gt;</span>
-            </a>
-          </div>
-          <div className="b2b-hero-art" aria-hidden="true">
-            <img
-              src="/store/images/b2b_images/b2b-banner.png"
-              alt=""
-            />
-          </div>
-        </section> */}
+        <Slider />
 
         <section className="b2b-section b2b-categories" aria-labelledby="b2b-categories-title">
           <div className="b2b-section-heading">
