@@ -7904,86 +7904,6 @@ H1, H2, H3, H4, H5, H6{
 .static-content {
   max-width: 100%;
   margin: 0;
-  font-family: Lato, Helvetica, Arial, sans-serif !important;
-  color: #22311d;
-}
-
-.static-content p {
-  font-size: 15px;
-  line-height: 1.8;
-  color: #22311d;
-  margin: 0 0 16px;
-  font-family: Lato, Helvetica, Arial, sans-serif !important;
-}
-
-.static-content h1 {
-  font-size: 30px;
-  line-height: 40px;
-  margin: 24px 0 12px;
-  font-family: Lato, Helvetica, Arial, sans-serif !important;
-  font-weight: 700;
-  letter-spacing: 1px;
-  color: #22311d;
-}
-
-.static-content h2 {
-  font-size: 26px;
-  line-height: 34px;
-  margin: 22px 0 10px;
-  font-family: Lato, Helvetica, Arial, sans-serif !important;
-  font-weight: 700;
-  letter-spacing: 1px;
-  color: #22311d;
-}
-
-.static-content h3 {
-  font-size: 22px;
-  line-height: 30px;
-  margin: 18px 0 8px;
-  font-family: Lato, Helvetica, Arial, sans-serif !important;
-  font-weight: 700;
-  letter-spacing: 1px;
-  color: #22311d;
-}
-
-.static-content h4 {
-  font-size: 19px;
-  line-height: 26px;
-  margin: 16px 0 6px;
-  font-family: Lato, Helvetica, Arial, sans-serif !important;
-  font-weight: 700;
-  letter-spacing: 1px;
-  color: #22311d;
-}
-
-.static-content h5 {
-  font-size: 17px;
-  line-height: 22px;
-  margin: 14px 0 6px;
-  font-family: Lato, Helvetica, Arial, sans-serif !important;
-  font-weight: 700;
-  letter-spacing: 1px;
-  color: #22311d;
-}
-
-.static-content h6 {
-  font-size: 15px;
-  line-height: 18px;
-  margin: 12px 0 6px;
-  font-family: Lato, Helvetica, Arial, sans-serif !important;
-  font-weight: 700;
-  letter-spacing: 1px;
-  color: #22311d;
-}
-
-/* Remove top margin when heading is the first element */
-.static-content h1:first-child,
-.static-content h2:first-child,
-.static-content h3:first-child,
-.static-content h4:first-child,
-.static-content h5:first-child,
-.static-content h6:first-child {
-  margin-top: 0;
 }
 
 .static-content ul {
@@ -7995,7 +7915,8 @@ H1, H2, H3, H4, H5, H6{
 .static-content li {
   margin-bottom: 8px;
   font-size: 15px;
-  line-height: 1.8;
+  line-height: 1.7;
+  color: #343434;
 }
 
 .static-content table {
@@ -8097,10 +8018,8 @@ H1, H2, H3, H4, H5, H6{
 
 /* Policy pages */
 .static-content .terms_pages {
-  max-width: 720px;
+  max-width: 780px;
   margin: 0 auto;
-  font-family: Lato, Helvetica, Arial, sans-serif !important;
-  color: #22311d;
 }
 
 @font-face {
@@ -8112,32 +8031,10 @@ H1, H2, H3, H4, H5, H6{
   font-display: swap;
 }
 
-.static-content .terms_pages {
-  max-width: 780px;
-}
-
-.static-content .terms_pages p,
-.static-content .terms_pages li,
-.static-content .terms_pages h4,
-.static-content .terms_pages h5,
-.static-content .terms_pages h6 {
-  font-family: Lato, Helvetica, Arial, sans-serif !important;
-}
-
-.static-content .terms_pages p {
-  color: #22311d;
-  margin: 0 0 6px;
-  font-size: 16px;
-  line-height: 1.5;
-}
-
 .static-content .terms_pages .policy_intro {
   max-width: 760px;
   margin: 0 auto 34px;
   text-align: center;
-  font-size: 16px;
-  line-height: 1.5;
-  color: #22311d;
 }
 
 .static-content .terms_pages .policy_section {
@@ -8308,33 +8205,20 @@ H1, H2, H3, H4, H5, H6{
 
 .static-content .terms_pages .policy_content h4 {
   margin: 0 0 8px;
-  font-size: 19px;
-  line-height: 26px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  color: #22311d;
 }
 
 .static-content .terms_pages .policy_content h5 {
   margin: 0 0 6px;
-  font-size: 17px;
-  line-height: 22px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  color: #22311d;
 }
 
 .static-content .terms_pages .policy_content p {
   margin: 0 0 6px;
-  font-size: 16px;
-  line-height: 1.5;
-  color: #22311d;
 }
 
 .static-content .terms_pages .policy_content ul {
   margin: 0 0 6px;
   padding-left: 22px;
-  color: #22311d;
+  color: #343434;
   list-style: disc outside !important;
 }
 
@@ -8348,9 +8232,7 @@ H1, H2, H3, H4, H5, H6{
   list-style: disc outside !important;
   margin: 0 0 6px;
   padding: 0;
-  font-size: 16px;
-  line-height: 1.5;
-  color: #22311d;
+  color: #343434;
 }
 
 .static-content .terms_pages .policy_content li::marker {
@@ -8380,8 +8262,6 @@ H1, H2, H3, H4, H5, H6{
 
 .static-content .terms_pages .policy_callout .charge_item p {
   margin: 0 0 6px;
-  font-size: 13px;
-  color: #22311d;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -8389,14 +8269,12 @@ H1, H2, H3, H4, H5, H6{
 
 .static-content .terms_pages .policy_callout .charge_item i {
   font-size: 14px;
-  color: #22311d;
 }
 
 .static-content .terms_pages .policy_callout .charge_item strong {
   display: block;
   font-size: 22px;
   line-height: 1.2;
-  color: #22311d;
 }
 
 .static-content .terms_pages .policy_footer {
@@ -8435,18 +8313,10 @@ H1, H2, H3, H4, H5, H6{
 
 .static-content .terms_pages .policy_footer_item h5 {
   margin: 0 0 8px;
-  font-size: 19px;
-  line-height: 26px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  color: #22311d;
 }
 
 .static-content .terms_pages .policy_footer_item p {
   margin: 0 0 4px;
-  font-size: 16px;
-  line-height: 1.5;
-  color: #22311d;
 }
 
 .static-content .terms_pages .policy_footer_item p:last-child {
@@ -8471,18 +8341,10 @@ H1, H2, H3, H4, H5, H6{
 
 .static-content .terms_pages .timeline_card h6 {
   margin: 0 0 4px;
-  font-size: 15px;
-  line-height: 18px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  color: #22311d;
 }
 
 .static-content .terms_pages .timeline_card p {
   margin: 0;
-  font-size: 16px;
-  line-height: 1.5;
-  color: #22311d;
 }
 
 @media (max-width: 760px) {
