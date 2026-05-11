@@ -7816,7 +7816,7 @@ input[type="checkbox"] {
 }
 
 .static-body--wide {
-  max-width: 780px;
+  max-width: 840px;
 }
 
 .static-title {
@@ -7985,7 +7985,7 @@ input[type="checkbox"] {
 
 /* Policy pages */
 .static-content .terms_pages {
-  max-width: 780px;
+  max-width: 850px;
   margin: 0 auto;
 }
 
@@ -7999,7 +7999,7 @@ input[type="checkbox"] {
 }
 
 .static-content .terms_pages .policy_intro {
-  max-width: 760px;
+  max-width: 850px;
   margin: 0 auto 34px;
   text-align: center;
 }
@@ -8317,6 +8317,10 @@ input[type="checkbox"] {
 @media (max-width: 760px) {
   .static-body--wide {
     max-width: 100%;
+  }
+
+  .static-content .terms_pages .policy_intro {
+    white-space: normal;
   }
 
   .static-content .terms_pages .policy_section {
