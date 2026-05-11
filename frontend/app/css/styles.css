@@ -7849,7 +7849,7 @@ H1, H2, H3, H4, H5, H6{
 }
 
 .static-body--wide {
-  max-width: 720px;
+  max-width: 780px;
 }
 
 .static-title {
@@ -7873,7 +7873,7 @@ H1, H2, H3, H4, H5, H6{
 
 .static-breadcrumb {
   font-size: 12px;
-  color: #888;
+  color: #22311d;
   margin: 0 0 16px;
   width: auto;
   display: flex;
@@ -7883,12 +7883,12 @@ H1, H2, H3, H4, H5, H6{
 }
 
 .static-breadcrumb a {
-  color: #888;
+  color: #22311d;
   text-decoration: none;
 }
 
 .static-breadcrumb a:hover {
-  color: #222;
+  color: #22311d;
 }
 
 .static-summary {
@@ -7896,7 +7896,7 @@ H1, H2, H3, H4, H5, H6{
   margin: 16px auto 30px;
   padding: 0;
   font-size: 15px;
-  color: #333;
+  color: #22311d;
   line-height: 1.7;
   text-align: center;
 }
@@ -7905,13 +7905,13 @@ H1, H2, H3, H4, H5, H6{
   max-width: 100%;
   margin: 0;
   font-family: Lato, Helvetica, Arial, sans-serif !important;
-  color: #222;
+  color: #22311d;
 }
 
 .static-content p {
   font-size: 15px;
   line-height: 1.8;
-  color: #333;
+  color: #22311d;
   margin: 0 0 16px;
   font-family: Lato, Helvetica, Arial, sans-serif !important;
 }
@@ -7989,7 +7989,7 @@ H1, H2, H3, H4, H5, H6{
 .static-content ul {
   padding-left: 20px;
   margin: 0 0 18px;
-  color: #333;
+  color: #22311d;
 }
 
 .static-content li {
@@ -8100,7 +8100,7 @@ H1, H2, H3, H4, H5, H6{
   max-width: 720px;
   margin: 0 auto;
   font-family: Lato, Helvetica, Arial, sans-serif !important;
-  color: #222;
+  color: #22311d;
 }
 
 @font-face {
@@ -8113,7 +8113,7 @@ H1, H2, H3, H4, H5, H6{
 }
 
 .static-content .terms_pages {
-  max-width: 720px;
+  max-width: 780px;
 }
 
 .static-content .terms_pages p,
@@ -8125,7 +8125,7 @@ H1, H2, H3, H4, H5, H6{
 }
 
 .static-content .terms_pages p {
-  color: #444;
+  color: #22311d;
   margin: 0 0 6px;
   font-size: 16px;
   line-height: 1.5;
@@ -8137,7 +8137,7 @@ H1, H2, H3, H4, H5, H6{
   text-align: center;
   font-size: 16px;
   line-height: 1.5;
-  color: #3c3c3c;
+  color: #22311d;
 }
 
 .static-content .terms_pages .policy_section {
@@ -8328,13 +8328,13 @@ H1, H2, H3, H4, H5, H6{
   margin: 0 0 6px;
   font-size: 16px;
   line-height: 1.5;
-  color: #444;
+  color: #22311d;
 }
 
 .static-content .terms_pages .policy_content ul {
   margin: 0 0 6px;
   padding-left: 22px;
-  color: #444;
+  color: #22311d;
   list-style: disc outside !important;
 }
 
@@ -8350,11 +8350,11 @@ H1, H2, H3, H4, H5, H6{
   padding: 0;
   font-size: 16px;
   line-height: 1.5;
-  color: #444;
+  color: #22311d;
 }
 
 .static-content .terms_pages .policy_content li::marker {
-  color: #222;
+  color: #22311d;
 }
 
 .static-content .terms_pages .policy_callout {
@@ -8381,7 +8381,7 @@ H1, H2, H3, H4, H5, H6{
 .static-content .terms_pages .policy_callout .charge_item p {
   margin: 0 0 6px;
   font-size: 13px;
-  color: #444;
+  color: #22311d;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -8389,14 +8389,14 @@ H1, H2, H3, H4, H5, H6{
 
 .static-content .terms_pages .policy_callout .charge_item i {
   font-size: 14px;
-  color: #222;
+  color: #22311d;
 }
 
 .static-content .terms_pages .policy_callout .charge_item strong {
   display: block;
   font-size: 22px;
   line-height: 1.2;
-  color: #222;
+  color: #22311d;
 }
 
 .static-content .terms_pages .policy_footer {
@@ -8425,7 +8425,7 @@ H1, H2, H3, H4, H5, H6{
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #222;
+  color: #22311d;
 }
 
 .static-content .terms_pages .policy_footer_icon i {
@@ -8444,9 +8444,9 @@ H1, H2, H3, H4, H5, H6{
 
 .static-content .terms_pages .policy_footer_item p {
   margin: 0 0 4px;
-  font-size: 14px;
-  line-height: 1.8;
-  color: #444;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #22311d;
 }
 
 .static-content .terms_pages .policy_footer_item p:last-child {
@@ -8482,7 +8482,7 @@ H1, H2, H3, H4, H5, H6{
   margin: 0;
   font-size: 16px;
   line-height: 1.5;
-  color: #444;
+  color: #22311d;
 }
 
 @media (max-width: 760px) {
@@ -8537,7 +8537,7 @@ H1, H2, H3, H4, H5, H6{
 .b2b-track p {
   margin: 0;
   font-size: 13px;
-  color: #555;
+  color: #22311d;
   line-height: 1.7;
 }
 

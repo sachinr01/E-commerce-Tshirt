@@ -3,7 +3,6 @@ import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import PdfDownloadButton from './PdfDownloadButton';
 
 type StaticPage = {
   slug: string;
@@ -48,16 +47,6 @@ const shouldHideHeroTitle = (pageTitle: string, html: string) => {
   const title = normalizeHeading(pageTitle);
   if (!title) return false;
   return extractFirstHeading(html) === title;
-};
-const isDownloadablePolicyPage = (page: StaticPage | undefined, slug: string) => {
-  const haystack = normalizeText(`${page?.slug || ''} ${page?.title || ''} ${slug}`);
-  return (
-    haystack.includes('privacy policy') ||
-    haystack.includes('shipping policy') ||
-    haystack.includes('refund') ||
-    haystack.includes('return') ||
-    (haystack.includes('terms') && haystack.includes('conditions'))
-  );
 };
 
 const fetchPage = async (slug: string): Promise<PageResult> => {
@@ -104,7 +93,6 @@ export async function renderStaticPage(slug: string) {
   const page = result.page;
   const html = page?.content || '';
   const hideHeroTitle = shouldHideHeroTitle(page?.title || '', html);
-  const showDownload = page ? isDownloadablePolicyPage(page, slug) : false;
 
   return (
     <>
@@ -136,12 +124,6 @@ export async function renderStaticPage(slug: string) {
           )}
 
           <div className="static-content" dangerouslySetInnerHTML={{ __html: html }} />
-
-          {showDownload && (
-            <div className="static-actions">
-              <PdfDownloadButton page={page} />
-            </div>
-          )}
         </div>
       </div>
       <Footer />
