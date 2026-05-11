@@ -105,41 +105,43 @@ export default function FAQsPage() {
           </p>
         </section>
 
-        <section className="faqs-list" aria-label="Frequently asked questions">
-          {faqGroups.map((group) => (
-            <div className="faqs-group" key={group.title}>
-              <h2>{group.title}</h2>
-              <div className="faqs-group-rule" />
-              <div className="faqs-items">
-                {group.items.map((item) => (
-                  <details className="faqs-item" key={item.question}>
-                    <summary>
-                      <span className="faqs-question-icon">
-                        <i className="fa fa-question" aria-hidden="true" />
-                      </span>
-                      <span className="faqs-question">{item.question}</span>
-                      <i className="fa fa-chevron-down faqs-chevron" aria-hidden="true" />
-                    </summary>
-                    <p>{item.answer}</p>
-                  </details>
-                ))}
+        <div className="faqs-content-wrap">
+          <section className="faqs-list" aria-label="Frequently asked questions">
+            {faqGroups.map((group) => (
+              <div className="faqs-group" key={group.title}>
+                <h2>{group.title}</h2>
+                <div className="faqs-group-rule" />
+                <div className="faqs-items">
+                  {group.items.map((item) => (
+                    <details className="faqs-item" key={item.question}>
+                      <summary>
+                        <span className="faqs-question-icon">
+                          <i className="fa fa-question" aria-hidden="true" />
+                        </span>
+                        <span className="faqs-question">{item.question}</span>
+                        <i className="fa fa-chevron-down faqs-chevron" aria-hidden="true" />
+                      </summary>
+                      <p>{item.answer}</p>
+                    </details>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
-        </section>
+            ))}
+          </section>
 
-        <section className="faqs-contact" aria-label="Still have a question">
-          <div className="faqs-mail-icon" aria-hidden="true">
-            <i className="fa fa-envelope" aria-hidden="true" />
-          </div>
-          <div>
-            <h2>Still have a question?</h2>
-            <p>
-              We&apos;re here to help. Reach out to us at{" "}
-              <a href="mailto:support@nestcase.in">support@nestcase.in</a>
-            </p>
-          </div>
-        </section>
+          <section className="faqs-contact" aria-label="Still have a question">
+            <div className="faqs-mail-icon" aria-hidden="true">
+              <i className="fa fa-envelope" aria-hidden="true" />
+            </div>
+            <div>
+              <h2>Still have a question?</h2>
+              <p>
+                We&apos;re here to help. Reach out to us at{" "}
+                <a href="mailto:support@nestcase.in">support@nestcase.in</a>
+              </p>
+            </div>
+          </section>
+        </div>
       </main>
 
       <Footer />
