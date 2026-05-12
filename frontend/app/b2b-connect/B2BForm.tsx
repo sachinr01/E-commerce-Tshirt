@@ -76,7 +76,7 @@ export default function B2BForm() {
       )}
 
       <button className="b2b-button" type="submit" disabled={status === "loading"}>
-        {status === "loading" ? "Sending…" : <>Request Callback <span aria-hidden="true">-&gt;</span></>}
+        {status === "loading" ? "Sending…" : <>Request Callback <i className="fa fa-arrow-right" aria-hidden="true" /></>}
       </button>
     </form>
   );

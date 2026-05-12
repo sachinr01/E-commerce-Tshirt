@@ -32,12 +32,6 @@ const collectionRows = [
         alt: 'Drinkware 3 collection',
         href: '/shop/drinkware',
       },
-      {
-        title: 'Drinkware 4',
-        src: '/store/images/collection/drinkware4_bn.png',
-        alt: 'Drinkware 4 collection',
-        href: '/shop/drinkware',
-      },
     ],
   },
   {
@@ -80,8 +74,8 @@ const collectionRows = [
     staticPanel: {
       title: 'KITCHEN ORGANISERS',
       src: '/store/images/collection/kitchen_organisers_bn.png',
-      alt: 'Stainless steel barware and cutlery collection',
-      href: '/shop/cutlery',
+      alt: 'jars-and-containers collection',
+      href: '/shop/jars-and-containers',
     },
     slides: [
       {
@@ -94,13 +88,13 @@ const collectionRows = [
         title: 'kitchenware_2',
         src: '/store/images/collection/kitchenware_2.png',
         alt: 'kitchenware_2 collection',
-        href: '/shop',
+        href: '/shop/jars-and-containers',
       },
       {
         title: 'kitchenware_1',
         src: '/store/images/collection/kitchenware_1.png',
         alt: 'kitchenware_1 collection',
-        href: '/shop',
+        href: '/shop/jars-and-containers',
       },
     ],
   },
@@ -132,6 +126,7 @@ const collectionRows = [
 type CollectionRow = (typeof collectionRows)[number];
 type CollectionPanel = CollectionRow['staticPanel'];
 type CollectionSlide = CollectionRow['slides'][number];
+type MobilePanel = CollectionPanel | CollectionSlide;
 
 function StaticPanel({ panel, priority }: { panel: CollectionPanel; priority: boolean }) {
   return (
@@ -200,6 +195,12 @@ function SliderRail({ slides, priority }: { slides: CollectionSlide[]; priority:
 }
 
 export function FeaturedCollectionPanels() {
+  const mobilePanels = collectionRows.flatMap((row) => (
+    row.staticSide === 'left'
+      ? [row.staticPanel, row.slides[0]]
+      : [row.slides[0], row.staticPanel]
+  )).filter(Boolean) as MobilePanel[];
+
   return (
     <section className="featured-collections-section" aria-labelledby="featured-collections-title">
       <h2 className="section-title" id="featured-collections-title">Trending</h2>
@@ -221,6 +222,24 @@ export function FeaturedCollectionPanels() {
               </>
             )}
           </div>
+        ))}
+      </div>
+      <div className="featured-mobile-grid" aria-label="Trending collections">
+        {mobilePanels.map((panel, index) => (
+          <Link href={panel.href} className="featured-mobile-tile" key={`${panel.title}-${index}`}>
+            <Image
+              src={panel.src}
+              alt={panel.alt}
+              width={420}
+              height={520}
+              sizes="50vw"
+            />
+            <span className="featured-mobile-shade" aria-hidden="true" />
+            <span className="featured-mobile-content">
+              <span className="featured-mobile-title">{panel.title}</span>
+              <span className="featured-mobile-button">Explore Collection</span>
+            </span>
+          </Link>
         ))}
       </div>
     </section>

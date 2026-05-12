@@ -92,7 +92,7 @@ export default async function B2BConnectPage() {
                   </span>
                   <span className="b2b-category-name">
                     {category.category_name}
-                    <span aria-hidden="true">-&gt;</span>
+                    <i className="fa fa-arrow-right" aria-hidden="true" />
                   </span>
                 </Link>
               ))}
