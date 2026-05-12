@@ -1,0 +1,81 @@
+.btn-view-product {
+  display: block !important;
+  text-align: center !important;
+  padding: 9px 16px !important;
+  border: 1.5px solid #22311d !important;
+  border-radius: 8px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+  color: #fff !important;
+  text-decoration: none !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  background: #22311d !important;
+  width: 100%;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.btn-view-product:hover {
+  background: transparent !important;
+  color: #000 !important;
+  border-color: #22311d !important;
+}
+
+/* inline modifier â€” auto width with side padding,
+   for CTAs that sit centered below a section grid */
+.btn-view-product--inline {
+  display: inline-block !important;
+  width: auto !important;
+  padding: 9px 28px !important;
+}
+
+/* centering wrapper for .btn-view-product--inline */
+.btn-view-product-wrap {
+  text-align: center;
+  margin-top: 8px;
+}
+
+/* view other button css */
+
+.btn-view-second {
+  display: block !important;
+  text-align: center !important;
+  padding: 9px 16px !important;
+  border: 1.5px solid #22311d !important;
+  border-radius: 8px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+  background: transparent !important;
+  color: #000 !important;
+  border-color: #22311d !important;
+  text-decoration: none !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  width: 100%;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.btn-view-second:hover {
+  background: #22311d !important;
+  color: #fff !important;
+}
+
+/* inline modifier â€” auto width with side padding,
+   for CTAs that sit centered below a section grid */
+.btn-view-second--inline {
+  display: inline-block !important;
+  width: auto !important;
+  padding: 9px 28px !important;
+}
+
+/* centering wrapper for .btn-view-second--inline */
+.btn-view-second-wrap {
+  text-align: center;
+  margin-top: 8px;
+}

@@ -21,7 +21,7 @@
               </div>
             </div>
             <div class="col-5 align-self-center text-end">
-              <span class="badge bg-primary rounded-pill px-3 py-2 fs-6">
+              <span class="btn-view-product btn-view-product--inline na-view-all-btn">
                 <i data-feather="tag" class="feather-sm me-1"></i>
                 <%= categories.length %> Total
               </span>
@@ -32,233 +32,231 @@
         <div class="container-fluid">
 
           <!-- Flash messages -->
-         
-              <% if (locals.errors) { %>
-                <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2">
-                  <i data-feather="alert-circle" class="feather-sm flex-shrink-0"></i>
-                  <%= locals.errors %>
-                    <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
-                </div>
-                <% } %>
 
-                  <div class="row">
+          <% if (locals.errors) { %>
+            <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2">
+              <i data-feather="alert-circle" class="feather-sm flex-shrink-0"></i>
+              <%= locals.errors %>
+                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+            </div>
+            <% } %>
 
-                    <!-- ══════════════════════════════════════════════
+              <div class="row">
+
+                <!-- ══════════════════════════════════════════════
            LEFT COL — Add Category
       ══════════════════════════════════════════════ -->
-                    <div class="col-lg-4 col-md-5">
-                      <div class="card mb-4">
-                        <div class="card-body">
+                <div class="col-lg-4 col-md-5">
+                  <div class="card mb-4">
+                    <div class="card-body">
 
-                          <h4 class="card-title mb-3 pb-3 border-bottom">Add New Category</h4>
+                      <h4 class="card-title mb-3 pb-3 border-bottom">Add New Category</h4>
 
-                          <form method="POST" action="/store/admin/product/category/store">
+                      <form method="POST" action="/store/admin/product/category/store">
 
-                            <div class="mb-3">
-                              <label class="form-label fw-semibold">
-                                Name <span class="text-danger">*</span>
-                              </label>
-                              <input type="text" name="category_name" id="add_name" class="form-control"
-                                placeholder="e.g. T-Shirts" required />
-                              <div class="form-text">The name is how it appears on your site.</div>
-                            </div>
-
-                            <div class="mb-3">
-                              <label class="form-label fw-semibold">Slug</label>
-                              <input type="text" name="category_slug" id="add_slug" class="form-control"
-                                placeholder="auto-generated-from-name" />
-                              <div class="form-text">URL-friendly version. Leave blank to auto-generate.</div>
-                            </div>
-
-                            <div class="mb-3">
-                              <label class="form-label fw-semibold">Parent Category</label>
-                              <select name="parent_id" class="form-select">
-                                <option value="0">— None (Top-level) —</option>
-                                <% categories.forEach(c=> { %>
-                                  <option value="<%= c.category_id %>">
-                                    <%= c.category_name %>
-                                  </option>
-                                  <% }) %>
-                              </select>
-                              <div class="form-text">Categories can have a hierarchy.</div>
-                            </div>
-
-                            <div class="mb-3">
-                              <label class="form-label fw-semibold">Description</label>
-                              <textarea name="category_desc" class="form-control" rows="3"
-                                placeholder="Optional category description..."></textarea>
-                              <div class="form-text">Shown on some themes, not required.</div>
-                            </div>
-
-                            <div class="d-grid">
-                              <button type="submit" class="btn btn-primary rounded-pill">
-                                <div class="d-flex align-items-center justify-content-center gap-1">
-                                  <i data-feather="plus-circle" class="feather-sm"></i>
-                                  Add New Category
-                                </div>
-                              </button>
-                            </div>
-
-                          </form>
+                        <div class="mb-3">
+                          <label class="form-label fw-semibold">
+                            Name <span class="text-danger">*</span>
+                          </label>
+                          <input type="text" name="category_name" id="add_name" class="form-control"
+                            placeholder="e.g. T-Shirts" required />
+                          <div class="form-text">The name is how it appears on your site.</div>
                         </div>
-                      </div>
+
+                        <div class="mb-3">
+                          <label class="form-label fw-semibold">Slug</label>
+                          <input type="text" name="category_slug" id="add_slug" class="form-control"
+                            placeholder="auto-generated-from-name" />
+                          <div class="form-text">URL-friendly version. Leave blank to auto-generate.</div>
+                        </div>
+
+                        <div class="mb-3">
+                          <label class="form-label fw-semibold">Parent Category</label>
+                          <select name="parent_id" class="form-select">
+                            <option value="0">— None (Top-level) —</option>
+                            <% categories.forEach(c=> { %>
+                              <option value="<%= c.category_id %>">
+                                <%= c.category_name %>
+                              </option>
+                              <% }) %>
+                          </select>
+                          <div class="form-text">Categories can have a hierarchy.</div>
+                        </div>
+
+                        <div class="mb-3">
+                          <label class="form-label fw-semibold">Description</label>
+                          <textarea name="category_desc" class="form-control" rows="3"
+                            placeholder="Optional category description..."></textarea>
+                          <div class="form-text">Shown on some themes, not required.</div>
+                        </div>
+
+                        <div class="d-grid">
+                          <button type="submit" class="btn-view-product btn-view-product--inline na-view-all-btn">
+                            <div class="d-flex align-items-center justify-content-center gap-1">
+                              <i data-feather="plus-circle" class="feather-sm"></i>
+                              Add New Category
+                            </div>
+                          </button>
+                        </div>
+
+                      </form>
                     </div>
-                    <!-- /LEFT -->
+                  </div>
+                </div>
+                <!-- /LEFT -->
 
 
-                    <!-- ══════════════════════════════════════════════
+                <!-- ══════════════════════════════════════════════
            RIGHT COL — Category Table
       ══════════════════════════════════════════════ -->
-                    <div class="col-lg-8 col-md-7">
-                      <div class="card mb-4">
-                        <div class="card-body">
+                <div class="col-lg-8 col-md-7">
+                  <div class="card mb-4">
+                    <div class="card-body">
 
-                          <!-- Table toolbar -->
-                          <div
-                            class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom flex-wrap gap-2">
-                            <h4 class="card-title mb-0">Categories</h4>
-                            <div class="d-flex align-items-center gap-2">
-                              <div class="input-group input-group-sm">
-                                <span class="input-group-text bg-transparent">
-                                  <i data-feather="search" class="feather-sm text-muted"></i>
-                                </span>
-                                <input type="text" id="catSearch" class="form-control"
-                                  placeholder="Search categories..." oninput="filterCats()" />
-                              </div>
-                              <span class="badge bg-light text-dark border fw-normal" id="catCountLabel">
-                                <%= categories.length %> items
-                              </span>
-                            </div>
+                      <!-- Table toolbar -->
+                      <div
+                        class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom flex-wrap gap-2">
+                        <h4 class="card-title mb-0">Categories</h4>
+                        <div class="d-flex align-items-center gap-2">
+                          <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-transparent">
+                              <i data-feather="search" class="feather-sm text-muted"></i>
+                            </span>
+                            <input type="text" id="catSearch" class="form-control" placeholder="Search categories..."
+                              oninput="filterCats()" />
                           </div>
-
-                          <% if (categories.length===0) { %>
-
-                            <!-- Empty state -->
-                            <div class="text-center py-5 text-muted">
-                              <i data-feather="tag" class="d-block mx-auto mb-3 opacity-25"
-                                style="width:48px;height:48px;"></i>
-                              <p class="fw-semibold mb-1">No categories yet</p>
-                              <small>Add your first category using the form on the left.</small>
-                            </div>
-
-                            <% } else { %>
-
-                              <div class="table-responsive">
-                                <table class="table table-hover align-middle mb-0" id="catTable">
-                                  <thead class="table-light">
-                                    <tr>
-                                      <th class="text-uppercase text-muted fw-semibold small"
-                                        style="letter-spacing:.05em; font-size:.72rem;">Name</th>
-                                      <th class="text-uppercase text-muted fw-semibold small"
-                                        style="letter-spacing:.05em; font-size:.72rem;">Slug</th>
-                                      <th class="text-uppercase text-muted fw-semibold small"
-                                        style="letter-spacing:.05em; font-size:.72rem;">Parent</th>
-                                      <th class="text-uppercase text-muted fw-semibold small"
-                                        style="letter-spacing:.05em; font-size:.72rem;">Actions</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    <% categories.forEach(cat=> {
-                                      const parentCat = categories.find(c => c.category_id === cat.parent_id);
-                                      %>
-                                      <tr>
-
-                                        <!-- Name + description -->
-                                        <td>
-                                          <div class="d-flex align-items-center gap-2">
-                                            <div
-                                              class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0"
-                                              style="width:34px;height:34px;">
-                                              <i data-feather="tag" class="text-primary"
-                                                style="width:14px;height:14px;"></i>
-                                            </div>
-                                            <div class="overflow-hidden">
-                                              <div class="fw-semibold text-dark lh-sm">
-                                                <%= cat.category_name %>
-                                              </div>
-                                              <% if (cat.category_desc) { %>
-                                                <div class="text-muted small text-truncate" style="max-width:160px;">
-                                                  <%= cat.category_desc %>
-                                                </div>
-                                                <% } %>
-                                            </div>
-                                          </div>
-                                        </td>
-
-                                        <!-- Slug -->
-                                        <td>
-                                          <code
-                                            class="bg-light border rounded px-2 py-1 small text-secondary d-inline-block">
-                            <%= cat.category_slug %>
-                          </code>
-                                        </td>
-
-                                        <!-- Parent -->
-                                        <td>
-                                          <% if (parentCat) { %>
-                                            <span
-                                              class="badge bg-primary bg-opacity-10 text-primary fw-normal px-2 py-1 rounded-pill">
-                                              <i data-feather="corner-down-right" style="width:11px;height:11px;"
-                                                class="me-1"></i>
-                                              <%= parentCat.category_name %>
-                                            </span>
-                                            <% } else { %>
-                                              <span class="text-muted small">—</span>
-                                              <% } %>
-                                        </td>
-
-                                        <!-- Actions -->
-                                        <td>
-                                          <div class="d-flex align-items-center gap-1">
-                                            <button class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick='editCategory(
-                                <%= cat.category_id %>,
-                                "<%= cat.category_name.replace(/"/g, ' \\"') %>",
-                                              "<%= cat.category_slug %>",
-                                                "<%= cat.parent_id || 0 %>",
-                                                  "<%= (cat.category_desc || '' ).replace(/"/g, '\\"' ) %>"
-                                                    )'>
-                                                    <div class="d-flex align-items-center gap-1">
-                                                      <i data-feather="edit-2" class="feather-sm"></i> Edit
-                                                    </div>
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-danger rounded-pill px-3 delete-btn"
-                                              data-id="<%= cat.category_id %>"
-                                              data-name="<%= cat.category_name %>"
-                                              data-url="/store/admin/product/category/delete/"
-                                              data-title="Delete Category">
-
-                                              <div class="d-flex align-items-center gap-1">
-                                                <i data-feather="trash-2" class="feather-sm"></i> Delete
-                                              </div>
-                                            </button>
-                                          </div>
-                                        </td>
-
-                                      </tr>
-                                      <% }) %>
-                                  </tbody>
-                                </table>
-                              </div>
-
-                              <!-- Footer -->
-                              <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
-                                <small class="text-muted" id="catFooterCount">
-                                  Showing <%= categories.length %> of <%= categories.length %> categories
-                                </small>
-                                <small class="text-muted d-flex align-items-center gap-1">
-                                  <i data-feather="info" class="feather-sm"></i>
-                                  Click <strong class="mx-1">Edit</strong> to modify a category
-                                </small>
-                              </div>
-
-                              <% } %>
-
+                          <span class="badge bg-light text-dark border fw-normal" id="catCountLabel">
+                            <%= categories.length %> items
+                          </span>
                         </div>
                       </div>
-                    </div>
-                    <!-- /RIGHT -->
 
+                      <% if (categories.length===0) { %>
+
+                        <!-- Empty state -->
+                        <div class="text-center py-5 text-muted">
+                          <i data-feather="tag" class="d-block mx-auto mb-3 opacity-25"
+                            style="width:48px;height:48px;"></i>
+                          <p class="fw-semibold mb-1">No categories yet</p>
+                          <small>Add your first category using the form on the left.</small>
+                        </div>
+
+                        <% } else { %>
+
+                          <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0" id="catTable">
+                              <thead class="table-light">
+                                <tr>
+                                  <th class="text-uppercase text-muted fw-semibold small"
+                                    style="letter-spacing:.05em; font-size:.72rem;">Name</th>
+                                  <th class="text-uppercase text-muted fw-semibold small"
+                                    style="letter-spacing:.05em; font-size:.72rem;">Slug</th>
+                                  <th class="text-uppercase text-muted fw-semibold small"
+                                    style="letter-spacing:.05em; font-size:.72rem;">Parent</th>
+                                  <th class="text-uppercase text-muted fw-semibold small"
+                                    style="letter-spacing:.05em; font-size:.72rem;">Actions</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <% categories.forEach(cat=> {
+                                  const parentCat = categories.find(c => c.category_id === cat.parent_id);
+                                  %>
+                                  <tr>
+
+                                    <!-- Name + description -->
+                                    <td>
+                                      <div class="d-flex align-items-center gap-2">
+                                        <div
+                                          class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0"
+                                          style="width:34px;height:34px;">
+                                          <i data-feather="tag" class="text-primary"
+                                            style="width:14px;height:14px;"></i>
+                                        </div>
+                                        <div class="overflow-hidden">
+                                          <div class="fw-semibold text-dark lh-sm">
+                                            <%= cat.category_name %>
+                                          </div>
+                                          <% if (cat.category_desc) { %>
+                                            <div class="text-muted small text-truncate" style="max-width:160px;">
+                                              <%= cat.category_desc %>
+                                            </div>
+                                            <% } %>
+                                        </div>
+                                      </div>
+                                    </td>
+
+                                    <!-- Slug -->
+                                    <td>
+                                      <code
+                                        class="bg-light border rounded px-2 py-1 small text-secondary d-inline-block">
+                            <%= cat.category_slug %>
+                          </code>
+                                    </td>
+
+                                    <!-- Parent -->
+                                    <td>
+                                      <% if (parentCat) { %>
+                                        <span
+                                          class="badge bg-primary bg-opacity-10 text-primary fw-normal px-2 py-1 rounded-pill">
+                                          <i data-feather="corner-down-right" style="width:11px;height:11px;"
+                                            class="me-1"></i>
+                                          <%= parentCat.category_name %>
+                                        </span>
+                                        <% } else { %>
+                                          <span class="text-muted small">—</span>
+                                          <% } %>
+                                    </td>
+
+                                    <!-- Actions -->
+                                    <td>
+                                      <div class="d-flex align-items-center gap-1">
+                                        <button class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick='editCategory(
+                                <%= cat.category_id %>,
+                                "<%= cat.category_name.replace(/"/g, ' \\"') %>",
+                                          "<%= cat.category_slug %>",
+                                            "<%= cat.parent_id || 0 %>",
+                                              "<%= (cat.category_desc || '' ).replace(/"/g, '\\"' ) %>"
+                                                )'>
+                                                <div class="d-flex align-items-center gap-1">
+                                                  <i data-feather="edit-2" class="feather-sm"></i> Edit
+                                                </div>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger rounded-pill px-3 delete-btn"
+                                          data-id="<%= cat.category_id %>" data-name="<%= cat.category_name %>"
+                                          data-url="/store/admin/product/category/delete/" data-title="Delete Category">
+
+                                          <div class="d-flex align-items-center gap-1">
+                                            <i data-feather="trash-2" class="feather-sm"></i> Delete
+                                          </div>
+                                        </button>
+                                      </div>
+                                    </td>
+
+                                  </tr>
+                                  <% }) %>
+                              </tbody>
+                            </table>
+                          </div>
+
+                          <!-- Footer -->
+                          <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+                            <small class="text-muted" id="catFooterCount">
+                              Showing <%= categories.length %> of <%= categories.length %> categories
+                            </small>
+                            <small class="text-muted d-flex align-items-center gap-1">
+                              <i data-feather="info" class="feather-sm"></i>
+                              Click <strong class="mx-1">Edit</strong> to modify a category
+                            </small>
+                          </div>
+
+                          <% } %>
+
+                    </div>
                   </div>
+                </div>
+                <!-- /RIGHT -->
+
+              </div>
         </div>
       </div>
       <!-- /page-wrapper -->

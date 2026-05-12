@@ -26,19 +26,21 @@
                 </div>
               </div>
               <div class="col-5 align-self-center text-end">
-                <a href="/store/admin/pages" class="btn btn-sm btn-secondary text-white" title="Back to Pages">
+                <a href="/store/admin/pages" class="btn-view-product btn-view-product--inline na-view-all-btn"
+                  title="Back to Pages">
                   <div class=" align-items-center">
                     <i data-feather="arrow-left" class="feather-sm me-1"></i> Back to Pages
                   </div>
                 </a>
-
-                <!-- View page -->
-                <a href="/store/<%= page.post_slug %>" target="_blank"
-                  class="btn btn-sm btn-light-success text-success" title="View Page">
-                  <div class="align-items-center">
-                    View Page <i data-feather="external-link" class=" feather-sm"></i>
-                  </div>
-                </a>
+                <% if (isEdit) { %>
+                  <!-- View page -->
+                  <a href="/store/<%= page.post_slug %>" target="_blank"
+                    class="btn-view-second btn-view-second--inline na-view-all-btn" title="View Page">
+                    <div class="align-items-center gap-2">
+                      View Page <i data-feather="external-link" class=" feather-sm"></i>
+                    </div>
+                  </a>
+                  <% } %>
               </div>
             </div>
           </div>
@@ -96,7 +98,7 @@
                         </div>
                       </div>
 
-                       <!-- SEO CARD -->
+                      <!-- SEO CARD -->
                       <div class="card mb-3">
                         <div class="card-body">
                           <h4 class="card-title mb-3 pb-3 border-bottom">SEO Settings</h4>

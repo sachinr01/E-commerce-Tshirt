@@ -23,7 +23,7 @@
                 </span>
               </a>
               <div class="dropdown-menu dropdown-menu-right" aria-labelledby="Userdd">
-                <a class="dropdown-item" href="#"><i data-feather="user" class="feather-sm text-info me-1"></i> My
+                <a class="dropdown-item" href="/store/admin/users/edit/<%= admin.id %>"><i data-feather="user" class="feather-sm text-info me-1"></i> My
                   Profile</a>
                 <a class="dropdown-item" href="#"><i data-feather="credit-card"
                     class="feather-sm text-primary me-1"></i> My
@@ -68,8 +68,8 @@
                   class="mdi mdi-adjust"></i><span class="hide-menu">Add New User </span></a>
             </li>
             <li class="sidebar-item">
-              <a href="/store/admin/users/profile"
-                class="sidebar-link <%= locals.currentRoute === '/store/admin/users/profile' ? 'active bg-body' : '' %>"><i
+              <a href="/store/admin/users/edit/<%= admin.id %>"
+                class="sidebar-link <%= locals.currentRoute === '/store/admin/users/edit' ? 'active bg-body' : '' %>"><i
                   class="mdi mdi-adjust"></i><span class="hide-menu">Profile </span></a>
             </li>
           </ul>

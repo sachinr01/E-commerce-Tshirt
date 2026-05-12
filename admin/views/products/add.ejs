@@ -27,19 +27,20 @@
                 </div>
               </div>
               <div class="col-5 align-self-center text-end">
-                <a href="/store/admin/products" class="btn btn-sm btn-secondary text-white" title="Back to Products">
+                <a href="/store/admin/products" class="btn-view-product btn-view-product--inline na-view-all-btn" title="Back to Products">
                   <div class=" align-items-center">
                     <i data-feather="arrow-left" class="feather-sm me-1"></i> Back to Products
                   </div>
                 </a>
-
+               <% if (isEdit) { %>
                 <!-- View Product -->
                 <a href="/store/shop/product/<%= product.product_url %>" target="_blank"
-                  class="btn btn-sm btn-light-success text-success" title="View Product">
-                  <div class="align-items-center">
+                  class="btn-view-second btn-view-second--inline na-view-all-btn" title="View Product">
+                  <div class="d-flex align-items-center gap-2">
                     View Product Page <i data-feather="external-link" class=" feather-sm"></i>
                   </div>
                 </a>
+                <% } %>
               </div>
             </div>
           </div>
@@ -292,7 +293,7 @@
                                                 <% if (selIds.includes(String(val.attr_id))) { %>
                                                   <span
                                                     class="attr-tag d-inline-flex align-items-center gap-1 px-2 py-1 rounded"
-                                                    style="background:#e8f0fe; border:1px solid #884531; font-size:13px;"
+                                                    style="background:#e8f0fe; border:1px solid #22311d; font-size:13px;"
                                                     id="tag_<%= attrType.attribute_type_id %>_<%= val.attr_id %>">
                                                     <%= val.attr_name %>
                                                       <button type="button" class="btn-close p-0 ms-1"
@@ -1018,7 +1019,7 @@
               var tag = document.createElement('span');
               tag.className = 'attr-tag d-inline-flex align-items-center gap-1 px-2 py-1 rounded';
               tag.id = 'tag_' + tid + '_' + attrId;
-              tag.style.cssText = 'background:#e8f0fe;border:1px solid #884531;font-size:13px;';
+              tag.style.cssText = 'background:#e8f0fe;border:1px solid #22311d;font-size:13px;';
               tag.innerHTML = attrName +
                 '<button type="button" class="btn-close p-0 ms-1" style="font-size:9px;"' +
                 ' onclick="event.stopPropagation();removeAttrTag(\'' + tid + '\',\'' + attrId + '\',\'' + attrName + '\')"></button>';
