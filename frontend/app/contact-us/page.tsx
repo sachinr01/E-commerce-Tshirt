@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import ContactForm from "./ContactForm";
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? "NESTCASE";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3001";
@@ -70,7 +71,7 @@ export default function ContactUsPage() {
       <Header />
       <main className="contact-main">
         <section className="contact-hero" aria-labelledby="contact-title">
-          <h1 id="contact-title">Contact Us</h1>
+          <h2 id="contact-title">Contact Us</h2>
           <span aria-hidden="true" />
           <p>
             We&apos;d love to hear from you.
@@ -82,14 +83,14 @@ export default function ContactUsPage() {
         <section className="contact-layout" aria-label="Contact details and enquiry form">
           <div className="contact-info">
             <section className="contact-block">
-              <h2>Customer Support</h2>
+              <h3>Customer Support</h3>
               <div className="contact-rule" />
               <div className="contact-stack">
                 {supportItems.map((item) => (
                   <div className="contact-row" key={item.label}>
                     <ContactIcon iconClass={item.iconClass} />
                     <div>
-                      <h3>{item.label}</h3>
+                      <h6>{item.label}</h6>
                       {"href" in item && item.href ? (
                         <a href={item.href}>{item.value}</a>
                       ) : (
@@ -102,12 +103,10 @@ export default function ContactUsPage() {
             </section>
 
             <section className="contact-block contact-divider">
-              <h2>Business &amp; B2B Enquiries</h2>
+              <h3>Business &amp; B2B Enquiries</h3>
               <div className="contact-rule" />
               <p className="contact-copy">
-                For bulk orders, gifting, hospitality
-                <br />
-                partnerships, or collaborations:
+                For bulk orders, gifting, hospitality partnerships, or collaborations:
               </p>
               <a className="contact-email" href="mailto:business@nestcase.in">
                 business@nestcase.in
@@ -115,7 +114,7 @@ export default function ContactUsPage() {
             </section>
 
             <section className="contact-block contact-divider">
-              <h2>Address</h2>
+              <h3>Address</h3>
               <div className="contact-rule" />
               <div className="contact-row">
                 <ContactIcon iconClass="fa-map-marker" />
@@ -130,14 +129,14 @@ export default function ContactUsPage() {
             </section>
 
             <section className="contact-block contact-divider">
-              <h2>Socials</h2>
+              <h3>Socials</h3>
               <div className="contact-rule" />
               <div className="contact-stack contact-socials">
                 {socialItems.map((item) => (
                   <div className="contact-row" key={item.label}>
                     <ContactIcon iconClass={item.iconClass} />
                     <div>
-                      <h3>{item.label}</h3>
+                      <h6>{item.label}</h6>
                       <p>{item.value}</p>
                     </div>
                   </div>
@@ -146,7 +145,7 @@ export default function ContactUsPage() {
             </section>
 
             <section className="contact-block contact-divider">
-              <h2>Response Time</h2>
+              <h3>Response Time</h3>
               <div className="contact-rule" />
               <div className="contact-row">
                 <ContactIcon iconClass="fa-refresh" />
@@ -160,34 +159,14 @@ export default function ContactUsPage() {
           </div>
 
           <section className="contact-form-section" aria-labelledby="connect-title">
-            <h2 id="connect-title">Let&apos;s Connect</h2>
+            <h3 id="connect-title">Let&apos;s Connect</h3>
             <div className="contact-rule" />
             <p>
               Have a question or requirement?
               <br />
-              Fill out the form below and our team will get
-              <br />
-              in touch with you.
+              Fill out the form below and our team will get in touch with you.
             </p>
-            <form className="contact-form">
-              <label>
-                <span>Name</span>
-                <input type="text" name="name" placeholder="Name" />
-              </label>
-              <label>
-                <span>Email Address</span>
-                <input type="email" name="email" placeholder="Email Address" />
-              </label>
-              <label>
-                <span>Phone Number</span>
-                <input type="tel" name="phone" placeholder="Phone Number" />
-              </label>
-              <label>
-                <span>Message</span>
-                <textarea name="message" placeholder="Message" />
-              </label>
-              <button type="button">Send Message</button>
-            </form>
+            <ContactForm />
           </section>
         </section>
       </main>

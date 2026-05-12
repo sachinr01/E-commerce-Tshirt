@@ -9,12 +9,17 @@ const coupon = require('./couponController');
 const { sessionMiddleware } = require('./session');
 const { guestCookieMiddleware } = require('./guestCookie');
 const { requireAdmin, requireAgentOrAdmin, requireLogin } = require('./authMiddleware');
+const contact = require('./contactController');
 
 router.use(guestCookieMiddleware());
 router.use(sessionMiddleware());
 
 // ── Health ────────────────────────────────────────────────────────────────────
 router.get('/health', (_req, res) => res.json({ success: true, message: 'API is running' }));
+
+// ── Contact Forms ─────────────────────────────────────────────────────────────
+router.post('/contact',     contact.submitContact);
+router.post('/b2b-contact', contact.submitB2BContact);
 
 // ── Products ──────────────────────────────────────────────────────────────────
 router.get('/products/featured',      ctrl.getFeaturedProducts);

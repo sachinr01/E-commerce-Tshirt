@@ -3,6 +3,8 @@ import Link from "next/link";
 import Header from "../components/Header";
 import Slider from "../components/Slider";
 import Footer from "../components/Footer";
+import { getProductCategories, type ProductCategory } from "../lib/api";
+import B2BForm from "./B2BForm";
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? "NESTCASE";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3001";
@@ -14,28 +16,22 @@ export const metadata: Metadata = {
   alternates: { canonical: `${SITE_URL}/b2b-connect` },
 };
 
-const categories = [
-  {
-    title: "Glassware",
-    image: "/store/images/b2b_images/Glassware.jpeg",
-  },
-  {
-    title: "Drinkware",
-    image: "/store/images/b2b_images/Drinkware.jpeg",
-  },
-  {
-    title: "Kitchen Storage",
-    image: "/store/images/b2b_images/Kitchen-Storage.jpeg",
-  },
-  {
-    title: "Corporate Gifting",
-    image: "/store/images/b2b_images/Corporate-Gifting.png",
-  },
-  {
-    title: "Hospitality Essentials",
-    image: "/store/images/b2b_images/Hospitality-Essentials.jpeg",
-  },
+// Collection images mapped by category slug keywords
+const COLLECTION_IMAGE_MAP: [string, string][] = [
+  ["glassware",  "/store/images/category_images/CC_GLASSWARE.png"],
+  ["drinkware",  "/store/images/category_images/CC_TUMBLERS_NEW.png"],
+  ["tumbler",    "/store/images/category_images/CC_TUMBLERS_NEW.png"],
+  ["kitchen",    "/store/images/category_images/CC_KITCHEN_ORGANISERS.png"],
+  ["organiser",  "/store/images/category_images/CC_KITCHEN_ORGANISERS.png"],
+  ["jar",        "/store/images/category_images/CC_KITCHEN_ORGANISERS.png"],
 ];
+
+const DEFAULT_COLLECTION_IMAGE = "/store/images/category_images/CC_GLASSWARE.png";
+
+function getCollectionImage(slug: string): string {
+  const match = COLLECTION_IMAGE_MAP.find(([key]) => slug.includes(key));
+  return match ? match[1] : DEFAULT_COLLECTION_IMAGE;
+}
 
 const benefits = [
   {
@@ -60,7 +56,15 @@ const benefits = [
   },
 ];
 
-export default function B2BConnectPage() {
+export default async function B2BConnectPage() {
+  let categories: ProductCategory[] = [];
+  try {
+    const all = await getProductCategories();
+    categories = all.filter((c) => !c.parent_id || c.parent_id === 0);
+  } catch {
+    // fall through — section renders empty
+  }
+
   return (
     <>
       <Header />
@@ -72,19 +76,28 @@ export default function B2BConnectPage() {
             <p className="b2b-eyebrow">Explore Our Collections</p>
             <h2 id="b2b-categories-title">Our Product Categories</h2>
           </div>
-          <div className="b2b-category-grid">
-            {categories.map((category) => (
-              <Link className="b2b-category-card" href="/shop" key={category.title}>
-                <span className="b2b-category-image">
-                  <img src={category.image} alt={category.title} />
-                </span>
-                <span className="b2b-category-name">
-                  {category.title}
-                  <span aria-hidden="true">-&gt;</span>
-                </span>
-              </Link>
-            ))}
-          </div>
+          {categories.length > 0 && (
+            <div className="b2b-category-grid">
+              {categories.map((category) => (
+                <Link
+                  className="b2b-category-card"
+                  href={`/shop/${category.category_slug}`}
+                  key={category.category_id}
+                >
+                  <span className="b2b-category-image">
+                    <img
+                      src={getCollectionImage(category.category_slug)}
+                      alt={category.category_name}
+                    />
+                  </span>
+                  <span className="b2b-category-name">
+                    {category.category_name}
+                    <i className="fa fa-arrow-right" aria-hidden="true" />
+                  </span>
+                </Link>
+              ))}
+            </div>
+          )}
         </section>
 
         <section className="b2b-quote-band" aria-label="Brand statement">
@@ -120,35 +133,7 @@ export default function B2BConnectPage() {
               with you.
             </p>
           </div>
-          <form className="b2b-form">
-            <div className="b2b-form-row">
-              <label>
-                <span>Your Name</span>
-                <input type="text" name="name" placeholder="Your Name" />
-              </label>
-              <label>
-                <span>Business Name</span>
-                <input type="text" name="business" placeholder="Business Name" />
-              </label>
-            </div>
-            <div className="b2b-form-row">
-              <label>
-                <span>Email Address</span>
-                <input type="email" name="email" placeholder="Email Address" />
-              </label>
-              <label>
-                <span>Phone Number</span>
-                <input type="tel" name="phone" placeholder="Phone Number" />
-              </label>
-            </div>
-            <label>
-              <span>Requirements</span>
-              <textarea name="requirements" placeholder="Tell us about your requirements" />
-            </label>
-            <button className="b2b-button" type="button">
-              Request Callback <span aria-hidden="true">-&gt;</span>
-            </button>
-          </form>
+          <B2BForm />
         </section>
       </main>
       <Footer />

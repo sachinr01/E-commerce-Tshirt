@@ -1,48 +1,269 @@
-import Link from 'next/link';
+"use client";
 
-const collectionImages = [
-  { src: '/store/images/category_images/CC_TUMBLERS_NEW.png',  alt: 'drinkware',   href: '/shop/drinkware' },
-  { src: '/store/images/category_images/CC_GLASSWARE.png', alt: 'glassware',  href: '/shop/glassware' },
-  { src: '/store/images/category_images/CC_KITCHEN_ORGANISERS.png',   alt: 'Kitchen',    href: '/shop/jars-and-containers' },
-  { src: '/store/images/category_images/CC_KITCHEN_ORGANISERS.png',alt: 'All in One', href: '/shop' },
+import Image from 'next/image';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
+
+const collectionRows = [
+  {
+    staticSide: 'left' as const,
+    staticPanel: {
+      title: 'Drinkware',
+      src: '/store/images/collection/drinkware_bn.png',
+      alt: 'Drinkware collection',
+      href: '/shop/drinkware',
+    },
+    slides: [
+      {
+        title: 'Drinkware 1',
+        src: '/store/images/collection/Drinkware1_bn.png',
+        alt: 'Drinkware 1 collection',
+        href: '/shop/drinkware',
+      },
+      {
+        title: 'Drinkware 2',
+        src: '/store/images/collection/tumbler1.png',
+        alt: 'Drinkware 2 collection',
+        href: '/shop/drinkware',
+      },
+      {
+        title: 'Drinkware 3',
+        src: '/store/images/collection/Drinkware3_bn.png',
+        alt: 'Drinkware 3 collection',
+        href: '/shop/drinkware',
+      },
+    ],
+  },
+  {
+    staticSide: 'right' as const,
+    staticPanel: {
+      title: 'Glassware',
+      src: '/store/images/collection/glassware_bn.png',
+      alt: 'Everyday drinkware collection',
+      href: '/shop/glassware',
+    },
+    slides: [
+      {
+        title: 'Glassware 1',
+        src: '/store/images/collection/Glassware1_bn.png',
+        alt: 'Glassware 1 collection',
+        href: '/shop/glassware',
+      },
+      {
+        title: 'Shot Glasses',
+        src: '/store/images/collection/glassware_1.png',
+        alt: 'Shot glasses collection',
+        href: '/shop/glassware',
+      },
+      // {
+      //   title: 'Whiskey Glasses',
+      //   src: 'https://www.blackcarrot.in/cdn/shop/files/6_Whisky_Glass_Set.jpg?v=1768302156&width=1200',
+      //   alt: 'Whiskey glasses collection',
+      //   href: '/shop/glassware',
+      // },
+      // {
+      //   title: 'Stemware',
+      //   src: 'https://www.blackcarrot.in/cdn/shop/files/stemware-glasses.jpg?v=1768302936&width=1200',
+      //   alt: 'Stemware collection',
+      //   href: '/shop/glassware',
+      // },
+    ],
+  },
+  {
+    staticSide: 'left' as const,
+    staticPanel: {
+      title: 'KITCHEN ORGANISERS',
+      src: '/store/images/collection/kitchen_organisers_bn.png',
+      alt: 'jars-and-containers collection',
+      href: '/shop/jars-and-containers',
+    },
+    slides: [
+      {
+        title: 'Jars and containers',
+        src: '/store/images/collection/jars-and-containers_bn.png',
+        alt: 'Jars and containers collection',
+        href: '/shop/jars-and-containers',
+      },
+      {
+        title: 'kitchenware_2',
+        src: '/store/images/collection/kitchenware_2.png',
+        alt: 'kitchenware_2 collection',
+        href: '/shop/jars-and-containers',
+      },
+      {
+        title: 'kitchenware_1',
+        src: '/store/images/collection/kitchenware_1.png',
+        alt: 'kitchenware_1 collection',
+        href: '/shop/jars-and-containers',
+      },
+    ],
+  },
+  // {
+  //   staticSide: 'right' as const,
+  //   staticPanel: {
+  //     title: 'Jars and Containers',
+  //     src: '/store/images/category_images/CC_GLASSWARE.png',
+  //     alt: 'Jars and containers collection',
+  //     href: '/shop/jars-and-containers',
+  //   },
+  //   slides: [
+  //     {
+  //       title: 'Spice Rack',
+  //       src: 'https://www.blackcarrot.in/cdn/shop/files/Black___Carrot__spice__rack.jpg?v=1769698271&width=1200',
+  //       alt: 'Spice rack collection',
+  //       href: '/shop/jars-and-containers',
+  //     },
+  //     {
+  //       title: 'Storage Jars',
+  //       src: 'https://www.blackcarrot.in/cdn/shop/files/BlackCarrot_Container.jpg?v=1769698426&width=1200',
+  //       alt: 'Storage jars collection',
+  //       href: '/shop/jars-and-containers',
+  //     },
+  //   ],
+  // },
 ];
 
-export default function CuratedGifting() {
+type CollectionRow = (typeof collectionRows)[number];
+type CollectionPanel = CollectionRow['staticPanel'];
+type CollectionSlide = CollectionRow['slides'][number];
+type MobilePanel = CollectionPanel | CollectionSlide;
+
+function StaticPanel({ panel, priority }: { panel: CollectionPanel; priority: boolean }) {
   return (
-    <section style={{ padding: '50px 0', background: '#fff' }}>
-      <div style={{ maxWidth: 1360, margin: '0 auto', padding: '0 45px' }}>
-        <h1 className="collection-hero-title">Welcome to nestcase, where modern style meets local excellence.</h1>
-        <h2 className="section-title">Our Collection</h2>
-        <div className="collection-grid-2x2">
-          {collectionImages.map((item, i) => (
-            <Link key={i} href={item.href} className="collection-grid-item">
-              <img src={item.src} alt={item.alt} loading="lazy" />
-            </Link>
-          ))}
-        </div>
-      </div>
-    </section>
+    <Link href={panel.href} className="featured-panel featured-panel-static">
+      <Image
+        src={panel.src}
+        alt={panel.alt}
+        width={1120}
+        height={620}
+        priority={priority}
+        sizes="(max-width: 990px) 100vw, 60vw"
+      />
+
+    </Link>
   );
 }
 
-export function PopularCategories() {
-  const popularCategories = [
-    'https://icmedianew.gumlet.io/pub/media//home_banner/images/Best-Seller01-10.03.2026.jpg',
-    'https://icmedianew.gumlet.io/pub/media//home_banner/images/Best-Seller02-10.03.2026.jpg',
-    'https://icmedianew.gumlet.io/pub/media//home_banner/images/Best-Seller03-10.03.2026.jpg',
-    'https://icmedianew.gumlet.io/pub/media//home_banner/images/Best-Seller04-10.03.2026.jpg',
-  ];
+function SliderRail({ slides, priority }: { slides: CollectionSlide[]; priority: boolean }) {
+  const [activeSlide, setActiveSlide] = useState(0);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setActiveSlide((current) => (current + 1) % slides.length);
+    }, 3200);
+
+    return () => window.clearInterval(timer);
+  }, [slides.length]);
 
   return (
-    <section className="home-section" style={{ paddingTop: 0 }}>
-      <h2 className="section-title">Popular Categories</h2>
-      <div className="pop-cat-grid">
-        {popularCategories.map((src, i) => (
-          <div key={i} className="pop-cat-item">
-            <img src={src} alt={`Category ${i + 1}`} />
+    <div className="featured-rail" aria-label="More featured categories">
+      <div className="featured-rail-track">
+        {slides.map((slide, index) => (
+          <Link
+            href={slide.href}
+            className={`featured-panel featured-panel-rail ${index === activeSlide ? 'active' : ''}`}
+            key={slide.title}
+            aria-hidden={index === activeSlide ? undefined : true}
+            tabIndex={index === activeSlide ? undefined : -1}
+          >
+            <Image
+              src={slide.src}
+              alt={slide.alt}
+              width={760}
+              height={620}
+              priority={priority && index === 0}
+              sizes="(max-width: 990px) 100vw, 40vw"
+            />
+          </Link>
+        ))}
+      </div>
+      {slides.length > 1 && (
+        <span className="featured-panel-dots">
+          {slides.map((slide, index) => (
+            <button
+              type="button"
+              key={slide.title}
+              className={index === activeSlide ? 'active' : ''}
+              aria-label={`Show ${slide.title}`}
+              onClick={() => setActiveSlide(index)}
+            />
+          ))}
+        </span>
+      )}
+    </div>
+  );
+}
+
+export function FeaturedCollectionPanels() {
+  const mobilePanels = collectionRows.flatMap((row) => (
+    row.staticSide === 'left'
+      ? [row.staticPanel, row.slides[0]]
+      : [row.slides[0], row.staticPanel]
+  )).filter(Boolean) as MobilePanel[];
+
+  return (
+    <section className="featured-collections-section" aria-labelledby="featured-collections-title">
+      <h2 className="section-title" id="featured-collections-title">Trending</h2>
+      <div className="featured-collections">
+        {collectionRows.map((row, rowIndex) => (
+          <div
+            className={`featured-collection-row featured-collection-row-static-${row.staticSide}`}
+            key={`${row.staticPanel.title}-${rowIndex}`}
+          >
+            {row.staticSide === 'left' ? (
+              <>
+                <StaticPanel panel={row.staticPanel} priority={rowIndex === 0} />
+                <SliderRail slides={row.slides} priority={rowIndex === 0} />
+              </>
+            ) : (
+              <>
+                <SliderRail slides={row.slides} priority={rowIndex === 0} />
+                <StaticPanel panel={row.staticPanel} priority={rowIndex === 0} />
+              </>
+            )}
           </div>
+        ))}
+      </div>
+      <div className="featured-mobile-grid" aria-label="Trending collections">
+        {mobilePanels.map((panel, index) => (
+          <Link href={panel.href} className="featured-mobile-tile" key={`${panel.title}-${index}`}>
+            <Image
+              src={panel.src}
+              alt={panel.alt}
+              width={420}
+              height={520}
+              sizes="50vw"
+            />
+            <span className="featured-mobile-shade" aria-hidden="true" />
+            <span className="featured-mobile-content">
+              <span className="featured-mobile-title">{panel.title}</span>
+              <span className="featured-mobile-button">Explore Collection</span>
+            </span>
+          </Link>
         ))}
       </div>
     </section>
   );
 }
+
+// export function PopularCategories() {
+//   const popularCategories = [
+//     'https://icmedianew.gumlet.io/pub/media//home_banner/images/Best-Seller01-10.03.2026.jpg',
+//     'https://icmedianew.gumlet.io/pub/media//home_banner/images/Best-Seller02-10.03.2026.jpg',
+//     'https://icmedianew.gumlet.io/pub/media//home_banner/images/Best-Seller03-10.03.2026.jpg',
+//     'https://icmedianew.gumlet.io/pub/media//home_banner/images/Best-Seller04-10.03.2026.jpg',
+//   ];
+
+//   return (
+//     <section className="home-section home-section-no-top">
+//       <h2 className="section-title">Popular Categories</h2>
+//       <div className="pop-cat-grid">
+//         {popularCategories.map((src, i) => (
+//           <div key={i} className="pop-cat-item">
+//             <Image src={src} alt={`Category ${i + 1}`} width={420} height={280} />
+//           </div>
+//         ))}
+//       </div>
+//     </section>
+//   );
+// }
