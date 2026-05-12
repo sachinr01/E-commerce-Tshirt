@@ -96,7 +96,7 @@ export default function FAQsPage() {
       <Header />
       <main className="faqs-main">
         <section className="faqs-hero" aria-labelledby="faqs-title">
-          <h1 id="faqs-title">Frequently Asked Questions</h1>
+          <h2 id="faqs-title">Frequently Asked Questions</h2>
           <span className="faqs-title-rule" aria-hidden="true" />
           <p>
             Find answers to the most common questions about
@@ -109,7 +109,7 @@ export default function FAQsPage() {
           <section className="faqs-list" aria-label="Frequently asked questions">
             {faqGroups.map((group) => (
               <div className="faqs-group" key={group.title}>
-                <h2>{group.title}</h2>
+                <h3>{group.title}</h3>
                 <div className="faqs-group-rule" />
                 <div className="faqs-items">
                   {group.items.map((item) => (
@@ -128,21 +128,14 @@ export default function FAQsPage() {
               </div>
             ))}
           </section>
-
-          <section className="faqs-contact" aria-label="Still have a question">
-            <div className="faqs-mail-icon" aria-hidden="true">
-              <i className="fa fa-envelope" aria-hidden="true" />
-            </div>
-            <div>
-              <h2>Still have a question?</h2>
-              <p>
-                We&apos;re here to help. Reach out to us at{" "}
-                <a href="mailto:support@nestcase.in">support@nestcase.in</a>
-              </p>
-            </div>
-          </section>
         </div>
       </main>
+
+      <section className="faqs-cta" aria-label="Shop now">
+        <h2>Still have a question?</h2>
+        <p>We're here to help. Reach out to us at support@nestcase.in</p>
+        <a href="/#" className="faqs-cta-btn">Email Now</a>
+      </section>
 
       <Footer />
     </div>

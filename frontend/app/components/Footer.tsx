@@ -10,17 +10,6 @@ type FooterPage = {
   title: string;
 };
 
-type FooterPost = {
-  slug: string;
-  title: string;
-  date: string;
-};
-
-type FooterProduct = {
-  slug: string;
-  title: string;
-};
-
 type FooterCategory = {
   slug: string;
   name: string;
@@ -31,13 +20,6 @@ const normalize = (value: string) =>
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, ' ')
     .trim();
-
-const toSlug = (value: string) =>
-  String(value || '')
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
 
 const fetchFooterPages = async (): Promise<FooterPage[]> => {
   try {
@@ -70,42 +52,6 @@ const fetchCategories = async (): Promise<FooterCategory[]> => {
   }
 };
 
-const fetchPopularProducts = async (): Promise<FooterProduct[]> => {
-  try {
-    const res = await fetch('/store/api/products/best-sellers?limit=4', { cache: 'no-store' });
-    if (!res.ok) return [];
-    const data = await res.json();
-    if (!data?.success || !Array.isArray(data.data)) return [];
-    return data.data.slice(0, 4).map((p: FooterProduct) => ({ slug: p.slug, title: p.title }));
-  } catch {
-    return [];
-  }
-};
-
-const fetchLatestProducts = async (): Promise<FooterProduct[]> => {
-  try {
-    const res = await fetch('/store/api/products?sort_by=newest&limit=4', { cache: 'no-store' });
-    if (!res.ok) return [];
-    const data = await res.json();
-    if (!data?.success || !Array.isArray(data.data)) return [];
-    return data.data.slice(0, 4).map((p: FooterProduct) => ({ slug: p.slug, title: p.title }));
-  } catch {
-    return [];
-  }
-};
-
-const fetchLatestPosts = async (): Promise<FooterPost[]> => {
-  try {
-    const res = await fetch('/store/api/blogs?limit=4', { cache: 'no-store' });
-    if (!res.ok) return [];
-    const data = await res.json();
-    if (!data?.success || !Array.isArray(data.data)) return [];
-    return data.data.slice(0, 4);
-  } catch {
-    return [];
-  }
-};
-
 const resolvePageHref = (pages: FooterPage[], matchers: string[]): string | null => {
   const page = pages.find((item) => {
     const title = normalize(item.title);
@@ -116,17 +62,11 @@ const resolvePageHref = (pages: FooterPage[], matchers: string[]): string | null
 
 export default function Footer() {
   const [pages, setPages] = useState<FooterPage[]>([]);
-  const [posts, setPosts] = useState<FooterPost[]>([]);
-  const [latestProducts, setLatestProducts] = useState<FooterProduct[]>([]);
-  const [popularProducts, setPopularProducts] = useState<FooterProduct[]>([]);
   const [categories, setCategories] = useState<FooterCategory[]>([]);
 
   useEffect(() => {
     let active = true;
     fetchFooterPages().then((nextPages) => { if (active) setPages(nextPages); });
-    fetchLatestPosts().then((nextPosts) => { if (active) setPosts(nextPosts); });
-    fetchLatestProducts().then((products) => { if (active) setLatestProducts(products); });
-    fetchPopularProducts().then((products) => { if (active) setPopularProducts(products); });
     fetchCategories().then((cats) => { if (active) setCategories(cats); });
     return () => { active = false; };
   }, []);
@@ -215,77 +155,17 @@ export default function Footer() {
         <div className="footer-middle" />
       </div>
 
-      {/* footer-bottom: Shop by Price | Shop by Categories | Popular Products | Latest Products */}
-      <div className="footer-bottom">
-        <div className="footer-grid">
-          <div>
-            <h4>Shop by Price</h4>
-            <ul className="footer-nav-list" role="list">
-              <li><Link href="/shop?max=1000" className="link-faded">Gift Under 1000</Link></li>
-              <li><Link href="/shop?max=2000" className="link-faded">Gift Under 2000</Link></li>
-              <li><Link href="/shop?max=3000" className="link-faded">Gift Under 3000</Link></li>
-              <li><Link href="/shop?max=5000" className="link-faded">Gift Under 5000</Link></li>
-            </ul>
-          </div>
-          <div>
-            <h4>Popular Products</h4>
-            <ul className="footer-nav-list" role="list">
-              {popularProducts.length > 0 ? popularProducts.map((product) => (
-                <li key={product.slug}>
-                  <Link href={`/shop/product/${toSlug(product.slug || product.title)}`} className="link-faded">{product.title}</Link>
-                </li>
-              )) : (
-                <>
-                  <li><a href="#" className="link-faded">Product 1 here</a></li>
-                  <li><a href="#" className="link-faded">Product 2 here</a></li>
-                  <li><a href="#" className="link-faded">Product 3 here</a></li>
-                  <li><a href="#" className="link-faded">Product 4 here</a></li>
-                </>
-              )}
-            </ul>
-          </div>
-          <div>
-            <h4>Latest Products</h4>
-            <ul className="footer-nav-list" role="list">
-              {latestProducts.length > 0 ? latestProducts.map((product) => (
-                <li key={product.slug}>
-                  <Link href={`/shop/product/${toSlug(product.slug || product.title)}`} className="link-faded">{product.title}</Link>
-                </li>
-              )) : (
-                <>
-                  <li><a href="#" className="link-faded">Product 1 here</a></li>
-                  <li><a href="#" className="link-faded">Product 2 here</a></li>
-                  <li><a href="#" className="link-faded">Product 3 here</a></li>
-                  <li><a href="#" className="link-faded">Product 4 here</a></li>
-                </>
-              )}
-            </ul>
-          </div>
-          <div>
-            <h4>Latest Posts</h4>
-            <ul className="footer-nav-list" role="list">
-              {posts.length > 0 ? posts.map((post) => (
-                <li key={post.slug}>
-                  <Link href={`/blog/${post.slug}`} className="link-faded footer-post-title">{post.title}</Link>
-                </li>
-              )) : (
-                <>
-                  <li><a href="#" className="link-faded">Post 1</a></li>
-                  <li><a href="#" className="link-faded">Post 2</a></li>
-                  <li><a href="#" className="link-faded">Post 3</a></li>
-                  <li><a href="#" className="link-faded">Post 4</a></li>
-                </>
-              )}
-            </ul>
-          </div>
-        </div>
-      </div>
+
 
       {/* footer-bottom2: Popular Search */}
       <div className="footer-bottom2">
         <h4>Popular Search</h4>
         <p className="popular_search--p">
           {[
+            { label: 'Gift Under 1000',     href: '/shop?max=1000' },
+            { label: 'Gift Under 2000',     href: '/shop?max=2000' },
+            { label: 'Gift Under 3000',     href: '/shop?max=3000' },
+            { label: 'Gift Under 5000',     href: '/shop?max=5000' },
             { label: 'Glassware',          href: '/shop/glassware' },
             { label: 'Drinkware',          href: '/shop/drinkware' },
             { label: 'Jars and containers', href: '/shop/jars-and-containers' },
@@ -306,24 +186,25 @@ export default function Footer() {
       </div>
 
       <div className="footer-legal">
-        <div className="footer-payment-row" aria-label="Accepted payment methods">
-          <p>We Accept</p>
-          <span className="footer-payment-badge footer-payment-image">
-            <Image src="/store/images/icons/visa.jpg" alt="Visa" width={42} height={22} />
-          </span>
-          <span className="footer-payment-badge footer-payment-image">
-            <Image src="/store/images/icons/master-c.jpg" alt="Mastercard" width={42} height={22} />
-          </span>
-          <span className="footer-payment-badge footer-payment-image">
-            <Image src="/store/images/icons/rupay_icon.png" alt="rupay" width={42} height={22} />
-          </span>
-          <span className="footer-payment-badge footer-payment-image">
-            <Image src="/store/images/icons/paytm_icon.png" alt="paytm" width={42} height={22} />
-          </span>
-          <p>and more..</p>
+        <div className="footer-legal-bottom">
+          <p>nestcase.in &copy; 2026</p>
+          <div className="footer-payment-row" aria-label="Accepted payment methods">
+            <p>We Accept</p>
+            <span className="footer-payment-badge footer-payment-image">
+              <Image src="/store/images/icons/visa.jpg" alt="Visa" width={42} height={22} />
+            </span>
+            <span className="footer-payment-badge footer-payment-image">
+              <Image src="/store/images/icons/master-c.jpg" alt="Mastercard" width={42} height={22} />
+            </span>
+            <span className="footer-payment-badge footer-payment-image">
+              <Image src="/store/images/icons/rupay_icon.png" alt="rupay" width={42} height={22} />
+            </span>
+            <span className="footer-payment-badge footer-payment-image">
+              <Image src="/store/images/icons/paytm_icon.png" alt="paytm" width={42} height={22} />
+            </span>
+            <p>and more..</p>
+          </div>
         </div>
-        <div className="footer-legal-divider" />
-        <p>nestcase.in &copy; 2026</p>
       </div>
     </footer>
   );

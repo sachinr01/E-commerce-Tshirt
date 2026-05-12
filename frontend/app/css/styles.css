@@ -2474,7 +2474,7 @@ input[type="checkbox"] {
 .footer-payment-row {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  gap: 2px;
   line-height: 1.4;
 }
 
@@ -2498,7 +2498,6 @@ input[type="checkbox"] {
 .footer-legal p {
   margin: 0;
   color: inherit;
-  text-align: center;
   line-height: 1.5;
 }
 
@@ -3455,6 +3454,157 @@ input[type="checkbox"] {
 }
 
 /* â”€â”€â”€ TRENDING CATEGORIES â”€â”€â”€ */
+.featured-collections-section {
+  background: #fff;
+  padding: 30px 0 36px;
+}
+.featured-collections {
+  display: flex;
+  flex-direction: column;
+  gap: 19px;
+  width: 100%;
+  max-width: none;
+  margin: 0 auto;
+  padding: 0 16px;
+  background: #fff;
+}
+.featured-collection-row {
+  display: grid;
+  gap: 19px;
+  height: 420px;
+}
+
+.featured-collection-row-static-left {
+  grid-template-columns: 60% calc(40% - 19px);
+}
+.featured-collection-row-static-right {
+  grid-template-columns: calc(40% - 19px) 60%;
+}
+.featured-panel {
+  position: relative;
+  display: block;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  color: #fff;
+  text-decoration: none;
+  background: #f4f0eb;
+}
+.featured-panel img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+.featured-panel:hover img {
+  transform: scale(1.025);
+}
+.featured-rail {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  background: #f4f0eb;
+}
+.featured-rail-track {
+  position: relative;
+  height: 100%;
+}
+.featured-panel-rail {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(18px);
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+.featured-panel-rail.active {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(0);
+}
+.featured-panel-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.04) 0%, rgba(0, 0, 0, 0.08) 44%, rgba(0, 0, 0, 0.76) 100%);
+  pointer-events: none;
+}
+.featured-panel-shade-top {
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.92) 0%, rgba(0, 0, 0, 0.46) 32%, rgba(0, 0, 0, 0.08) 64%, rgba(0, 0, 0, 0.18) 100%);
+}
+.featured-panel-content {
+  position: absolute;
+  left: 40px;
+  right: 40px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  text-align: center;
+}
+.featured-panel-content-bottom {
+  bottom: 48px;
+}
+.featured-panel-content-top {
+  top: 74px;
+}
+.featured-panel-title {
+  max-width: 720px;
+  font-size: clamp(30px, 3vw, 44px);
+  font-weight: 300;
+  letter-spacing: 0.01em;
+  line-height: 1.1;
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.25);
+}
+.featured-panel-kicker {
+  font-size: clamp(20px, 1.8vw, 30px);
+  font-weight: 300;
+  letter-spacing: 0.04em;
+  line-height: 1.15;
+  text-transform: uppercase;
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.3);
+}
+.featured-panel-rule {
+  width: min(420px, 82%);
+  height: 1px;
+  margin: 12px auto 22px;
+  background: rgba(255, 255, 255, 0.72);
+}
+.featured-panel-button {
+  min-width: 250px;
+  padding: 11px 24px;
+  background: #fff;
+  color: #111;
+  font-size: clamp(17px, 1.4vw, 24px);
+  font-weight: 300;
+  line-height: 1.15;
+}
+.featured-panel-dots {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 12px;
+  z-index: 3;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+.featured-panel-dots button {
+  width: 9px;
+  height: 9px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.28);
+  cursor: pointer;
+}
+.featured-panel-dots button.active {
+  background: #111;
+}
+.featured-mobile-grid {
+  display: none;
+}
+
 .cat-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -3538,7 +3688,7 @@ input[type="checkbox"] {
 /* â”€â”€â”€ FULL-WIDTH BANNER â”€â”€â”€ */
 .video-banner {
   width: 100%;
-  height: 519px;
+  height: 468px;
   position: relative;
   overflow: hidden;
 }
@@ -11269,27 +11419,27 @@ input[type="checkbox"] {
 .contact-form input,
 .contact-form textarea {
   width: 100%;
-  border: 1px solid #bbb7b2 !important;
-  background: #fff;
-  color: #111;
+  border: 1px solid #bbb7b2;
   border-radius: 0;
+  background: rgba(255, 255, 255, 0.82);
+  color: #111;
   outline: none;
   box-shadow: none;
   font-family: Lato, Arial, sans-serif !important;
-  font-size: 15.5px;
+  font-size: 13px;
   font-weight: 400;
   line-height: 1;
 }
 
 .contact-form input {
-  height: 73px;
-  padding: 0 24px;
+  height: 50px;
+  padding: 0 20px;
 }
 
 .contact-form textarea {
-  min-height: 201px;
+  min-height: 74px;
   resize: vertical;
-  padding: 31px 24px;
+  padding: 18px 20px;
   line-height: 1.45;
 }
 
@@ -11300,16 +11450,13 @@ input[type="checkbox"] {
 }
 
 .contact-form button {
-  height: 62px;
+  height: 40px;
   margin-top: 10px;
   border: 0;
   background: #000;
   color: #fff;
   cursor: pointer;
-  font-family: Lato, Arial, sans-serif !important;
   font-size: 14px;
-  font-weight: 900;
-  letter-spacing: 0.22em;
   line-height: 1;
   text-transform: uppercase;
 }
@@ -11349,11 +11496,11 @@ input[type="checkbox"] {
   }
 
   .contact-form input {
-    height: 60px;
+    height: 50px;
   }
 
   .contact-form textarea {
-    min-height: 160px;
+    min-height: 74px;
   }
 
 }
@@ -11369,10 +11516,6 @@ input[type="checkbox"] {
 .faqs-shell *::before,
 .faqs-shell *::after {
   box-sizing: border-box;
-}
-
-.faqs-main {
-  padding: 0 0 62px;
 }
 
 .faqs-hero {
@@ -11523,6 +11666,61 @@ input[type="checkbox"] {
   text-underline-offset: 2px;
 }
 
+.faqs-contact-btn {
+  margin-left: auto;
+  display: inline-block;
+  padding: 12px 28px;
+  background: #c0392b;
+  color: #fff !important;
+  text-decoration: none !important;
+  font-weight: 600;
+  font-size: 15px;
+  border-radius: 4px;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+
+.faqs-contact-btn:hover {
+  background: #a93226;
+}
+
+.faqs-cta {
+  text-align: center;
+  padding: 72px 24px;
+  background: #f4f0eb;
+  margin-top: 62px;
+}
+
+.faqs-cta h2 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #10110f;
+  margin: 0 0 12px;
+}
+
+.faqs-cta p {
+  font-size: 15px;
+  color: #555;
+  margin: 0 0 28px;
+}
+
+.faqs-cta-btn {
+  display: inline-block;
+  padding: 13px 36px;
+  background: #10110f;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+
+.faqs-cta-btn:hover {
+  background: #333;
+}
+
 @media (max-width: 900px) {
   .faqs-hero {
     padding-top: 66px;
@@ -11547,6 +11745,14 @@ input[type="checkbox"] {
 
   .faqs-mail-icon {
     margin: 0 auto;
+  }
+
+  .faqs-cta {
+    padding: 48px 24px;
+  }
+
+  .faqs-cta h2 {
+    font-size: 22px;
   }
 
 }

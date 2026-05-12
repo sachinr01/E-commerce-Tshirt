@@ -3,7 +3,7 @@ import Header from './components/Header';
 import Slider from './components/Slider';
 import NewlyLaunched, { BestSellers } from './components/NewArrivals';
 import VideoBanner from './components/SalesEvent';
-import CuratedGifting from './components/PopularProducts';
+import { FeaturedCollectionPanels } from './components/PopularProducts';
 import GiftingWorld from './components/GiftingWorld';
 import LatestPosts from './components/LatestPosts';
 import Footer from './components/Footer';
@@ -90,7 +90,7 @@ export default async function Home() {
       />
       <Header />
       <Slider />
-      <CuratedGifting />
+      <FeaturedCollectionPanels />
       <NewlyLaunched />
       <VideoBanner />
       <GiftingWorld />

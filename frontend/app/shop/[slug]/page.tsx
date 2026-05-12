@@ -22,26 +22,40 @@ function DualRangeSlider({ min, max, valueMin, valueMax, onChangeMin, onChangeMa
   min: number; max: number; valueMin: number; valueMax: number;
   onChangeMin: (v: number) => void; onChangeMax: (v: number) => void;
 }) {
+  const [localMin, setLocalMin] = useState(valueMin);
+  const [localMax, setLocalMax] = useState(valueMax);
+
+  useEffect(() => { setLocalMin(valueMin); }, [valueMin]);
+  useEffect(() => { setLocalMax(valueMax); }, [valueMax]);
+
   const range = max - min || 1;
-  const leftPct  = ((valueMin - min) / range) * 100;
-  const rightPct = ((valueMax - min) / range) * 100;
+  const leftPct  = ((localMin - min) / range) * 100;
+  const rightPct = ((localMax - min) / range) * 100;
   return (
     <div className="drs-outer">
       <div className="drs-values-row">
-        <span className="drs-val-bubble">{CURRENCY}{valueMin.toLocaleString()}</span>
+        <span className="drs-val-bubble">{CURRENCY}{localMin.toLocaleString()}</span>
         <span className="drs-val-sep">-</span>
-        <span className="drs-val-bubble">{CURRENCY}{valueMax.toLocaleString()}</span>
+        <span className="drs-val-bubble">{CURRENCY}{localMax.toLocaleString()}</span>
       </div>
       <div className="drs-track-row">
         <div className="drs-track">
           <div className="drs-fill" style={{ left: `${leftPct}%`, width: `${rightPct - leftPct}%` }}/>
         </div>
-        <input type="range" className="drs-input drs-min" min={min} max={max} value={valueMin}
+        <input type="range" className="drs-input drs-min" min={min} max={max} value={localMin}
           aria-label="Minimum price"
-          onChange={e => onChangeMin(Math.min(Number(e.target.value), valueMax - 1))}/>
-        <input type="range" className="drs-input drs-max" min={min} max={max} value={valueMax}
+          onChange={e => {
+            const v = Math.min(Number(e.target.value), localMax - 1);
+            setLocalMin(v);
+            onChangeMin(v);
+          }}/>
+        <input type="range" className="drs-input drs-max" min={min} max={max} value={localMax}
           aria-label="Maximum price"
-          onChange={e => onChangeMax(Math.max(Number(e.target.value), valueMin + 1))}/>
+          onChange={e => {
+            const v = Math.max(Number(e.target.value), localMin + 1);
+            setLocalMax(v);
+            onChangeMax(v);
+          }}/>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { getProducts, getImageUrl, getBestSellers, type Product } from '../lib/api';
 import { formatPrice, formatPriceRange } from '../lib/price';
@@ -103,16 +103,62 @@ function SkeletonCard() {
   );
 }
 
-function ProductGrid({ title, products, loading }: { title: string; products: Product[]; loading: boolean }) {
+function ProductGrid({
+  title,
+  products,
+  loading,
+  scrollable = false,
+}: {
+  title: string;
+  products: Product[];
+  loading: boolean;
+  scrollable?: boolean;
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const scrollProducts = (direction: 'prev' | 'next') => {
+    const row = scrollRef.current;
+    if (!row) return;
+
+    row.scrollBy({
+      left: row.clientWidth * (direction === 'next' ? 0.85 : -0.85),
+      behavior: 'smooth',
+    });
+  };
+
   return (
-    <div className="na-section">
+    <div className={`na-section${scrollable ? ' na-scroll-section' : ''}`}>
       <h3 className="na-section-title">{title}</h3>
-      <div className="na-grid">
+      {scrollable && (
+        <button
+          className="na-scroll-btn na-scroll-btn-prev"
+          type="button"
+          aria-label={`Scroll ${title} left`}
+          onClick={() => scrollProducts('prev')}
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+        </button>
+      )}
+      <div ref={scrollRef} className={`na-grid${scrollable ? ' na-grid-scroll' : ''}`}>
         {loading
-          ? Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)
+          ? Array.from({ length: scrollable ? 8 : 4 }).map((_, i) => <SkeletonCard key={i} />)
           : products.map((p, i) => <ProductCard key={p.ID} p={p} idx={i} />)
         }
       </div>
+      {scrollable && (
+        <button
+          className="na-scroll-btn na-scroll-btn-next"
+          type="button"
+          aria-label={`Scroll ${title} right`}
+          onClick={() => scrollProducts('next')}
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M9 6l6 6-6 6" />
+          </svg>
+        </button>
+      )}
     </div>
   );
 }
@@ -122,15 +168,15 @@ export default function NewArrivals() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getProducts(new URLSearchParams({ sort_by: 'newest', limit: '5' }))
-      .then(all => setProducts(all.slice(0, 5)))
+    getProducts(new URLSearchParams({ sort_by: 'newest', limit: '12' }))
+      .then(all => setProducts(all.slice(0, 12)))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
   return (
     <section className="na-outer na-outer-top">
-      <ProductGrid title="Newly Launched Products" products={products} loading={loading} />
+      <ProductGrid title="Newly Launched Products" products={products} loading={loading} scrollable />
       <div className="na-view-all-wrap btn-view-product-wrap">
         <Link href="/shop" className="na-view-all-btn btn-view-product btn-view-product--inline">View All Products</Link>
       </div>

@@ -33,6 +33,7 @@ const nextConfig: NextConfig = {
     unoptimized: false,
     remotePatterns: [
       { protocol: 'https', hostname: 'www.oceancowboy.com' },
+      { protocol: 'https', hostname: 'www.blackcarrot.in' },
     ],
     dangerouslyAllowSVG: false,
   },

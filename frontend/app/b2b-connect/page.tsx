@@ -4,6 +4,7 @@ import Header from "../components/Header";
 import Slider from "../components/Slider";
 import Footer from "../components/Footer";
 import { getProductCategories, type ProductCategory } from "../lib/api";
+import B2BForm from "./B2BForm";
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? "NESTCASE";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3001";
@@ -132,35 +133,7 @@ export default async function B2BConnectPage() {
               with you.
             </p>
           </div>
-          <form className="b2b-form">
-            <div className="b2b-form-row">
-              <label>
-                <span>Your Name</span>
-                <input type="text" name="name" placeholder="Your Name" />
-              </label>
-              <label>
-                <span>Business Name</span>
-                <input type="text" name="business" placeholder="Business Name" />
-              </label>
-            </div>
-            <div className="b2b-form-row">
-              <label>
-                <span>Email Address</span>
-                <input type="email" name="email" placeholder="Email Address" />
-              </label>
-              <label>
-                <span>Phone Number</span>
-                <input type="tel" name="phone" placeholder="Phone Number" />
-              </label>
-            </div>
-            <label>
-              <span>Requirements</span>
-              <textarea name="requirements" placeholder="Tell us about your requirements" />
-            </label>
-            <button className="b2b-button" type="button">
-              Request Callback <span aria-hidden="true">-&gt;</span>
-            </button>
-          </form>
+          <B2BForm />
         </section>
       </main>
       <Footer />
