@@ -703,17 +703,17 @@ export default function CheckoutPage() {
       <>
         <Header />
         <div className="dima-main checkout-page">
-          <nav style={{ padding: '13px 48px', fontSize: 13, color: '#888', display: 'flex', gap: 6, alignItems: 'center', borderBottom: '1px solid #ececec', background: '#fff', flexWrap: 'wrap' as const }}>
-            <Link href="/" style={{ color: '#888', textDecoration: 'none' }}>Home</Link>
-            <span aria-hidden="true">&gt;</span>
-            <Link href="/shop" style={{ color: '#888', textDecoration: 'none' }}>Shop</Link>
-            <span aria-hidden="true">&gt;</span>
-            <span style={{ color: '#1c1c1c', fontWeight: 500 }}>Checkout</span>
+          <nav className="cart-breadcrumb">
+            <Link href="/">Home</Link>
+            <span className="cart-breadcrumb-separator">›</span>
+            <Link href="/shop">Shop</Link>
+            <span className="cart-breadcrumb-separator">›</span>
+            <span className="cart-breadcrumb-current">Checkout</span>
           </nav>
           <section className="section">
             <div className="page-section-content overflow-hidden checkout-content">
-              <div className="checkout-container" style={{ textAlign: 'center', padding: '64px 20px' }}>
-                <p style={{ fontSize: 18, marginBottom: 20 }}>Your cart is empty.</p>
+              <div className="checkout-container checkout-empty">
+                <p className="checkout-empty-msg">Your cart is empty.</p>
                 <Link href="/shop" className="btn-view-product btn-view-product--inline">Go to Shop</Link>
               </div>
             </div>
@@ -738,12 +738,12 @@ export default function CheckoutPage() {
       />
       <Header />
       <div className="dima-main checkout-page">
-        <nav style={{ padding: '13px 48px', fontSize: 13, color: '#888', display: 'flex', gap: 6, alignItems: 'center', borderBottom: '1px solid #ececec', background: '#fff', flexWrap: 'wrap' as const }}>
-          <Link href="/" style={{ color: '#888', textDecoration: 'none' }}>Home</Link>
-          <span className="csp-bsep" aria-hidden="true">&gt;</span>
-          <Link href="/shop" style={{ color: '#888', textDecoration: 'none' }}>Shop</Link>
-          <span className="csp-bsep" aria-hidden="true">&gt;</span>
-          <span style={{ color: '#1c1c1c', fontWeight: 500 }}>Checkout</span>
+        <nav className="cart-breadcrumb">
+          <Link href="/">Home</Link>
+          <span className="cart-breadcrumb-separator">›</span>
+          <Link href="/shop">Shop</Link>
+          <span className="cart-breadcrumb-separator">›</span>
+          <span className="cart-breadcrumb-current">Checkout</span>
         </nav>
 
         <section className="section">
@@ -793,7 +793,7 @@ export default function CheckoutPage() {
                     )}
                   </div>
                   {couponMsg && (
-                    <p className="checkout-coupon-msg" style={{ color: couponMsg.ok ? '#2e7d32' : '#c62828' }}>
+                    <p className={`checkout-coupon-msg ${couponMsg.ok ? 'ok' : 'err'}`}>
                       {couponMsg.text}
                     </p>
                   )}
@@ -817,12 +817,12 @@ export default function CheckoutPage() {
                     <button type="button" className="btn-view-product btn-view-product--inline" onClick={() => void handlePasswordLogin()} disabled={loginLoading}>
                       {loginLoading ? 'Logging in...' : 'Login'}
                     </button>
-                    <a href="#" className="lost-pass" style={{ fontSize: 13 }}>Lost Password?</a>
+                    <a href="#" className="lost-pass">Lost Password?</a>
                   </div>
                   {loginError && <p className="checkout-auth-feedback error">{loginError}</p>}
                   <div className="checkout-google-wrap">
                     <div className="checkout-auth-divider"><span>or</span></div>
-                    <p style={{ margin: 0, fontSize: 13, color: '#6f6459' }}>
+                    <p className="checkout-google-hint">
                       Sign in with Google to reuse your saved account and checkout details.
                     </p>
                     <div ref={googleButtonRef} className="checkout-google-button" />
@@ -841,26 +841,26 @@ export default function CheckoutPage() {
                       <div className="field">
                         <label className="required">First Name</label>
                         <input type="text" placeholder="First Name *" value={contactFirstName} onChange={(e) => setContactFirstName(e.target.value)} aria-label="First Name" />
-                        {errors.contactFirstName && <span data-error style={errStyle}>{errors.contactFirstName}</span>}
+                        {errors.contactFirstName && <span data-error className="csp-field-error">{errors.contactFirstName}</span>}
                       </div>
                       <div className="field">
                         <label className="required">Last Name</label>
                         <input type="text" placeholder="Last Name *" value={contactLastName} onChange={(e) => setContactLastName(e.target.value)} aria-label="Last Name" />
-                        {errors.contactLastName && <span data-error style={errStyle}>{errors.contactLastName}</span>}
+                        {errors.contactLastName && <span data-error className="csp-field-error">{errors.contactLastName}</span>}
                       </div>
                     </div>
                     <div className="field">
                       <label className="required">Email Address</label>
                       <input type="email" placeholder="Email Address *" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} aria-label="Email Address" />
-                      {errors.contactEmail && <span data-error style={errStyle}>{errors.contactEmail}</span>}
+                      {errors.contactEmail && <span data-error className="csp-field-error">{errors.contactEmail}</span>}
                     </div>
                     <div className="checkout-inline-row">
                       <div className="field">
                         <label className="required">Mobile</label>
                         <input type="tel" placeholder="Mobile *" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} aria-label="Mobile" />
-                        {errors.contactPhone && <span data-error style={errStyle}>{errors.contactPhone}</span>}
+                        {errors.contactPhone && <span data-error className="csp-field-error">{errors.contactPhone}</span>}
                       </div>
-                      <div className="field" style={{ display: 'flex', alignItems: 'center', color: '#666', fontSize: 13 }}>
+                      <div className="field csp-otp-hint">
                         Verify your contact details with simple OTP for smooth delivery process.
                       </div>
                     </div>
@@ -870,7 +870,6 @@ export default function CheckoutPage() {
                         type="button"
                         className="checkout-toggle-label"
                         onClick={() => { setShowRegister(true); setRegError(''); setRegSuccess(''); }}
-                        style={{ cursor: 'pointer', userSelect: 'none', background: 'transparent', border: 'none', padding: 0 }}
                       >
                         <div className="ck-box" />
                         Create an account?
@@ -916,7 +915,7 @@ export default function CheckoutPage() {
                       </>
                     )}
 
-                    {errors.shipping && <span data-error style={errStyle}>{errors.shipping}</span>}
+                    {errors.shipping && <span data-error className="csp-field-error">{errors.shipping}</span>}
 
                     {/* Show shipping form when: no previous cards, or user clicked "new address" */}
                     {(!isLoggedIn || (!loadingPrev && (prevShippingCards.length === 0 || selectedShippingKey === null))) && (
@@ -925,19 +924,19 @@ export default function CheckoutPage() {
                           <div className="field">
                             <label className="required">First Name</label>
                             <input type="text" placeholder="First Name *" value={shipForm.firstName} onChange={(e) => setShipForm((f) => ({ ...f, firstName: e.target.value }))} aria-label="Shipping First Name" />
-                            {errors.shipFirstName && <span data-error style={errStyle}>{errors.shipFirstName}</span>}
+                            {errors.shipFirstName && <span data-error className="csp-field-error">{errors.shipFirstName}</span>}
                           </div>
                           <div className="field">
                             <label className="required">Last Name</label>
                             <input type="text" placeholder="Last Name *" value={shipForm.lastName} onChange={(e) => setShipForm((f) => ({ ...f, lastName: e.target.value }))} aria-label="Shipping Last Name" />
-                            {errors.shipLastName && <span data-error style={errStyle}>{errors.shipLastName}</span>}
+                            {errors.shipLastName && <span data-error className="csp-field-error">{errors.shipLastName}</span>}
                           </div>
                         </div>
                         <div className="checkout-inline-row">
                           <div className="field">
                             <label>Phone No.</label>
                             <input type="tel" placeholder="Phone No. *" value={shipForm.phone} onChange={(e) => setShipForm((f) => ({ ...f, phone: e.target.value }))} aria-label="Shipping Phone" />
-                            {errors.shipPhone && <span data-error style={errStyle}>{errors.shipPhone}</span>}
+                            {errors.shipPhone && <span data-error className="csp-field-error">{errors.shipPhone}</span>}
                           </div>
                           <div className="field">
                             <label>Company Name</label>
@@ -947,7 +946,7 @@ export default function CheckoutPage() {
                         <div className="field">
                           <label className="required">Address</label>
                           <input type="text" placeholder="Address *" value={shipForm.address1} onChange={(e) => setShipForm((f) => ({ ...f, address1: e.target.value }))} aria-label="Address" />
-                          {errors.shipAddress && <span data-error style={errStyle}>{errors.shipAddress}</span>}
+                          {errors.shipAddress && <span data-error className="csp-field-error">{errors.shipAddress}</span>}
                         </div>
                         <div className="field">
                           <input type="text" placeholder="Apartment, suite, unit etc. (optional)" value={shipForm.address2} onChange={(e) => setShipForm((f) => ({ ...f, address2: e.target.value }))} aria-label="Address line 2" />
@@ -955,7 +954,7 @@ export default function CheckoutPage() {
                         <div className="field">
                           <label className="required">Town / City</label>
                           <input type="text" placeholder="Town / City *" value={shipForm.city} onChange={(e) => setShipForm((f) => ({ ...f, city: e.target.value }))} aria-label="Town / City" />
-                          {errors.shipCity && <span data-error style={errStyle}>{errors.shipCity}</span>}
+                          {errors.shipCity && <span data-error className="csp-field-error">{errors.shipCity}</span>}
                         </div>
                         <div className="checkout-inline-row">
                           <div className="field">
@@ -972,23 +971,22 @@ export default function CheckoutPage() {
                                 </option>
                               ))}
                             </select>
-                            {errors.shipState && <span data-error style={errStyle}>{errors.shipState}</span>}
+                            {errors.shipState && <span data-error className="csp-field-error">{errors.shipState}</span>}
                           </div>
                           <div className="field">
                             <label className="required">Postcode / Zip</label>
                             <input type="text" placeholder="Postcode / Zip *" value={shipForm.postcode} onChange={(e) => setShipForm((f) => ({ ...f, postcode: e.target.value }))} aria-label="Postcode / Zip" />
-                            {errors.shipZip && <span data-error style={errStyle}>{errors.shipZip}</span>}
+                            {errors.shipZip && <span data-error className="csp-field-error">{errors.shipZip}</span>}
                           </div>
                         </div>
                       </>
                     )}
 
                     {/* ── Billing same as shipping ──────────────────────────── */}
-                    <div className="field" style={{ marginTop: 16 }}>
+                    <div className="field csp-billing-toggle">
                       <div
                         className="checkout-toggle-label"
                         onClick={() => setBillingSameAsShipping(v => !v)}
-                        style={{ cursor: 'pointer', userSelect: 'none' }}
                       >
                         <div className={`ck-box ${billingSameAsShipping ? 'checked' : ''}`} />
                         Same as shipping address
@@ -997,8 +995,8 @@ export default function CheckoutPage() {
 
                     {/* ── Billing Address ──────────────────────────────────── */}
                     {!billingSameAsShipping && (
-                      <div className="checkout-shipping-box" style={{ marginTop: 12 }}>
-                        <h5 style={{ marginBottom: 12 }}>Billing Address</h5>
+                      <div className="checkout-shipping-box">
+                        <h5 className="csp-billing-title">Billing Address</h5>
 
                         {isLoggedIn && !loadingPrev && prevBillingCards.length > 0 && (
                           <>
@@ -1030,7 +1028,7 @@ export default function CheckoutPage() {
                           </>
                         )}
 
-                        {errors.billing && <span data-error style={errStyle}>{errors.billing}</span>}
+                        {errors.billing && <span data-error className="csp-field-error">{errors.billing}</span>}
 
                         {(!isLoggedIn || (!loadingPrev && (prevBillingCards.length === 0 || selectedBillingKey === null))) && (
                           <>
@@ -1038,19 +1036,19 @@ export default function CheckoutPage() {
                               <div className="field">
                                 <label className="required">First Name</label>
                                 <input type="text" placeholder="First Name *" value={billForm.firstName} onChange={(e) => setBillForm((f) => ({ ...f, firstName: e.target.value }))} aria-label="Billing First Name" />
-                                {errors.billFirstName && <span data-error style={errStyle}>{errors.billFirstName}</span>}
+                                {errors.billFirstName && <span data-error className="csp-field-error">{errors.billFirstName}</span>}
                               </div>
                               <div className="field">
                                 <label className="required">Last Name</label>
                                 <input type="text" placeholder="Last Name *" value={billForm.lastName} onChange={(e) => setBillForm((f) => ({ ...f, lastName: e.target.value }))} aria-label="Billing Last Name" />
-                                {errors.billLastName && <span data-error style={errStyle}>{errors.billLastName}</span>}
+                                {errors.billLastName && <span data-error className="csp-field-error">{errors.billLastName}</span>}
                               </div>
                             </div>
                             <div className="checkout-inline-row">
                               <div className="field">
                                 <label>Phone No.</label>
                                 <input type="tel" placeholder="Phone No. *" value={billForm.phone} onChange={(e) => setBillForm((f) => ({ ...f, phone: e.target.value }))} aria-label="Billing Phone" />
-                                {errors.billPhone && <span data-error style={errStyle}>{errors.billPhone}</span>}
+                                {errors.billPhone && <span data-error className="csp-field-error">{errors.billPhone}</span>}
                               </div>
                               <div className="field">
                                 <label>Company Name</label>
@@ -1060,7 +1058,7 @@ export default function CheckoutPage() {
                             <div className="field">
                               <label className="required">Address</label>
                               <input type="text" placeholder="Address *" value={billForm.address1} onChange={(e) => setBillForm((f) => ({ ...f, address1: e.target.value }))} aria-label="Billing Address" />
-                              {errors.billAddress && <span data-error style={errStyle}>{errors.billAddress}</span>}
+                              {errors.billAddress && <span data-error className="csp-field-error">{errors.billAddress}</span>}
                             </div>
                             <div className="field">
                               <input type="text" placeholder="Apartment, suite, unit etc. (optional)" value={billForm.address2} onChange={(e) => setBillForm((f) => ({ ...f, address2: e.target.value }))} aria-label="Billing Address line 2" />
@@ -1068,7 +1066,7 @@ export default function CheckoutPage() {
                             <div className="field">
                               <label className="required">Town / City</label>
                               <input type="text" placeholder="Town / City *" value={billForm.city} onChange={(e) => setBillForm((f) => ({ ...f, city: e.target.value }))} aria-label="Billing Town / City" />
-                              {errors.billCity && <span data-error style={errStyle}>{errors.billCity}</span>}
+                              {errors.billCity && <span data-error className="csp-field-error">{errors.billCity}</span>}
                             </div>
                             <div className="checkout-inline-row">
                               <div className="field">
@@ -1085,12 +1083,12 @@ export default function CheckoutPage() {
                                     </option>
                                   ))}
                                 </select>
-                                {errors.billState && <span data-error style={errStyle}>{errors.billState}</span>}
+                                {errors.billState && <span data-error className="csp-field-error">{errors.billState}</span>}
                               </div>
                               <div className="field">
                                 <label className="required">Postcode / Zip</label>
                                 <input type="text" placeholder="Postcode / Zip *" value={billForm.postcode} onChange={(e) => setBillForm((f) => ({ ...f, postcode: e.target.value }))} aria-label="Billing Postcode / Zip" />
-                                {errors.billZip && <span data-error style={errStyle}>{errors.billZip}</span>}
+                                {errors.billZip && <span data-error className="csp-field-error">{errors.billZip}</span>}
                               </div>
                             </div>
                           </>
@@ -1098,7 +1096,7 @@ export default function CheckoutPage() {
                       </div>
                     )}
 
-                    <div className="field last" style={{ marginTop: 16 }}>
+                    <div className="field last csp-notes-field">
                       <label>Order Notes</label>
                       <textarea rows={4} placeholder="Order notes (optional)" value={notes} onChange={(e) => setNotes(e.target.value)} aria-label="Order Notes" />
                     </div>
@@ -1114,14 +1112,14 @@ export default function CheckoutPage() {
                           <strong>{formatPrice(total)}</strong>
                         </div>
                         {discount > 0 && (
-                          <div className="checkout-summary-row" style={{ color: '#2e7d32' }}>
+                          <div className="checkout-summary-row csp-discount-row">
                             <span>Discount ({appliedCoupon?.code})</span>
                             <strong>−{formatPrice(discount)}</strong>
                           </div>
                         )}
                         <div className="checkout-summary-row">
                           <span>Shipping &amp; Handling</span>
-                          <strong style={{ color: '#2e7d32' }}>Free</strong>
+                          <strong className="csp-free-shipping">Free</strong>
                         </div>
                         <div className="checkout-summary-total">
                           <span>Order Total</span>
@@ -1130,7 +1128,7 @@ export default function CheckoutPage() {
                       </div>
 
                       <div className="checkout-order-items-card">
-                        <h4 className="checkout-subsection-title checkout-order-items-title" style={{ marginTop: 0 }}>Your Items</h4>
+                        <h4 className="checkout-subsection-title checkout-order-items-title">Your Items</h4>
                         <div className="checkout-order-items">
                           {items.map((item) => (
                             <div key={item.cartItemId} className="checkout-order-item">
@@ -1166,7 +1164,7 @@ export default function CheckoutPage() {
 
                       {showPayment && (
                         <>
-                          <h4 className="checkout-subsection-title" style={{ marginTop: 20 }}>Payment Method</h4>
+                          <h4 className="checkout-subsection-title csp-payment-title">Payment Method</h4>
                           <div className="checkout-payment-list">
                             <div className={`checkout-payment-item ${paymentMethod === 'cod' ? 'selected' : ''}`}>
                               <label className="checkout-payment-label">
@@ -1195,8 +1193,8 @@ export default function CheckoutPage() {
                           </div>
 
                           {showCardDetails && (
-                            <div className="checkout-card-box" style={{ marginTop: 14 }}>
-                              <h5 style={{ marginBottom: 10 }}>Card Details</h5>
+                            <div className="checkout-card-box">
+                              <h5 className="csp-card-title">Card Details</h5>
                               <div className="field">
                                 <label>Name on Card</label>
                                 <input type="text" placeholder="Full name" value={cardName} onChange={(e) => setCardName(e.target.value)} autoComplete="cc-name" />
@@ -1218,23 +1216,23 @@ export default function CheckoutPage() {
                             </div>
                           )}
 
-                          <button type="submit" style={{ marginTop: 20 }} className="button fill uppercase checkout-submit" disabled={placing}>
+                          <button type="submit" className="button fill uppercase checkout-submit" disabled={placing}>
                             {placing ? 'Placing Order...' : 'Place Order'}
                           </button>
 
-                          {orderError && <div style={{ color: '#c62828', fontSize: 13, marginBottom: 10 }}>{orderError}</div>}
+                          {orderError && <div className="csp-order-error">{orderError}</div>}
 
                           <div className="field checkout-terms">
                             <div
-                              style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, userSelect: 'none' }}
+                              className="csp-terms-row"
                               onClick={() => setTerms(v => !v)}
                             >
                               <div className={`ck-box ${terms ? 'checked' : ''}`} />
-                              <span style={{ color: '#2563eb', fontWeight: 600 }}>
+                              <span className="csp-terms-link">
                                 I&apos;ve read and accept the <a href="#" onClick={e => e.stopPropagation()}>terms &amp; conditions</a>
                               </span>
                             </div>
-                            {errors.terms && <span data-error style={{ ...errStyle, display: 'block', marginTop: 4 }}>{errors.terms}</span>}
+                            {errors.terms && <span data-error className="csp-field-error csp-terms-error">{errors.terms}</span>}
                           </div>
                         </>
                       )}
@@ -1289,4 +1287,5 @@ export default function CheckoutPage() {
   );
 }
 
-const errStyle: React.CSSProperties = { color: '#c62828', fontSize: 12, marginTop: 2 };
+
+
