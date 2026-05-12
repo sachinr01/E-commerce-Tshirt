@@ -2880,6 +2880,75 @@ input[type="checkbox"] {
   gap: 24px;
 }
 
+.na-scroll-section {
+  position: relative;
+}
+
+.na-grid-scroll {
+  display: flex;
+  grid-template-columns: none;
+  overflow-x: auto;
+  overflow-y: hidden;
+  gap: 24px;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 0 14px;
+  scrollbar-width: none;
+}
+
+.na-grid-scroll .na-card {
+  flex: 0 0 calc((100% - 96px) / 5);
+  min-width: 220px;
+  scroll-snap-align: start;
+}
+
+.na-grid-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.na-scroll-btn {
+  position: absolute;
+  top: 45%;
+  z-index: 25;
+  width: 46px;
+  height: 46px;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  color: #22311d;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.16);
+  transform: translateY(-50%);
+  transition: transform 160ms ease, color 160ms ease, box-shadow 160ms ease;
+}
+
+.na-scroll-btn svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.na-scroll-btn:hover {
+  color: #1a8a6e;
+  box-shadow: 0 8px 22px rgba(0,0,0,0.2);
+  transform: translateY(-50%) scale(1.04);
+}
+
+.na-scroll-btn-prev {
+  left: 12px;
+}
+
+.na-scroll-btn-next {
+  right: 12px;
+}
+
 .na-card {
   display: flex;
   flex-direction: column;
@@ -3113,12 +3182,38 @@ input[type="checkbox"] {
   .na-grid {
     grid-template-columns: repeat(4, 1fr);
   }
+
+  .na-grid-scroll .na-card {
+    flex-basis: calc((100% - 72px) / 4);
+  }
 }
 
 @media (max-width: 768px) {
   .na-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 16px;
+  }
+
+  .na-grid-scroll {
+    gap: 16px;
+  }
+
+  .na-grid-scroll .na-card {
+    flex-basis: calc((100% - 16px) / 2);
+    min-width: 190px;
+  }
+
+  .na-scroll-btn {
+    width: 40px;
+    height: 40px;
+  }
+
+  .na-scroll-btn-prev {
+    left: 8px;
+  }
+
+  .na-scroll-btn-next {
+    right: 8px;
   }
 
   .na-outer {
@@ -3130,6 +3225,20 @@ input[type="checkbox"] {
   .na-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
+  }
+
+  .na-grid-scroll {
+    gap: 12px;
+  }
+
+  .na-grid-scroll .na-card {
+    flex-basis: calc((100% - 12px) / 2);
+    min-width: 150px;
+  }
+
+  .na-scroll-btn {
+    width: 36px;
+    height: 36px;
   }
 
   .na-price {
