@@ -3671,7 +3671,7 @@ input[type="checkbox"] {
 .featured-collection-row {
   display: grid;
   gap: 19px;
-  height: 420px;
+  /* height: 420px; */
 }
 
 .featured-collection-row-static-left {
