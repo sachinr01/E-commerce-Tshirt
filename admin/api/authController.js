@@ -17,11 +17,12 @@ const ITOA64 = './0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz
 const BREVO_API_KEY =
   process.env.BREVO_API_KEY || process.env.SENDINBLUE_API_KEY || '';
 const BREVO_SENDER_EMAIL =
-  process.env.BREVO_SENDER_EMAIL || 'rupeshmutkule2005@gmail.com';
+  process.env.BREVO_SENDER_EMAIL ;
 const BREVO_SENDER_NAME = process.env.BREVO_SENDER_NAME || 'NESTCASE';
 const RESET_TOKEN_HASH_META = 'password_reset_token_hash';
 const RESET_TOKEN_EXPIRES_META = 'password_reset_token_expires';
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
+const MAX_BCRYPT_PASSWORD_BYTES = 72;
 
 const roleSlugFromType = (type) => {
   if (type === 1) return 'admin';
@@ -113,21 +114,78 @@ function setSessionUser(req, user) {
   req.touchSession();
 }
 
+async function setUserMetaEntries(userId, entries) {
+  const normalizedEntries = (Array.isArray(entries) ? entries : [])
+    .filter((entry) => entry && entry.metaKey)
+    .map((entry) => ({
+      metaKey: String(entry.metaKey),
+      metaValue: String(entry.metaValue ?? ''),
+    }));
+
+  if (!normalizedEntries.length) {
+    return;
+  }
+
+  const conn = await db.getConnection();
+  const lockKey = `usermeta:${userId}`;
+
+  try {
+    const [[lockRow]] = await conn.query('SELECT GET_LOCK(?, 5) AS got_lock', [lockKey]);
+    if (!lockRow || Number(lockRow.got_lock) !== 1) {
+      throw new Error('Could not acquire user meta lock.');
+    }
+
+    await conn.beginTransaction();
+    const metaKeys = [...new Set(normalizedEntries.map((entry) => entry.metaKey))];
+    await conn.query(
+      'DELETE FROM tbl_usermeta WHERE user_id = ? AND meta_key IN (?)',
+      [userId, metaKeys]
+    );
+    const rows = normalizedEntries.map((entry) => [userId, entry.metaKey, entry.metaValue]);
+    await conn.query(
+      'INSERT INTO tbl_usermeta (user_id, meta_key, meta_value) VALUES ?',
+      [rows]
+    );
+    await conn.commit();
+  } catch (err) {
+    try {
+      await conn.rollback();
+    } catch {}
+    throw err;
+  } finally {
+    try {
+      await conn.query('SELECT RELEASE_LOCK(?)', [lockKey]);
+    } catch {}
+    conn.release();
+  }
+}
+
 async function setUserMeta(userId, metaKey, metaValue) {
-  await db.query('DELETE FROM tbl_usermeta WHERE user_id = ? AND meta_key = ?', [userId, metaKey]);
-  await db.query(
-    'INSERT INTO tbl_usermeta (user_id, meta_key, meta_value) VALUES (?, ?, ?)',
-    [userId, metaKey, String(metaValue ?? '')]
-  );
+  await setUserMetaEntries(userId, [{ metaKey, metaValue }]);
 }
 
 async function deleteUserMeta(userId, metaKey) {
   await db.query('DELETE FROM tbl_usermeta WHERE user_id = ? AND meta_key = ?', [userId, metaKey]);
 }
 
+function validateBcryptPasswordLength(password) {
+  const bytes = Buffer.byteLength(String(password ?? ''), 'utf8');
+  if (bytes > MAX_BCRYPT_PASSWORD_BYTES) {
+    return 'Password is too long — please shorten it.';
+  }
+  return null;
+}
+
 async function clearPasswordResetToken(userId) {
   await deleteUserMeta(userId, RESET_TOKEN_HASH_META);
   await deleteUserMeta(userId, RESET_TOKEN_EXPIRES_META);
+}
+
+async function clearPasswordResetTokenInConn(conn, userId) {
+  await conn.query(
+    'DELETE FROM tbl_usermeta WHERE user_id = ? AND meta_key IN (?)',
+    [userId, [RESET_TOKEN_HASH_META, RESET_TOKEN_EXPIRES_META]]
+  );
 }
 
 function escapeHtml(value) {
@@ -140,11 +198,34 @@ function escapeHtml(value) {
 }
 
 function getFrontendBaseUrl() {
-  return (
+  const rawBase = (
     process.env.FRONTEND_URL ||
     process.env.NEXT_PUBLIC_SITE_URL ||
     'http://localhost:3001'
   ).replace(/\/+$/, '');
+
+  try {
+    const url = new URL(rawBase);
+    const isLocalhost = ['localhost', '127.0.0.1', '::1'].includes(url.hostname);
+
+    if (process.env.NODE_ENV === 'production' && isLocalhost) {
+      throw new Error(
+        `Invalid FRONTEND_URL/NEXT_PUBLIC_SITE_URL for production: ${rawBase}. Set it to your public domain.`,
+      );
+    }
+
+    if (!isLocalhost && url.port === '3001') {
+      url.port = '';
+    }
+    return url.toString().replace(/\/+$/, '');
+  } catch {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(
+        `Unable to determine a production frontend URL from FRONTEND_URL/NEXT_PUBLIC_SITE_URL: ${rawBase}`,
+      );
+    }
+    return rawBase;
+  }
 }
 
 async function sendBrevoEmail({ toEmail, toName, subject, html }) {
@@ -315,6 +396,11 @@ const register = async (req, res) => {
       return res.status(409).json({ success: false, message: 'Username or email already exists.' });
     }
 
+    const passwordLengthError = validateBcryptPasswordLength(password);
+    if (passwordLengthError) {
+      return res.status(400).json({ success: false, message: passwordLengthError });
+    }
+
     const hashed = await bcrypt.hash(password, 12);
     const nicename = toSlug(username);
 
@@ -462,14 +548,16 @@ const googleLogin = async (req, res) => {
       throw new Error('Google account could not be loaded.');
     }
 
-    await setUserMeta(userId, 'auth_provider', 'google');
-    await setUserMeta(userId, 'google_sub', googleUser.sub);
-    await setUserMeta(userId, 'google_email', googleUser.email);
-    await setUserMeta(userId, 'google_name', googleUser.name);
-    await setUserMeta(userId, 'google_picture', googleUser.picture);
-    if (googleUser.givenName) await setUserMeta(userId, 'first_name', googleUser.givenName);
-    if (googleUser.familyName) await setUserMeta(userId, 'last_name', googleUser.familyName);
-    if (googleUser.hd) await setUserMeta(userId, 'google_hd', googleUser.hd);
+    await setUserMetaEntries(userId, [
+      { metaKey: 'auth_provider', metaValue: 'google' },
+      { metaKey: 'google_sub', metaValue: googleUser.sub },
+      { metaKey: 'google_email', metaValue: googleUser.email },
+      { metaKey: 'google_name', metaValue: googleUser.name },
+      { metaKey: 'google_picture', metaValue: googleUser.picture },
+      ...(googleUser.givenName ? [{ metaKey: 'first_name', metaValue: googleUser.givenName }] : []),
+      ...(googleUser.familyName ? [{ metaKey: 'last_name', metaValue: googleUser.familyName }] : []),
+      ...(googleUser.hd ? [{ metaKey: 'google_hd', metaValue: googleUser.hd }] : []),
+    ]);
 
     const oldSessionId = req.sessionId;
     const guestCookieId = req.guestId || null;
@@ -592,6 +680,10 @@ const updateProfile = async (req, res) => {
       if (!ok) {
         return res.status(400).json({ success: false, message: 'Current password is incorrect.' });
       }
+      const passwordLengthError = validateBcryptPasswordLength(newPassword);
+      if (passwordLengthError) {
+        return res.status(400).json({ success: false, message: passwordLengthError });
+      }
       newHash = await bcrypt.hash(newPassword, 12);
     }
 
@@ -663,10 +755,21 @@ const requestPasswordReset = async (req, res) => {
     const tokenHash = sha256(rawToken);
     const expiresAt = String(Date.now() + RESET_TOKEN_TTL_MS);
 
-    await setUserMeta(user.ID, RESET_TOKEN_HASH_META, tokenHash);
-    await setUserMeta(user.ID, RESET_TOKEN_EXPIRES_META, expiresAt);
+    await setUserMetaEntries(user.ID, [
+      { metaKey: RESET_TOKEN_HASH_META, metaValue: tokenHash },
+      { metaKey: RESET_TOKEN_EXPIRES_META, metaValue: expiresAt },
+    ]);
 
-    const frontendBase = getFrontendBaseUrl();
+    let frontendBase;
+    try {
+      frontendBase = getFrontendBaseUrl();
+    } catch (urlErr) {
+      console.error('requestPasswordReset frontend URL error:', urlErr);
+      return res.status(500).json({
+        success: false,
+        message: 'Password reset is not configured correctly. Set FRONTEND_URL to your public domain.',
+      });
+    }
     const resetUrl = `${frontendBase}/store/reset-password?token=${encodeURIComponent(rawToken)}`;
     const displayName = user.display_name || user.user_login || 'there';
     const emailHtml = `
@@ -783,9 +886,26 @@ const resetPassword = async (req, res) => {
       });
     }
 
+    const passwordLengthError = validateBcryptPasswordLength(password);
+    if (passwordLengthError) {
+      return res.status(400).json({ success: false, message: passwordLengthError });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 12);
-    await db.query('UPDATE tbl_users SET user_pass = ? WHERE ID = ?', [hashedPassword, record.ID]);
-    await clearPasswordResetToken(record.ID);
+    const conn = await db.getConnection();
+    try {
+      await conn.beginTransaction();
+      await conn.query('UPDATE tbl_users SET user_pass = ? WHERE ID = ?', [hashedPassword, record.ID]);
+      await clearPasswordResetTokenInConn(conn, record.ID);
+      await conn.commit();
+    } catch (txErr) {
+      try {
+        await conn.rollback();
+      } catch {}
+      throw txErr;
+    } finally {
+      conn.release();
+    }
 
     return res.json({
       success: true,

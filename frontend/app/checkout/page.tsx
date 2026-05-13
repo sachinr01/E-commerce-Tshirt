@@ -344,6 +344,10 @@ export default function CheckoutPage() {
       setResetError('Please enter and confirm your new password.');
       return;
     }
+    if (resetNewPassword.length < 6) {
+      setResetError('Password must be at least 6 characters long.');
+      return;
+    }
     if (resetNewPassword !== resetConfirmPassword) {
       setResetError('Passwords do not match.');
       return;

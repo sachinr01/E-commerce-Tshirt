@@ -37,7 +37,7 @@ export default function ResetPasswordPage() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
-    setToken(params.get('token')?.trim() || '');
+    setToken(params.get('token')?.trim() || params.get('reset')?.trim() || '');
   }, []);
 
   useEffect(() => {
