@@ -41,6 +41,7 @@ type MegaMenu = {
   isKitchen?: boolean;
   isDrinkware?: boolean;
   isGlassware?: boolean;
+  categorySlug?: string;
 };
 
 export default function Header() {
@@ -160,7 +161,7 @@ export default function Header() {
     }, 280);
   };
 
-  const [aboutHref, setAboutHref] = useState("#");
+  const [aboutHref] = useState("/about-us");
   const [b2bHref, setB2bHref] = useState("/b2b-connect");
 
   useEffect(() => {
@@ -175,28 +176,40 @@ export default function Header() {
           );
           return page?.slug ? `/${page.slug}` : null;
         };
-        const about = resolve(['about us', 'our story', 'about']);
-        if (about) setAboutHref(about);
         const b2b = resolve(['b2b connect', 'b2b-connect', 'b2b']);
         if (b2b) setB2bHref(b2b);
       })
       .catch(() => {});
   }, []);
 
+  type NavCategory = { id: number; name: string; slug: string };
+  const [navCategories, setNavCategories] = useState<NavCategory[]>([]);
+
+  useEffect(() => {
+    fetch('/store/api/product-categories', { headers: { Accept: 'application/json' } })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (!data?.success || !Array.isArray(data.data)) return;
+        const topLevel = data.data
+          .filter((c: any) => !c.parent_id || Number(c.parent_id) === 0)
+          .map((c: any) => ({ id: c.category_id, name: c.category_name, slug: c.category_slug }));
+        setNavCategories(topLevel);
+      })
+      .catch(() => {});
+  }, []);
+
   const navLinks: Array<{ label: string; href: string; mega?: MegaMenu }> = [
-    { label: "DRINKWARE", href: "/shop/drinkware", mega: { columns: [], featured: [], isDrinkware: true } },
-    { label: "GLASSWARE", href: "/shop/glassware", mega: { columns: [], featured: [], isGlassware: true } },
-    { label: "KITCHEN ORGANISERS", href: "/shop/jars-and-containers", mega: { columns: [], featured: [], isKitchen: true } },
+    ...navCategories.map(cat => ({
+      label: cat.name.toUpperCase(),
+      href: `/shop/${cat.slug}`,
+      mega: { columns: [], featured: [], categorySlug: cat.slug } as MegaMenu,
+    })),
     { label: "ABOUT US", href: aboutHref },
     { label: "B2B CONNECT", href: b2bHref },
   ];
 
-  const [kitchenProducts, setKitchenProducts] = useState<Array<{ id: number; title: string; price: string; image: string; slug: string }>>([]);
-  const [drinkwareProducts, setDrinkwareProducts] = useState<Array<{ id: number; title: string; price: string; image: string; slug: string }>>([]);
-  const [glasswareProducts, setGlasswareProducts] = useState<Array<{ id: number; title: string; price: string; image: string; slug: string }>>([]);
-  const [kitchenBestSellers, setKitchenBestSellers] = useState<Array<{ id: number; title: string; price: string; image: string; slug: string }>>([]);
-  const [drinkwareBestSellers, setDrinkwareBestSellers] = useState<Array<{ id: number; title: string; price: string; image: string; slug: string }>>([]);
-  const [glasswareBestSellers, setGlasswareBestSellers] = useState<Array<{ id: number; title: string; price: string; image: string; slug: string }>>([]);
+  const [catProducts, setCatProducts] = useState<Record<string, Array<{ id: number; title: string; price: string; image: string; slug: string }>>>({});
+  const [catBestSellers, setCatBestSellers] = useState<Record<string, Array<{ id: number; title: string; price: string; image: string; slug: string }>>>({});
 
   const mapProducts = (raw: any[]) => raw.slice(0, 4).map((p: any) => {
     const raw_img = p.thumbnail_url ?? '';
@@ -214,19 +227,15 @@ export default function Header() {
   });
 
   useEffect(() => {
-    const fetchCat = (cat: string, setter: (v: any[]) => void) =>
-      fetch(`/store/api/product-categories/${cat}/products`, { headers: { Accept: 'application/json' } })
-        .then(r => r.json()).then(json => setter(mapProducts(json.data ?? json ?? []))).catch(() => {});
-    const fetchBestSellers = (cat: string, setter: (v: any[]) => void) =>
-      fetch(`/store/api/products/best-sellers?category=${cat}&limit=2`, { headers: { Accept: 'application/json' } })
-        .then(r => r.json()).then(json => setter(mapProducts(json.data ?? []))).catch(() => {});
-    fetchCat('jars-and-containers', setKitchenProducts);
-    fetchCat('drinkware', setDrinkwareProducts);
-    fetchCat('glassware', setGlasswareProducts);
-    fetchBestSellers('jars-and-containers', setKitchenBestSellers);
-    fetchBestSellers('drinkware', setDrinkwareBestSellers);
-    fetchBestSellers('glassware', setGlasswareBestSellers);
-  }, []);
+    if (!navCategories.length) return;
+    navCategories.forEach(cat => {
+      fetch(`/store/api/product-categories/${cat.slug}/products`, { headers: { Accept: 'application/json' } })
+        .then(r => r.json()).then(json => setCatProducts(prev => ({ ...prev, [cat.slug]: mapProducts(json.data ?? json ?? []) }))).catch(() => {});
+      fetch(`/store/api/products/best-sellers?category=${cat.slug}&limit=2`, { headers: { Accept: 'application/json' } })
+        .then(r => r.json()).then(json => setCatBestSellers(prev => ({ ...prev, [cat.slug]: mapProducts(json.data ?? []) }))).catch(() => {});
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navCategories]);
 
   const closeOverlays = () => { setCartOpen(false); setSearchOpen(false); setMobileSearchOpen(false); setMobileMenuOpen(false); setActiveMenu(null); };
   const openMega = (label: string) => { if (megaLeaveTimer.current) clearTimeout(megaLeaveTimer.current); setActiveMenu(label); };
@@ -248,15 +257,7 @@ export default function Header() {
               <button type="button" className="nh-icon-btn nh-hamburger" onClick={() => setMobileMenuOpen(true)} aria-label="Open menu">
                 <span className="nh-hamburger-lines"><span /><span /><span /></span>
               </button>
-            </div>
 
-            <div className="nh-top-center">
-              <Link href="/" className="nh-logo-link" onClick={closeOverlays}>
-                <Image src="/store/images/nestcase-logo-optimized.png" alt="Nestcase" width={220} height={80} priority className="nh-logo-image" />
-              </Link>
-            </div>
-
-            <div className="nh-top-right">
               {/* Desktop search */}
               <div className="nh-header-search" ref={searchWrapRef}>
                 <form className="nh-header-search-form" onSubmit={handleSearchSubmit}>
@@ -310,7 +311,15 @@ export default function Header() {
                   </div>
                 )}
               </div>
+            </div>
 
+            <div className="nh-top-center">
+              <Link href="/" className="nh-logo-link" onClick={closeOverlays}>
+                <Image src="/store/images/nestcase-logo-optimized.png" alt="Nestcase" width={220} height={80} priority className="nh-logo-image" />
+              </Link>
+            </div>
+
+            <div className="nh-top-right">
               {/* Mobile search icon */}
               <button type="button" className="nh-icon-btn nh-mobile-search" onClick={() => setMobileSearchOpen(true)} aria-label="Open search">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
@@ -372,21 +381,15 @@ export default function Header() {
                         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9"/></svg>
                       </Link>
                       <div className={`nh-mega-panel${activeMenu === link.label ? ' open' : ''}`} onMouseEnter={keepMega} onMouseLeave={closeMega}>
-                        {(link.mega.isKitchen || link.mega.isDrinkware || link.mega.isGlassware) ? (() => {
-                          const products = link.mega.isKitchen ? kitchenProducts : link.mega.isDrinkware ? drinkwareProducts : glasswareProducts;
-                          const bestSellers = link.mega.isKitchen ? kitchenBestSellers : link.mega.isDrinkware ? drinkwareBestSellers : glasswareBestSellers;
+                        {(link.mega.isKitchen || link.mega.isDrinkware || link.mega.isGlassware || link.mega.categorySlug) ? (() => {
+                          const slug = link.mega.categorySlug
+                            ?? (link.mega.isKitchen ? 'jars-and-containers' : link.mega.isDrinkware ? 'drinkware' : 'glassware');
+                          const products = catProducts[slug] ?? [];
+                          const bestSellers = catBestSellers[slug] ?? [];
                           const shopHref = link.href;
-                          const promos = link.mega.isKitchen
-                            ? [
-                                { img: '/store/images/category_images/CC_KITCHEN_ORGANISERS.png', title: 'OUR KITCHEN COLLECTION', sub: '150+ Products Available', badge: false, cta: false },
-                              ]
-                            : link.mega.isDrinkware
-                            ? [
-                                { img: '/store/images/category_images/CC_TUMBLERS.png', title: 'OUR DRINKWARE COLLECTION', sub: '150+ Products Available', badge: false, cta: false },
-                              ]
-                            : [
-                                { img: '/store/images/category_images/CC_GLASSWARE.png', title: 'OUR GLASSWARE COLLECTION', sub: '150+ Products Available', badge: false, cta: false },
-                              ];
+                          const promos = [
+                            { img: `/store/images/category_images/CC_${slug.toUpperCase().replace(/-/g, '_')}.png`, title: `OUR ${link.label} COLLECTION`, sub: '150+ Products Available', badge: false, cta: false },
+                          ];
                           const placeholder = <span className="nh-km-placeholder"><svg viewBox="0 0 48 48" fill="none"><rect width="48" height="48" fill="#e8e8e8"/><path d="M14 34l8-10 6 7 4-5 6 8H14z" fill="#bbb"/><circle cx="30" cy="20" r="4" fill="#bbb"/></svg></span>;
                           return (
                             <div className="nh-km-layout">

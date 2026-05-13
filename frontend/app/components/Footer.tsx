@@ -146,6 +146,9 @@ export default function Footer() {
                 <a href="#" className="footer-social-icon footer-social-icon--pinterest" aria-label="pinterest">
                   <Image src="/store/images/icons/pinterest.png" alt="pinterest" width={24} height={24} />
                 </a>
+                <a href="#" className="footer-social-icon footer-social-icon--linkedin" aria-label="LinkedIn">
+                  <Image src="/store/images/icons/linkedin.png" alt="LinkedIn" width={24} height={24} />
+                </a>
               </li>
             </ul>
           </div>
