@@ -171,7 +171,7 @@ async function deleteUserMeta(userId, metaKey) {
 function validateBcryptPasswordLength(password) {
   const bytes = Buffer.byteLength(String(password ?? ''), 'utf8');
   if (bytes > MAX_BCRYPT_PASSWORD_BYTES) {
-    return 'Password is too long — please shorten it.';
+    return 'Password is too long - please shorten it.';
   }
   return null;
 }
@@ -214,6 +214,9 @@ function getFrontendBaseUrl() {
       );
     }
 
+    if (url.pathname === '/store' || url.pathname === '/store/') {
+      url.pathname = '';
+    }
     if (!isLocalhost && url.port === '3001') {
       url.port = '';
     }
@@ -226,6 +229,48 @@ function getFrontendBaseUrl() {
     }
     return rawBase;
   }
+}
+
+function getResetCheckoutBaseUrl() {
+  const rawResetUrl = (process.env.RESET_URL || '').replace(/\/+$/, '');
+
+  if (rawResetUrl) {
+    let url;
+    try {
+      url = new URL(rawResetUrl);
+    } catch {
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error(
+          `Invalid RESET_URL for production: ${rawResetUrl}. Set it to your public checkout URL, for example https://gaffis.org/store/checkout.`,
+        );
+      }
+      return rawResetUrl;
+    }
+
+    const isLocalhost = ['localhost', '127.0.0.1', '::1'].includes(url.hostname);
+    if (process.env.NODE_ENV === 'production') {
+      if (isLocalhost) {
+        throw new Error(
+          `Invalid RESET_URL for production: ${rawResetUrl}. Set it to your public checkout URL, for example https://gaffis.org/store/checkout.`,
+        );
+      }
+      if (url.pathname === '/' || url.pathname === '') {
+        throw new Error(
+          `RESET_URL must point to the checkout page in production. Example: https://gaffis.org/store/checkout.`,
+        );
+      }
+    }
+
+    return url.toString().replace(/\/+$/, '');
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(
+      'RESET_URL is not configured. Set RESET_URL to your public checkout URL, for example https://gaffis.org/store/checkout.',
+    );
+  }
+
+  return `${getFrontendBaseUrl()}/store/checkout`;
 }
 
 async function sendBrevoEmail({ toEmail, toName, subject, html }) {
@@ -760,17 +805,17 @@ const requestPasswordReset = async (req, res) => {
       { metaKey: RESET_TOKEN_EXPIRES_META, metaValue: expiresAt },
     ]);
 
-    let frontendBase;
+    let resetBaseUrl;
     try {
-      frontendBase = getFrontendBaseUrl();
+      resetBaseUrl = getResetCheckoutBaseUrl();
     } catch (urlErr) {
       console.error('requestPasswordReset frontend URL error:', urlErr);
       return res.status(500).json({
         success: false,
-        message: 'Password reset is not configured correctly. Set FRONTEND_URL to your public domain.',
+        message: 'Password reset is not configured correctly. Set RESET_URL to your public checkout URL.',
       });
     }
-    const resetUrl = `${frontendBase}/reset-password?token=${encodeURIComponent(rawToken)}`;;
+    const resetUrl = `${resetBaseUrl}?login=1&reset=${encodeURIComponent(rawToken)}`;
     const displayName = user.display_name || user.user_login || 'there';
     const emailHtml = `
       <div style="margin:0; padding:0; background:#f5efe8;">
@@ -927,3 +972,4 @@ module.exports = {
   requestPasswordReset,
   resetPassword,
 };
+
