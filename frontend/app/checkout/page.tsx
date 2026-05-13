@@ -8,7 +8,9 @@ import Footer from '../components/Footer';
 import { useCart } from '../lib/cartContext';
 import {
   authGoogleLogin,
+  authForgotPassword,
   authLogin,
+  authResetPassword,
   authRegister,
   getRecentOrderAddresses,
   getActiveCoupon,
@@ -170,6 +172,18 @@ export default function CheckoutPage() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googleScriptReady, setGoogleScriptReady] = useState(false);
   const [loginError, setLoginError] = useState('');
+  const [showForgotRecovery, setShowForgotRecovery] = useState(false);
+  const [showResetRecovery, setShowResetRecovery] = useState(false);
+  const [forgotIdentifier, setForgotIdentifier] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotError, setForgotError] = useState('');
+  const [forgotSuccess, setForgotSuccess] = useState('');
+  const [resetToken, setResetToken] = useState('');
+  const [resetNewPassword, setResetNewPassword] = useState('');
+  const [resetConfirmPassword, setResetConfirmPassword] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetError, setResetError] = useState('');
+  const [resetSuccess, setResetSuccess] = useState('');
 
   // ─── Register modal state ────────────────────────────────────────────────────
   const [showRegister, setShowRegister] = useState(false);
@@ -223,6 +237,35 @@ export default function CheckoutPage() {
     setShowLogin(false);
   }, [refresh, setUser]);
 
+  const closeForgotRecovery = useCallback(() => {
+    setShowForgotRecovery(false);
+    setForgotIdentifier('');
+    setForgotLoading(false);
+    setForgotError('');
+    setForgotSuccess('');
+  }, []);
+
+  const closeResetRecovery = useCallback(() => {
+    setShowResetRecovery(false);
+    setResetToken('');
+    setResetNewPassword('');
+    setResetConfirmPassword('');
+    setResetLoading(false);
+    setResetError('');
+    setResetSuccess('');
+  }, []);
+
+  const openForgotRecovery = useCallback(() => {
+    setShowLogin(true);
+    setShowForgotRecovery(true);
+    setShowResetRecovery(false);
+    setForgotIdentifier(loginUsername.trim());
+    setForgotError('');
+    setForgotSuccess('');
+    setResetError('');
+    setResetSuccess('');
+  }, [loginUsername]);
+
   const handleRegister = async () => {
     setRegError('');
     setRegSuccess('');
@@ -266,6 +309,70 @@ export default function CheckoutPage() {
     }
   };
 
+  const handleForgotRecovery = async () => {
+    const value = forgotIdentifier.trim();
+    if (!value) {
+      setForgotError('Please enter your username or email address.');
+      return;
+    }
+
+    setForgotLoading(true);
+    setForgotError('');
+    setForgotSuccess('');
+
+    try {
+      const res = await authForgotPassword(value);
+      if (res.success) {
+        setForgotSuccess(res.message || 'A password reset link has been sent.');
+        setForgotIdentifier('');
+      } else {
+        setForgotError(res.message || 'Unable to process your request.');
+      }
+    } catch {
+      setForgotError('Could not connect to the server.');
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const handleResetRecovery = async () => {
+    if (!resetToken) {
+      setResetError('This reset link is invalid or missing its token.');
+      return;
+    }
+    if (!resetNewPassword || !resetConfirmPassword) {
+      setResetError('Please enter and confirm your new password.');
+      return;
+    }
+    if (resetNewPassword !== resetConfirmPassword) {
+      setResetError('Passwords do not match.');
+      return;
+    }
+
+    setResetLoading(true);
+    setResetError('');
+    setResetSuccess('');
+
+    try {
+      const res = await authResetPassword(resetToken, resetNewPassword, resetConfirmPassword);
+      if (res.success) {
+        setResetSuccess(res.message || 'Password updated successfully.');
+        setResetNewPassword('');
+        setResetConfirmPassword('');
+        setTimeout(() => {
+          closeResetRecovery();
+          router.replace('/checkout?login=1');
+        }, 1800);
+      } else {
+        setResetError(res.message || 'Unable to reset password.');
+      }
+    } catch {
+      setResetError('Could not connect to the server.');
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
   const handlePasswordLogin = async () => {
     if (!loginUsername.trim() || !loginPassword.trim()) {
       setLoginError('Please enter your username/email and password.');
@@ -288,6 +395,26 @@ export default function CheckoutPage() {
       setLoginLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('login') === '1') {
+      setShowLogin(true);
+    }
+    const resetParam = params.get('reset')?.trim() || '';
+    if (resetParam) {
+      setShowLogin(true);
+      setShowResetRecovery(true);
+      setResetToken(resetParam);
+      setShowForgotRecovery(false);
+      return;
+    }
+    if (params.get('forgot') === '1') {
+      setShowLogin(true);
+      setShowForgotRecovery(true);
+    }
+  }, []);
 
   const handleGoogleLogin = useCallback(async (credential: string) => {
     if (!credential) {
@@ -817,7 +944,15 @@ export default function CheckoutPage() {
                     <button type="button" className="btn-view-product btn-view-product--inline" onClick={() => void handlePasswordLogin()} disabled={loginLoading}>
                       {loginLoading ? 'Logging in...' : 'Login'}
                     </button>
-                    <a href="#" className="lost-pass">Lost Password?</a>
+                    <button
+                      type="button"
+                      className="lost-pass"
+                      onClick={() => {
+                        openForgotRecovery();
+                      }}
+                    >
+                      Lost Password?
+                    </button>
                   </div>
                   {loginError && <p className="checkout-auth-feedback error">{loginError}</p>}
                   <div className="checkout-google-wrap">
@@ -1266,7 +1401,7 @@ export default function CheckoutPage() {
             {regSuccess && <p className="register-modal-success">{regSuccess}</p>}
             <button
               type="button"
-              className="register-modal-submit"
+              className="btn-view-product register-modal-submit"
               onClick={() => void handleRegister()}
               disabled={regLoading}
             >
@@ -1282,10 +1417,113 @@ export default function CheckoutPage() {
           </div>
         </div>
       )}
+      {showForgotRecovery && (
+        <div className="register-modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) { closeForgotRecovery(); } }}>
+          <div className="register-modal">
+            <button type="button" className="register-modal-close" onClick={closeForgotRecovery} aria-label="Close">&#x2715;</button>
+            <p className="register-modal-title">Lost Password?</p>
+            <p className="register-modal-sub">Enter your username or email address and we&apos;ll send a secure reset link to your registered email.</p>
+
+            <div className="register-modal-field">
+              <label className="register-modal-label">Username or Email <span>*</span></label>
+              <input
+                className="register-modal-input"
+                type="text"
+                placeholder="Username or email"
+                value={forgotIdentifier}
+                onChange={(e) => setForgotIdentifier(e.target.value)}
+                autoComplete="username"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') void handleForgotRecovery();
+                }}
+              />
+            </div>
+
+            {forgotError && <p className="register-modal-err">{forgotError}</p>}
+            {forgotSuccess && <p className="register-modal-success">{forgotSuccess}</p>}
+
+            <button
+              type="button"
+              className="btn-view-product checkout-recovery-submit"
+              onClick={() => void handleForgotRecovery()}
+              disabled={forgotLoading}
+            >
+              {forgotLoading ? 'Sending...' : 'Send Reset Link'}
+            </button>
+
+            <div className="reset-password-foot">
+              <button type="button" className="reset-password-foot-link" onClick={closeForgotRecovery}>
+                Back to checkout login
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showResetRecovery && (
+        <div className="register-modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) { closeResetRecovery(); } }}>
+          <div className="register-modal">
+            <button type="button" className="register-modal-close" onClick={closeResetRecovery} aria-label="Close">&#x2715;</button>
+            <p className="register-modal-title">Set a new password</p>
+            <p className="register-modal-sub">Choose a strong password and confirm it below. Once saved, you can log in with the new password.</p>
+
+            {!resetToken ? (
+              <div className="reset-password-alert">
+                This reset link is invalid or incomplete. Please request a new password reset from the checkout page.
+              </div>
+            ) : (
+              <div>
+                <div className="register-modal-field">
+                  <label className="register-modal-label">New Password <span>*</span></label>
+                  <input
+                    className="register-modal-input"
+                    type="password"
+                    placeholder="Enter new password"
+                    value={resetNewPassword}
+                    onChange={(e) => setResetNewPassword(e.target.value)}
+                    autoComplete="new-password"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') void handleResetRecovery();
+                    }}
+                  />
+                </div>
+                <div className="register-modal-field">
+                  <label className="register-modal-label">Confirm Password <span>*</span></label>
+                  <input
+                    className="register-modal-input"
+                    type="password"
+                    placeholder="Confirm new password"
+                    value={resetConfirmPassword}
+                    onChange={(e) => setResetConfirmPassword(e.target.value)}
+                    autoComplete="new-password"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') void handleResetRecovery();
+                    }}
+                  />
+                </div>
+
+                {resetError && <p className="register-modal-err">{resetError}</p>}
+                {resetSuccess && <p className="register-modal-success">{resetSuccess}</p>}
+
+                <button
+                  type="button"
+                  className="btn-view-product checkout-recovery-submit"
+                  onClick={() => void handleResetRecovery()}
+                  disabled={resetLoading}
+                >
+                  {resetLoading ? 'Updating...' : 'Update Password'}
+                </button>
+              </div>
+            )}
+
+            <div className="reset-password-foot">
+              <button type="button" className="reset-password-foot-link" onClick={closeResetRecovery}>
+                Back to checkout login
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <Footer />
     </>
   );
 }
-
-
-

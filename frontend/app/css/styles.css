@@ -13458,8 +13458,167 @@ input[type="checkbox"] {
   color: #c62828 !important;
 }
 
-.lost-pass {
+.reset-password-page {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.48);
+  backdrop-filter: blur(2px);
+}
+
+.reset-password-wrap {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 0;
+  width: 100%;
+}
+
+.reset-password-card {
+  background: #fff;
+  border: 1px solid #ece7dc;
+  box-shadow: 0 18px 50px rgba(34, 49, 29, 0.08);
+  padding: 34px 32px 30px;
+  position: relative;
+}
+
+.reset-password-eyebrow {
+  margin: 0 0 8px !important;
+  color: #7b6f63 !important;
+  font-size: 12px !important;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.reset-password-title {
+  margin: 0 0 10px !important;
+}
+
+.reset-password-sub {
+  margin: 0 0 22px !important;
+  color: #343434 !important;
+}
+
+.reset-password-form {
+  display: grid;
+  gap: 14px;
+}
+
+.reset-password-form .field {
+  margin-bottom: 0;
+}
+
+.reset-password-form .field input {
+  width: 100%;
+}
+
+.reset-password-msg {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.reset-password-msg.error {
+  color: #c62828;
+}
+
+.reset-password-msg.success {
+  color: #2e7d32;
+}
+
+.reset-password-submit.btn-view-product {
+  width: 100% !important;
+  display: block !important;
+  padding-left: 16px !important;
+  padding-right: 16px !important;
+  min-height: 48px !important;
+  line-height: 1.2 !important;
+}
+
+.reset-password-strength {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.reset-password-strength.muted {
+  color: #7b6f63;
+}
+
+.reset-password-strength.warn {
+  color: #b45309;
+}
+
+.reset-password-strength.ok {
+  color: #2e7d32;
+}
+
+.reset-password-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 2;
+}
+
+.reset-password-foot {
+  margin-top: 18px;
+  font-size: 14px;
+}
+
+.reset-password-foot-link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #22311d;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.reset-password-foot a {
+  color: #22311d;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.checkout-recovery-submit {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.checkout-login-actions .lost-pass {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 !important;
+  margin: 0;
+  position: relative;
+  z-index: 2;
+  appearance: none;
+  -webkit-appearance: none;
+  font: inherit;
   font-size: 13px !important;
+  line-height: 1.4;
+  color: #1a1a1a !important;
+  cursor: pointer;
+  pointer-events: auto;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  width: auto !important;
+  box-shadow: none !important;
+}
+
+.checkout-login-actions .lost-pass:hover {
+  color: #22311d;
 }
 
 .checkout-google-hint {

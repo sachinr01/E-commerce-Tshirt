@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
+const https = require('https');
 const db = require('../config/db');
 const { mergeGuestCart } = require('./cartController');
 
@@ -13,6 +14,14 @@ const requireGoogleClientId = () => {
 };
 const GOOGLE_TOKENINFO_URL = 'https://oauth2.googleapis.com/tokeninfo?id_token=';
 const ITOA64 = './0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+const BREVO_API_KEY =
+  process.env.BREVO_API_KEY || process.env.SENDINBLUE_API_KEY || '';
+const BREVO_SENDER_EMAIL =
+  process.env.BREVO_SENDER_EMAIL || 'rupeshmutkule2005@gmail.com';
+const BREVO_SENDER_NAME = process.env.BREVO_SENDER_NAME || 'NESTCASE';
+const RESET_TOKEN_HASH_META = 'password_reset_token_hash';
+const RESET_TOKEN_EXPIRES_META = 'password_reset_token_expires';
+const RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
 
 const roleSlugFromType = (type) => {
   if (type === 1) return 'admin';
@@ -32,6 +41,7 @@ const toSlug = (value) =>
 const md5 = (val) => crypto.createHash('md5').update(val).digest('hex');
 
 const md5Buffer = (val) => crypto.createHash('md5').update(val).digest();
+const sha256 = (val) => crypto.createHash('sha256').update(val).digest('hex');
 
 const isHex32 = (val) => /^[a-f0-9]{32}$/i.test(val || '');
 
@@ -109,6 +119,100 @@ async function setUserMeta(userId, metaKey, metaValue) {
     'INSERT INTO tbl_usermeta (user_id, meta_key, meta_value) VALUES (?, ?, ?)',
     [userId, metaKey, String(metaValue ?? '')]
   );
+}
+
+async function deleteUserMeta(userId, metaKey) {
+  await db.query('DELETE FROM tbl_usermeta WHERE user_id = ? AND meta_key = ?', [userId, metaKey]);
+}
+
+async function clearPasswordResetToken(userId) {
+  await deleteUserMeta(userId, RESET_TOKEN_HASH_META);
+  await deleteUserMeta(userId, RESET_TOKEN_EXPIRES_META);
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function getFrontendBaseUrl() {
+  return (
+    process.env.FRONTEND_URL ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    'http://localhost:3001'
+  ).replace(/\/+$/, '');
+}
+
+async function sendBrevoEmail({ toEmail, toName, subject, html }) {
+  if (!BREVO_API_KEY) {
+    console.warn('Brevo API key missing. Set BREVO_API_KEY in environment.');
+    return false;
+  }
+
+  const payload = JSON.stringify({
+    sender: { name: BREVO_SENDER_NAME, email: BREVO_SENDER_EMAIL },
+    to: [{ email: toEmail, name: toName || toEmail }],
+    subject,
+    htmlContent: html,
+  });
+
+  return new Promise((resolve) => {
+    const req = https.request(
+      {
+        method: 'POST',
+        hostname: 'api.brevo.com',
+        path: '/v3/smtp/email',
+        headers: {
+          'api-key': BREVO_API_KEY,
+          'content-type': 'application/json',
+          'content-length': Buffer.byteLength(payload),
+        },
+      },
+      (res) => {
+        let body = '';
+        res.on('data', (chunk) => {
+          body += chunk;
+        });
+        res.on('end', () => {
+          if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
+            resolve(true);
+          } else {
+            console.error('Brevo send failed:', res.statusCode, body);
+            resolve(false);
+          }
+        });
+      },
+    );
+
+    req.on('error', (err) => {
+      console.error('Brevo send error:', err);
+      resolve(false);
+    });
+
+    req.write(payload);
+    req.end();
+  });
+}
+
+async function findUserByIdentifier(identifier) {
+  const value = String(identifier ?? '').trim();
+  if (!value) return null;
+
+  const [[user]] = await db.query(
+    `SELECT u.ID, u.user_login, u.user_email, u.display_name, u.user_type,
+            ut.user_type_slug
+     FROM tbl_users u
+     LEFT JOIN tbl_user_types ut ON ut.user_type_id = u.user_type
+     WHERE u.user_login = ? OR LOWER(u.user_email) = LOWER(?)
+     LIMIT 1`,
+    [value, value],
+  );
+
+  return user || null;
 }
 
 async function getAuthUserById(userId) {
@@ -542,4 +646,164 @@ const updateProfile = async (req, res) => {
   }
 };
 
-module.exports = { register, login, googleLogin, logout, me, updateProfile };
+// POST /store/api/auth/forgot-password
+const requestPasswordReset = async (req, res) => {
+  const identifier = String((req.body && req.body.identifier) || '').trim();
+  if (!identifier) {
+    return res.status(400).json({ success: false, message: 'Username or email is required.' });
+  }
+
+  try {
+    const user = await findUserByIdentifier(identifier);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    const tokenHash = sha256(rawToken);
+    const expiresAt = String(Date.now() + RESET_TOKEN_TTL_MS);
+
+    await setUserMeta(user.ID, RESET_TOKEN_HASH_META, tokenHash);
+    await setUserMeta(user.ID, RESET_TOKEN_EXPIRES_META, expiresAt);
+
+    const frontendBase = getFrontendBaseUrl();
+    const resetUrl = `${frontendBase}/store/reset-password?token=${encodeURIComponent(rawToken)}`;
+    const displayName = user.display_name || user.user_login || 'there';
+    const emailHtml = `
+      <div style="margin:0; padding:0; background:#f5efe8;">
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f5efe8; padding:32px 0;">
+          <tr>
+            <td align="center">
+              <table role="presentation" cellpadding="0" cellspacing="0" width="640" style="max-width:640px; background:#ffffff; border-radius:16px; overflow:hidden; border:1px solid #eadfce;">
+                <tr>
+                  <td style="background:#22311d; color:#ffffff; padding:24px 28px; font-family: Arial, sans-serif; font-size:22px; font-weight:700; letter-spacing:1px;">
+                    NESTCASE
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:28px; font-family: Arial, sans-serif; color:#1b1b1b;">
+                    <h2 style="margin:0 0 12px; font-size:24px; color:#22311d;">Reset your password</h2>
+                    <p style="margin:0 0 14px; color:#343434; font-size:15px; line-height:1.7;">Hi ${escapeHtml(displayName)},</p>
+                    <p style="margin:0 0 18px; color:#343434; font-size:15px; line-height:1.7;">
+                      We received a request to reset your password. Click the button below to open the password change page and choose a new password.
+                      This link will expire in 1 hour.
+                    </p>
+                    <p style="margin:0 0 24px;">
+                      <a href="${resetUrl}" style="display:inline-block; background:#22311d; color:#ffffff; text-decoration:none; padding:14px 22px; border-radius:8px; font-size:14px; font-weight:700; letter-spacing:0.04em;">
+                        Change password
+                      </a>
+                    </p>
+                    <p style="margin:0; color:#6f6459; font-size:13px; line-height:1.7;">
+                      If you did not request this change, you can safely ignore this email.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </div>
+    `;
+
+    const sent = await sendBrevoEmail({
+      toEmail: user.user_email,
+      toName: displayName,
+      subject: 'Reset your Nestcase password',
+      html: emailHtml,
+    });
+
+    if (!sent) {
+      await clearPasswordResetToken(user.ID);
+      return res.status(500).json({
+        success: false,
+        message: 'Unable to send the reset email right now. Please try again later.',
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: 'A password reset link has been sent to the registered email address.',
+    });
+  } catch (err) {
+    console.error('requestPasswordReset error:', err);
+    return res.status(500).json({ success: false, message: 'Server error.' });
+  }
+};
+
+// POST /store/api/auth/reset-password
+const resetPassword = async (req, res) => {
+  const token = String((req.body && req.body.token) || '').trim();
+  const password = String((req.body && req.body.password) || '');
+  const confirmPassword = String((req.body && req.body.confirmPassword) || '');
+
+  if (!token || !password || !confirmPassword) {
+    return res.status(400).json({
+      success: false,
+      message: 'Token, password and confirm password are required.',
+    });
+  }
+
+  if (password !== confirmPassword) {
+    return res.status(400).json({ success: false, message: 'Passwords do not match.' });
+  }
+
+  if (password.length < 6) {
+    return res.status(400).json({ success: false, message: 'Password must be at least 6 characters long.' });
+  }
+
+  try {
+    const tokenHash = sha256(token);
+    const [[record]] = await db.query(
+      `SELECT u.ID, u.display_name, u.user_email,
+              hash_meta.meta_value AS token_hash,
+              expires_meta.meta_value AS token_expires
+       FROM tbl_users u
+       INNER JOIN tbl_usermeta hash_meta
+         ON hash_meta.user_id = u.ID AND hash_meta.meta_key = ?
+       INNER JOIN tbl_usermeta expires_meta
+         ON expires_meta.user_id = u.ID AND expires_meta.meta_key = ?
+       WHERE hash_meta.meta_value = ?
+       LIMIT 1`,
+      [RESET_TOKEN_HASH_META, RESET_TOKEN_EXPIRES_META, tokenHash],
+    );
+
+    if (!record) {
+      return res.status(400).json({
+        success: false,
+        message: 'Reset link is invalid or has expired.',
+      });
+    }
+
+    const expiresAt = Number(record.token_expires || 0);
+    if (!Number.isFinite(expiresAt) || expiresAt < Date.now()) {
+      await clearPasswordResetToken(record.ID);
+      return res.status(400).json({
+        success: false,
+        message: 'Reset link is invalid or has expired.',
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 12);
+    await db.query('UPDATE tbl_users SET user_pass = ? WHERE ID = ?', [hashedPassword, record.ID]);
+    await clearPasswordResetToken(record.ID);
+
+    return res.json({
+      success: true,
+      message: 'Password updated successfully. You can now log in with your new password.',
+    });
+  } catch (err) {
+    console.error('resetPassword error:', err);
+    return res.status(500).json({ success: false, message: 'Server error.' });
+  }
+};
+
+module.exports = {
+  register,
+  login,
+  googleLogin,
+  logout,
+  me,
+  updateProfile,
+  requestPasswordReset,
+  resetPassword,
+};
