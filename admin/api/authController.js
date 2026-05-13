@@ -770,7 +770,7 @@ const requestPasswordReset = async (req, res) => {
         message: 'Password reset is not configured correctly. Set FRONTEND_URL to your public domain.',
       });
     }
-    const resetUrl = `${frontendBase}/store/reset-password?token=${encodeURIComponent(rawToken)}`;
+    const resetUrl = `${frontendBase}/reset-password?token=${encodeURIComponent(rawToken)}`;;
     const displayName = user.display_name || user.user_login || 'there';
     const emailHtml = `
       <div style="margin:0; padding:0; background:#f5efe8;">
