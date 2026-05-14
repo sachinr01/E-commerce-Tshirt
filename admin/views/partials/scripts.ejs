@@ -119,6 +119,10 @@
       // Blogs: GET route
       actionUrl = url + id;
       formMethod = 'GET';
+    } else if (url.includes('/product/category/delete/')) {
+      // Product Categories: GET route
+      actionUrl = url + id;
+      formMethod = 'GET';
 
     } else {
       // Default: /module/delete/:id
