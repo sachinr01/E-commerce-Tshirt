@@ -2532,10 +2532,7 @@ input[type="checkbox"] {
 }
 
 .footer-legal p {
-  margin: 0;
   color: inherit;
-  line-height: 1.5;
-  font-size: 13px;
 }
 
 @media (max-width: 900px) {
@@ -2587,7 +2584,7 @@ input[type="checkbox"] {
   width: 100%;
   overflow: hidden;
   background-color: transparent;
-  height: 676px;
+  /* height: 676px; */
   /* â† CHANGE THIS for banner height */
 }
 
@@ -2670,15 +2667,15 @@ input[type="checkbox"] {
 
 /* â”€â”€â”€ RESPONSIVE â”€â”€â”€ */
 @media (max-width: 1024px) {
-  .slider-root {
+  /* .slider-root {
     height: 380px;
-  }
+  } */
 }
 
 @media (max-width: 768px) {
-  .slider-root {
+  /* .slider-root {
     height: 300px;
-  }
+  } */
 
   .slider-dots {
     bottom: 14px;
@@ -2693,9 +2690,9 @@ input[type="checkbox"] {
 }
 
 @media (max-width: 480px) {
-  .slider-root {
+  /* .slider-root {
     height: 220px;
-  }
+  } */
 }
 
 /* ===== frontend/app/components/TrustBar.css ===== */

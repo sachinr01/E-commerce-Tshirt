@@ -203,7 +203,7 @@ export function FeaturedCollectionPanels() {
 
   return (
     <section className="featured-collections-section" aria-labelledby="featured-collections-title">
-      <h2 className="section-title" id="featured-collections-title">Trending</h2>
+      <h2 className="section-title" id="featured-collections-title">Our Collection</h2>
       <div className="featured-collections">
         {collectionRows.map((row, rowIndex) => (
           <div
