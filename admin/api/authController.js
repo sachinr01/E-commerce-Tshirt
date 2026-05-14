@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
+const https = require('https');
 const db = require('../config/db');
 const { mergeGuestCart } = require('./cartController');
 
@@ -13,6 +14,15 @@ const requireGoogleClientId = () => {
 };
 const GOOGLE_TOKENINFO_URL = 'https://oauth2.googleapis.com/tokeninfo?id_token=';
 const ITOA64 = './0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+const BREVO_API_KEY =
+  process.env.BREVO_API_KEY || process.env.SENDINBLUE_API_KEY || '';
+const BREVO_SENDER_EMAIL =
+  process.env.BREVO_SENDER_EMAIL ;
+const BREVO_SENDER_NAME = process.env.BREVO_SENDER_NAME || 'NESTCASE';
+const RESET_TOKEN_HASH_META = 'password_reset_token_hash';
+const RESET_TOKEN_EXPIRES_META = 'password_reset_token_expires';
+const RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
+const MAX_BCRYPT_PASSWORD_BYTES = 72;
 
 const roleSlugFromType = (type) => {
   if (type === 1) return 'admin';
@@ -32,6 +42,7 @@ const toSlug = (value) =>
 const md5 = (val) => crypto.createHash('md5').update(val).digest('hex');
 
 const md5Buffer = (val) => crypto.createHash('md5').update(val).digest();
+const sha256 = (val) => crypto.createHash('sha256').update(val).digest('hex');
 
 const isHex32 = (val) => /^[a-f0-9]{32}$/i.test(val || '');
 
@@ -103,12 +114,231 @@ function setSessionUser(req, user) {
   req.touchSession();
 }
 
+async function setUserMetaEntries(userId, entries) {
+  const normalizedEntries = (Array.isArray(entries) ? entries : [])
+    .filter((entry) => entry && entry.metaKey)
+    .map((entry) => ({
+      metaKey: String(entry.metaKey),
+      metaValue: String(entry.metaValue ?? ''),
+    }));
+
+  if (!normalizedEntries.length) {
+    return;
+  }
+
+  const conn = await db.getConnection();
+  const lockKey = `usermeta:${userId}`;
+
+  try {
+    const [[lockRow]] = await conn.query('SELECT GET_LOCK(?, 5) AS got_lock', [lockKey]);
+    if (!lockRow || Number(lockRow.got_lock) !== 1) {
+      throw new Error('Could not acquire user meta lock.');
+    }
+
+    await conn.beginTransaction();
+    const metaKeys = [...new Set(normalizedEntries.map((entry) => entry.metaKey))];
+    await conn.query(
+      'DELETE FROM tbl_usermeta WHERE user_id = ? AND meta_key IN (?)',
+      [userId, metaKeys]
+    );
+    const rows = normalizedEntries.map((entry) => [userId, entry.metaKey, entry.metaValue]);
+    await conn.query(
+      'INSERT INTO tbl_usermeta (user_id, meta_key, meta_value) VALUES ?',
+      [rows]
+    );
+    await conn.commit();
+  } catch (err) {
+    try {
+      await conn.rollback();
+    } catch {}
+    throw err;
+  } finally {
+    try {
+      await conn.query('SELECT RELEASE_LOCK(?)', [lockKey]);
+    } catch {}
+    conn.release();
+  }
+}
+
 async function setUserMeta(userId, metaKey, metaValue) {
+  await setUserMetaEntries(userId, [{ metaKey, metaValue }]);
+}
+
+async function deleteUserMeta(userId, metaKey) {
   await db.query('DELETE FROM tbl_usermeta WHERE user_id = ? AND meta_key = ?', [userId, metaKey]);
-  await db.query(
-    'INSERT INTO tbl_usermeta (user_id, meta_key, meta_value) VALUES (?, ?, ?)',
-    [userId, metaKey, String(metaValue ?? '')]
+}
+
+function validateBcryptPasswordLength(password) {
+  const bytes = Buffer.byteLength(String(password ?? ''), 'utf8');
+  if (bytes > MAX_BCRYPT_PASSWORD_BYTES) {
+    return 'Password is too long - please shorten it.';
+  }
+  return null;
+}
+
+async function clearPasswordResetToken(userId) {
+  await deleteUserMeta(userId, RESET_TOKEN_HASH_META);
+  await deleteUserMeta(userId, RESET_TOKEN_EXPIRES_META);
+}
+
+async function clearPasswordResetTokenInConn(conn, userId) {
+  await conn.query(
+    'DELETE FROM tbl_usermeta WHERE user_id = ? AND meta_key IN (?)',
+    [userId, [RESET_TOKEN_HASH_META, RESET_TOKEN_EXPIRES_META]]
   );
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function getFrontendBaseUrl() {
+  const rawBase = (
+    process.env.FRONTEND_URL ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    'http://localhost:3001'
+  ).replace(/\/+$/, '');
+
+  try {
+    const url = new URL(rawBase);
+    const isLocalhost = ['localhost', '127.0.0.1', '::1'].includes(url.hostname);
+
+    if (process.env.NODE_ENV === 'production' && isLocalhost) {
+      throw new Error(
+        `Invalid FRONTEND_URL/NEXT_PUBLIC_SITE_URL for production: ${rawBase}. Set it to your public domain.`,
+      );
+    }
+
+    if (url.pathname === '/store' || url.pathname === '/store/') {
+      url.pathname = '';
+    }
+    if (!isLocalhost && url.port === '3001') {
+      url.port = '';
+    }
+    return url.toString().replace(/\/+$/, '');
+  } catch {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(
+        `Unable to determine a production frontend URL from FRONTEND_URL/NEXT_PUBLIC_SITE_URL: ${rawBase}`,
+      );
+    }
+    return rawBase;
+  }
+}
+
+function getResetCheckoutBaseUrl() {
+  const rawResetUrl = (process.env.RESET_URL || '').replace(/\/+$/, '');
+
+  if (rawResetUrl) {
+    let url;
+    try {
+      url = new URL(rawResetUrl);
+    } catch {
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error(
+          `Invalid RESET_URL for production: ${rawResetUrl}. Set it to your public checkout URL, for example https://gaffis.org/store/checkout.`,
+        );
+      }
+      return rawResetUrl;
+    }
+
+    const isLocalhost = ['localhost', '127.0.0.1', '::1'].includes(url.hostname);
+    if (process.env.NODE_ENV === 'production') {
+      if (isLocalhost) {
+        throw new Error(
+          `Invalid RESET_URL for production: ${rawResetUrl}. Set it to your public checkout URL, for example https://gaffis.org/store/checkout.`,
+        );
+      }
+      if (url.pathname === '/' || url.pathname === '') {
+        throw new Error(
+          `RESET_URL must point to the checkout page in production. Example: https://gaffis.org/store/checkout.`,
+        );
+      }
+    }
+
+    return url.toString().replace(/\/+$/, '');
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(
+      'RESET_URL is not configured. Set RESET_URL to your public checkout URL, for example https://gaffis.org/store/checkout.',
+    );
+  }
+
+  return `${getFrontendBaseUrl()}/store/checkout`;
+}
+
+async function sendBrevoEmail({ toEmail, toName, subject, html }) {
+  if (!BREVO_API_KEY) {
+    console.warn('Brevo API key missing. Set BREVO_API_KEY in environment.');
+    return false;
+  }
+
+  const payload = JSON.stringify({
+    sender: { name: BREVO_SENDER_NAME, email: BREVO_SENDER_EMAIL },
+    to: [{ email: toEmail, name: toName || toEmail }],
+    subject,
+    htmlContent: html,
+  });
+
+  return new Promise((resolve) => {
+    const req = https.request(
+      {
+        method: 'POST',
+        hostname: 'api.brevo.com',
+        path: '/v3/smtp/email',
+        headers: {
+          'api-key': BREVO_API_KEY,
+          'content-type': 'application/json',
+          'content-length': Buffer.byteLength(payload),
+        },
+      },
+      (res) => {
+        let body = '';
+        res.on('data', (chunk) => {
+          body += chunk;
+        });
+        res.on('end', () => {
+          if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
+            resolve(true);
+          } else {
+            console.error('Brevo send failed:', res.statusCode, body);
+            resolve(false);
+          }
+        });
+      },
+    );
+
+    req.on('error', (err) => {
+      console.error('Brevo send error:', err);
+      resolve(false);
+    });
+
+    req.write(payload);
+    req.end();
+  });
+}
+
+async function findUserByIdentifier(identifier) {
+  const value = String(identifier ?? '').trim();
+  if (!value) return null;
+
+  const [[user]] = await db.query(
+    `SELECT u.ID, u.user_login, u.user_email, u.display_name, u.user_type,
+            ut.user_type_slug
+     FROM tbl_users u
+     LEFT JOIN tbl_user_types ut ON ut.user_type_id = u.user_type
+     WHERE u.user_login = ? OR LOWER(u.user_email) = LOWER(?)
+     LIMIT 1`,
+    [value, value],
+  );
+
+  return user || null;
 }
 
 async function getAuthUserById(userId) {
@@ -209,6 +439,11 @@ const register = async (req, res) => {
     );
     if (existing) {
       return res.status(409).json({ success: false, message: 'Username or email already exists.' });
+    }
+
+    const passwordLengthError = validateBcryptPasswordLength(password);
+    if (passwordLengthError) {
+      return res.status(400).json({ success: false, message: passwordLengthError });
     }
 
     const hashed = await bcrypt.hash(password, 12);
@@ -358,14 +593,16 @@ const googleLogin = async (req, res) => {
       throw new Error('Google account could not be loaded.');
     }
 
-    await setUserMeta(userId, 'auth_provider', 'google');
-    await setUserMeta(userId, 'google_sub', googleUser.sub);
-    await setUserMeta(userId, 'google_email', googleUser.email);
-    await setUserMeta(userId, 'google_name', googleUser.name);
-    await setUserMeta(userId, 'google_picture', googleUser.picture);
-    if (googleUser.givenName) await setUserMeta(userId, 'first_name', googleUser.givenName);
-    if (googleUser.familyName) await setUserMeta(userId, 'last_name', googleUser.familyName);
-    if (googleUser.hd) await setUserMeta(userId, 'google_hd', googleUser.hd);
+    await setUserMetaEntries(userId, [
+      { metaKey: 'auth_provider', metaValue: 'google' },
+      { metaKey: 'google_sub', metaValue: googleUser.sub },
+      { metaKey: 'google_email', metaValue: googleUser.email },
+      { metaKey: 'google_name', metaValue: googleUser.name },
+      { metaKey: 'google_picture', metaValue: googleUser.picture },
+      ...(googleUser.givenName ? [{ metaKey: 'first_name', metaValue: googleUser.givenName }] : []),
+      ...(googleUser.familyName ? [{ metaKey: 'last_name', metaValue: googleUser.familyName }] : []),
+      ...(googleUser.hd ? [{ metaKey: 'google_hd', metaValue: googleUser.hd }] : []),
+    ]);
 
     const oldSessionId = req.sessionId;
     const guestCookieId = req.guestId || null;
@@ -488,6 +725,10 @@ const updateProfile = async (req, res) => {
       if (!ok) {
         return res.status(400).json({ success: false, message: 'Current password is incorrect.' });
       }
+      const passwordLengthError = validateBcryptPasswordLength(newPassword);
+      if (passwordLengthError) {
+        return res.status(400).json({ success: false, message: passwordLengthError });
+      }
       newHash = await bcrypt.hash(newPassword, 12);
     }
 
@@ -542,4 +783,193 @@ const updateProfile = async (req, res) => {
   }
 };
 
-module.exports = { register, login, googleLogin, logout, me, updateProfile };
+// POST /store/api/auth/forgot-password
+const requestPasswordReset = async (req, res) => {
+  const identifier = String((req.body && req.body.identifier) || '').trim();
+  if (!identifier) {
+    return res.status(400).json({ success: false, message: 'Username or email is required.' });
+  }
+
+  try {
+    const user = await findUserByIdentifier(identifier);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    const tokenHash = sha256(rawToken);
+    const expiresAt = String(Date.now() + RESET_TOKEN_TTL_MS);
+
+    await setUserMetaEntries(user.ID, [
+      { metaKey: RESET_TOKEN_HASH_META, metaValue: tokenHash },
+      { metaKey: RESET_TOKEN_EXPIRES_META, metaValue: expiresAt },
+    ]);
+
+    let resetBaseUrl;
+    try {
+      resetBaseUrl = getResetCheckoutBaseUrl();
+    } catch (urlErr) {
+      console.error('requestPasswordReset frontend URL error:', urlErr);
+      return res.status(500).json({
+        success: false,
+        message: 'Password reset is not configured correctly. Set RESET_URL to your public checkout URL.',
+      });
+    }
+    const resetUrl = `${resetBaseUrl}?login=1&reset=${encodeURIComponent(rawToken)}`;
+    const displayName = user.display_name || user.user_login || 'there';
+    const emailHtml = `
+      <div style="margin:0; padding:0; background:#f5efe8;">
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f5efe8; padding:32px 0;">
+          <tr>
+            <td align="center">
+              <table role="presentation" cellpadding="0" cellspacing="0" width="640" style="max-width:640px; background:#ffffff; border-radius:16px; overflow:hidden; border:1px solid #eadfce;">
+                <tr>
+                  <td style="background:#22311d; color:#ffffff; padding:24px 28px; font-family: Arial, sans-serif; font-size:22px; font-weight:700; letter-spacing:1px;">
+                    NESTCASE
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:28px; font-family: Arial, sans-serif; color:#1b1b1b;">
+                    <h2 style="margin:0 0 12px; font-size:24px; color:#22311d;">Reset your password</h2>
+                    <p style="margin:0 0 14px; color:#343434; font-size:15px; line-height:1.7;">Hi ${escapeHtml(displayName)},</p>
+                    <p style="margin:0 0 18px; color:#343434; font-size:15px; line-height:1.7;">
+                      We received a request to reset your password. Click the button below to open the password change page and choose a new password.
+                      This link will expire in 1 hour.
+                    </p>
+                    <p style="margin:0 0 24px;">
+                      <a href="${resetUrl}" style="display:inline-block; background:#22311d; color:#ffffff; text-decoration:none; padding:14px 22px; border-radius:8px; font-size:14px; font-weight:700; letter-spacing:0.04em;">
+                        Change password
+                      </a>
+                    </p>
+                    <p style="margin:0; color:#6f6459; font-size:13px; line-height:1.7;">
+                      If you did not request this change, you can safely ignore this email.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </div>
+    `;
+
+    const sent = await sendBrevoEmail({
+      toEmail: user.user_email,
+      toName: displayName,
+      subject: 'Reset your Nestcase password',
+      html: emailHtml,
+    });
+
+    if (!sent) {
+      await clearPasswordResetToken(user.ID);
+      return res.status(500).json({
+        success: false,
+        message: 'Unable to send the reset email right now. Please try again later.',
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: 'A password reset link has been sent to the registered email address.',
+    });
+  } catch (err) {
+    console.error('requestPasswordReset error:', err);
+    return res.status(500).json({ success: false, message: 'Server error.' });
+  }
+};
+
+// POST /store/api/auth/reset-password
+const resetPassword = async (req, res) => {
+  const token = String((req.body && req.body.token) || '').trim();
+  const password = String((req.body && req.body.password) || '');
+  const confirmPassword = String((req.body && req.body.confirmPassword) || '');
+
+  if (!token || !password || !confirmPassword) {
+    return res.status(400).json({
+      success: false,
+      message: 'Token, password and confirm password are required.',
+    });
+  }
+
+  if (password !== confirmPassword) {
+    return res.status(400).json({ success: false, message: 'Passwords do not match.' });
+  }
+
+  if (password.length < 6) {
+    return res.status(400).json({ success: false, message: 'Password must be at least 6 characters long.' });
+  }
+
+  try {
+    const tokenHash = sha256(token);
+    const [[record]] = await db.query(
+      `SELECT u.ID, u.display_name, u.user_email,
+              hash_meta.meta_value AS token_hash,
+              expires_meta.meta_value AS token_expires
+       FROM tbl_users u
+       INNER JOIN tbl_usermeta hash_meta
+         ON hash_meta.user_id = u.ID AND hash_meta.meta_key = ?
+       INNER JOIN tbl_usermeta expires_meta
+         ON expires_meta.user_id = u.ID AND expires_meta.meta_key = ?
+       WHERE hash_meta.meta_value = ?
+       LIMIT 1`,
+      [RESET_TOKEN_HASH_META, RESET_TOKEN_EXPIRES_META, tokenHash],
+    );
+
+    if (!record) {
+      return res.status(400).json({
+        success: false,
+        message: 'Reset link is invalid or has expired.',
+      });
+    }
+
+    const expiresAt = Number(record.token_expires || 0);
+    if (!Number.isFinite(expiresAt) || expiresAt < Date.now()) {
+      await clearPasswordResetToken(record.ID);
+      return res.status(400).json({
+        success: false,
+        message: 'Reset link is invalid or has expired.',
+      });
+    }
+
+    const passwordLengthError = validateBcryptPasswordLength(password);
+    if (passwordLengthError) {
+      return res.status(400).json({ success: false, message: passwordLengthError });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 12);
+    const conn = await db.getConnection();
+    try {
+      await conn.beginTransaction();
+      await conn.query('UPDATE tbl_users SET user_pass = ? WHERE ID = ?', [hashedPassword, record.ID]);
+      await clearPasswordResetTokenInConn(conn, record.ID);
+      await conn.commit();
+    } catch (txErr) {
+      try {
+        await conn.rollback();
+      } catch {}
+      throw txErr;
+    } finally {
+      conn.release();
+    }
+
+    return res.json({
+      success: true,
+      message: 'Password updated successfully. You can now log in with your new password.',
+    });
+  } catch (err) {
+    console.error('resetPassword error:', err);
+    return res.status(500).json({ success: false, message: 'Server error.' });
+  }
+};
+
+module.exports = {
+  register,
+  login,
+  googleLogin,
+  logout,
+  me,
+  updateProfile,
+  requestPasswordReset,
+  resetPassword,
+};
+

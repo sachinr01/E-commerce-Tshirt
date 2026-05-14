@@ -19,14 +19,14 @@ export const metadata: Metadata = {
 // Collection images mapped by category slug keywords
 const COLLECTION_IMAGE_MAP: [string, string][] = [
   ["glassware",  "/store/images/category_images/CC_GLASSWARE.png"],
-  ["drinkware",  "/store/images/category_images/CC_TUMBLERS_NEW.png"],
-  ["tumbler",    "/store/images/category_images/CC_TUMBLERS_NEW.png"],
+  ["drinkware",  "/store/images/category_images/CC_DRINKWARE.png"],
+  ["tumbler",    "/store/images/category_images/CC_DRINKWARE.png"],
   ["kitchen",    "/store/images/category_images/CC_KITCHEN_ORGANISERS.png"],
   ["organiser",  "/store/images/category_images/CC_KITCHEN_ORGANISERS.png"],
   ["jar",        "/store/images/category_images/CC_KITCHEN_ORGANISERS.png"],
 ];
 
-const DEFAULT_COLLECTION_IMAGE = "/store/images/category_images/CC_GLASSWARE.png";
+const DEFAULT_COLLECTION_IMAGE = "/store/images/dummy.jpg";
 
 function getCollectionImage(slug: string): string {
   const match = COLLECTION_IMAGE_MAP.find(([key]) => slug.includes(key));

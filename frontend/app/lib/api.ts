@@ -214,6 +214,12 @@ export const authGoogleLogin = (credential: string) =>
 export const authRegister = (username: string, email: string, password: string) =>
   apiPost<{ userId: number }>('/auth/register', { username, email, password });
 
+export const authForgotPassword = (identifier: string) =>
+  apiPost('/auth/forgot-password', { identifier });
+
+export const authResetPassword = (token: string, password: string, confirmPassword: string) =>
+  apiPost('/auth/reset-password', { token, password, confirmPassword });
+
 export const updateProfile = (body: {
   displayName: string;
   email: string;

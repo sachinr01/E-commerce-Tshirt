@@ -63,6 +63,8 @@ router.post('/auth/register', auth.register);
 router.post('/auth/login',    auth.login);
 router.post('/auth/google',   auth.googleLogin);
 router.post('/auth/logout',   auth.logout);
+router.post('/auth/forgot-password', auth.requestPasswordReset);
+router.post('/auth/reset-password',  auth.resetPassword);
 router.get('/auth/me',        auth.me);
 router.put('/auth/profile',   requireLogin, auth.updateProfile);
 

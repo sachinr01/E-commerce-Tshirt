@@ -2,8 +2,17 @@ const https = require("https");
 
 const BREVO_API_KEY = process.env.BREVO_API_KEY || "";
 const BREVO_SENDER_EMAIL = process.env.BREVO_SENDER_EMAIL || "";
-const BREVO_SENDER_NAME = process.env.BREVO_SENDER_NAME || "Store";
+const BREVO_SENDER_NAME = process.env.BREVO_SENDER_NAME || "NESTCASE";
 const RECEIVED_EMAIL = process.env.RECEIVED_EMAIL || "";
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 
 function sendBrevoEmail({ toEmail, toName, subject, html }) {
   return new Promise((resolve) => {
@@ -62,13 +71,32 @@ async function submitContact(req, res) {
   }
 
   const html = `
-    <h2>New Contact Us Enquiry</h2>
-    <table cellpadding="6" cellspacing="0">
-      <tr><td><strong>Name</strong></td><td>${name}</td></tr>
-      <tr><td><strong>Email</strong></td><td>${email}</td></tr>
-      <tr><td><strong>Phone</strong></td><td>${phone || "—"}</td></tr>
-      <tr><td><strong>Message</strong></td><td>${message}</td></tr>
-    </table>
+    <div style="margin:0; padding:0; background:#f5efe8;">
+      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f5efe8; padding:32px 0;">
+        <tr>
+          <td align="center">
+            <table role="presentation" cellpadding="0" cellspacing="0" width="640" style="max-width:640px; background:#ffffff; border-radius:16px; overflow:hidden; border:1px solid #eadfce;">
+              <tr>
+                <td style="background:#22311d; color:#ffffff; padding:24px 28px; font-family: Arial, sans-serif; font-size:22px; font-weight:700; letter-spacing:1px;">
+                  NESTCASE
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:28px; font-family: Arial, sans-serif; color:#1b1b1b;">
+                  <h2 style="margin:0 0 18px; font-size:24px; color:#22311d;">New Contact Us Enquiry</h2>
+                  <table cellpadding="6" cellspacing="0" style="font-size:15px; color:#343434; line-height:1.7;">
+                    <tr><td style="font-weight:700; padding-right:16px;">Name</td><td>${escapeHtml(name)}</td></tr>
+                    <tr><td style="font-weight:700; padding-right:16px;">Email</td><td>${escapeHtml(email)}</td></tr>
+                    <tr><td style="font-weight:700; padding-right:16px;">Phone</td><td>${escapeHtml(phone || "—")}</td></tr>
+                    <tr><td style="font-weight:700; padding-right:16px; vertical-align:top;">Message</td><td>${escapeHtml(message)}</td></tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </div>
   `;
 
   const sent = await sendBrevoEmail({
@@ -95,14 +123,33 @@ async function submitB2BContact(req, res) {
   }
 
   const html = `
-    <h2>New B2B Connect Enquiry</h2>
-    <table cellpadding="6" cellspacing="0">
-      <tr><td><strong>Name</strong></td><td>${name}</td></tr>
-      <tr><td><strong>Business</strong></td><td>${business || "—"}</td></tr>
-      <tr><td><strong>Email</strong></td><td>${email}</td></tr>
-      <tr><td><strong>Phone</strong></td><td>${phone || "—"}</td></tr>
-      <tr><td><strong>Requirements</strong></td><td>${requirements}</td></tr>
-    </table>
+    <div style="margin:0; padding:0; background:#f5efe8;">
+      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f5efe8; padding:32px 0;">
+        <tr>
+          <td align="center">
+            <table role="presentation" cellpadding="0" cellspacing="0" width="640" style="max-width:640px; background:#ffffff; border-radius:16px; overflow:hidden; border:1px solid #eadfce;">
+              <tr>
+                <td style="background:#22311d; color:#ffffff; padding:24px 28px; font-family: Arial, sans-serif; font-size:22px; font-weight:700; letter-spacing:1px;">
+                  NESTCASE
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:28px; font-family: Arial, sans-serif; color:#1b1b1b;">
+                  <h2 style="margin:0 0 18px; font-size:24px; color:#22311d;">New B2B Connect Enquiry</h2>
+                  <table cellpadding="6" cellspacing="0" style="font-size:15px; color:#343434; line-height:1.7;">
+                    <tr><td style="font-weight:700; padding-right:16px;">Name</td><td>${escapeHtml(name)}</td></tr>
+                    <tr><td style="font-weight:700; padding-right:16px;">Business</td><td>${escapeHtml(business || "—")}</td></tr>
+                    <tr><td style="font-weight:700; padding-right:16px;">Email</td><td>${escapeHtml(email)}</td></tr>
+                    <tr><td style="font-weight:700; padding-right:16px;">Phone</td><td>${escapeHtml(phone || "—")}</td></tr>
+                    <tr><td style="font-weight:700; padding-right:16px; vertical-align:top;">Requirements</td><td>${escapeHtml(requirements)}</td></tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </div>
   `;
 
   const sent = await sendBrevoEmail({

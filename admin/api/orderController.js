@@ -27,8 +27,8 @@ const toInt = (val, fallback = 0) => {
 const BREVO_API_KEY =
   process.env.BREVO_API_KEY || process.env.SENDINBLUE_API_KEY || "";
 const BREVO_SENDER_EMAIL =
-  process.env.BREVO_SENDER_EMAIL || "rupeshmutkule2005@gmail.com";
-const BREVO_SENDER_NAME = process.env.BREVO_SENDER_NAME || "COFFR";
+  process.env.BREVO_SENDER_EMAIL ;
+const BREVO_SENDER_NAME = process.env.BREVO_SENDER_NAME || "NESTCASE";
 const BREVO_LOGO_URL = process.env.BREVO_LOGO_URL || "";
 const DEFAULT_LOGO_PATH = path.join(
   __dirname,
@@ -849,7 +849,7 @@ const placeOrder = async (req, res) => {
                       <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
                         <tr>
                           <td>
-                            ${logoSrc ? `<img src="${logoSrc}" alt="COFFR" style="height:40px; width:auto; display:block;" />` : `<div style="color:#fff; font-size:20px; letter-spacing:2px; font-weight:700;">COFFR</div>`}
+                            ${logoSrc ? `<img src="${logoSrc}" alt="NESTCASE" style="height:40px; width:auto; display:block;" />` : `<div style="color:#fff; font-size:20px; letter-spacing:2px; font-weight:700;">COFFR</div>`}
                           </td>
                           <td style="text-align:right; color:#fff; font-family: Arial, sans-serif; font-size:12px;">
                             <div style="opacity:0.85;">Order Confirmed</div>
@@ -949,7 +949,7 @@ const placeOrder = async (req, res) => {
                   </tr>
                   <tr>
                     <td style="background:#f8f3ee; padding:14px 24px; text-align:center; font-family: Arial, sans-serif; font-size:12px; color:#7a6b5c;">
-                      Thank you for choosing COFFR
+                      Thank you for choosing NESTCASE
                     </td>
                   </tr>
                 </table>
