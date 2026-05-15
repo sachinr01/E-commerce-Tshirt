@@ -1,16 +1,42 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import Script from 'next/script';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import { authLogin, authRegister } from '../lib/api';
+import { authGoogleLogin, authLogin, authRegister, type AuthUser } from '../lib/api';
 import { useCart } from '../lib/cartContext';
 import { useAuth } from '../lib/authContext';
+
+declare global {
+  interface Window {
+    google?: {
+      accounts?: {
+        id?: {
+          initialize: (config: {
+            client_id: string;
+            callback: (response: { credential?: string }) => void;
+          }) => void;
+          renderButton: (parent: HTMLElement, options: Record<string, unknown>) => void;
+          prompt: () => void;
+          cancel?: () => void;
+        };
+      };
+    };
+  }
+}
+
+const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
+type GoogleButtonText = 'signin_with' | 'signup_with';
 
 export default function MyAccountPage() {
   const { user, isLoggedIn, isLoading, setUser, logout } = useAuth();
   const { refresh } = useCart();
+
+  const loginGoogleRef = useRef<HTMLDivElement | null>(null);
+  const registerGoogleRef = useRef<HTMLDivElement | null>(null);
 
   const [login, setLogin] = useState({ username: '', password: '', remember: false });
   const [reg, setReg] = useState({ username: '', email: '', password: '' });
@@ -20,14 +46,34 @@ export default function MyAccountPage() {
   const [regLoading, setRegLoading] = useState(false);
   const [regSuccess, setRegSuccess] = useState('');
   const [showRegister, setShowRegister] = useState(false);
+  const [googleScriptReady, setGoogleScriptReady] = useState(false);
+  const [googleError, setGoogleError] = useState('');
 
   const setL = (k: keyof typeof login) =>
     (e: React.ChangeEvent<HTMLInputElement>) =>
-      setLogin((f) => ({ ...f, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value } as typeof login));
+      setLogin((f) => ({
+        ...f,
+        [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value,
+      }) as typeof login);
 
   const setR = (k: keyof typeof reg) =>
     (e: React.ChangeEvent<HTMLInputElement>) =>
       setReg((f) => ({ ...f, [k]: e.target.value }));
+
+  const syncLoggedInUser = useCallback(async (fallbackUser: AuthUser) => {
+    try {
+      const me = await fetch('/store/api/auth/me', { credentials: 'include' }).then((r) => r.json());
+      if (me.success && me.data?.isLoggedIn && me.data.user) {
+        setUser(me.data.user);
+      } else {
+        setUser(fallbackUser);
+      }
+      await refresh();
+    } catch {
+      setUser(fallbackUser);
+      await refresh();
+    }
+  }, [refresh, setUser]);
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -42,13 +88,7 @@ export default function MyAccountPage() {
     try {
       const res = await authLogin(login.username, login.password);
       if (res.success && res.data) {
-        const me = await fetch('/store/api/auth/me', { credentials: 'include' }).then((r) => r.json());
-        if (me.success && me.data?.isLoggedIn && me.data.user) {
-          setUser(me.data.user);
-        } else {
-          setUser(res.data);
-        }
-        await refresh();
+        await syncLoggedInUser(res.data.user);
       } else {
         setLoginErr(res.message || 'Login failed.');
       }
@@ -94,8 +134,148 @@ export default function MyAccountPage() {
     }
   };
 
+  const handleGoogleCredential = useCallback(async (credential: string) => {
+    if (!credential) {
+      setGoogleError('Google did not return a sign-in credential.');
+      return;
+    }
+
+    setGoogleError('');
+
+    try {
+      const res = await authGoogleLogin(credential);
+      if (res.success && res.data) {
+        await syncLoggedInUser(res.data.user);
+      } else {
+        setGoogleError(res.message || 'Google sign-in failed.');
+      }
+    } catch {
+      setGoogleError('Could not complete Google sign-in.');
+    }
+  }, [syncLoggedInUser]);
+
+  const renderGoogleButton = useCallback((container: HTMLDivElement | null, text: GoogleButtonText) => {
+    if (!container) return false;
+    if (!GOOGLE_CLIENT_ID) {
+      setGoogleError('Google sign-in is not configured for this environment.');
+      return false;
+    }
+
+    const google = window.google?.accounts?.id;
+    if (!google) return false;
+
+    const width = container.offsetWidth || 400;
+    container.innerHTML = '';
+    setGoogleError('');
+
+    try {
+      google.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: (response: { credential?: string }) => {
+          if (response.credential) {
+            void handleGoogleCredential(response.credential);
+          } else {
+            setGoogleError('Google sign-in did not return a credential.');
+          }
+        },
+      });
+
+      google.renderButton(container, {
+        theme: 'outline',
+        size: 'large',
+        text,
+        shape: 'rectangular',
+        width,
+        logo_alignment: 'left',
+      });
+      return true;
+    } catch {
+      setGoogleError('Google sign-in could not be initialized.');
+      return false;
+    }
+  }, [handleGoogleCredential]);
+
+  useEffect(() => {
+    if (showRegister) return;
+
+    const container = loginGoogleRef.current;
+    if (!container) return;
+
+    if (!GOOGLE_CLIENT_ID) {
+      setGoogleError('Google sign-in is not configured for this environment.');
+      return;
+    }
+
+    const tryRender = () => renderGoogleButton(container, 'signin_with');
+
+    if (googleScriptReady) {
+      if (!tryRender()) {
+        const interval = setInterval(() => {
+          if (window.google?.accounts?.id) {
+            clearInterval(interval);
+            tryRender();
+          }
+        }, 200);
+        return () => clearInterval(interval);
+      }
+    } else {
+      const interval = setInterval(() => {
+        if (window.google?.accounts?.id) {
+          clearInterval(interval);
+          tryRender();
+        }
+      }, 200);
+      return () => clearInterval(interval);
+    }
+
+    return () => {
+      container.innerHTML = '';
+    };
+  }, [googleScriptReady, renderGoogleButton, showRegister]);
+
+  useEffect(() => {
+    if (!showRegister) return;
+
+    const container = registerGoogleRef.current;
+    if (!container) return;
+
+    if (!GOOGLE_CLIENT_ID) {
+      setGoogleError('Google sign-in is not configured for this environment.');
+      return;
+    }
+
+    const tryRender = () => renderGoogleButton(container, 'signup_with');
+
+    if (googleScriptReady) {
+      if (!tryRender()) {
+        const interval = setInterval(() => {
+          if (window.google?.accounts?.id) {
+            clearInterval(interval);
+            tryRender();
+          }
+        }, 200);
+        return () => clearInterval(interval);
+      }
+    } else {
+      const interval = setInterval(() => {
+        if (window.google?.accounts?.id) {
+          clearInterval(interval);
+          tryRender();
+        }
+      }, 200);
+      return () => clearInterval(interval);
+    }
+
+    return () => {
+      container.innerHTML = '';
+    };
+  }, [googleScriptReady, renderGoogleButton, showRegister]);
+
   const accountName = user?.displayName || user?.username || 'Guest';
   const accountHandle = user?.username ? `@${user.username}` : user?.email || '@account';
+  const googleNotice = GOOGLE_CLIENT_ID
+    ? googleError
+    : 'Google sign-in is not configured for this environment.';
 
   return (
     <>
@@ -105,8 +285,9 @@ export default function MyAccountPage() {
           <div className="page-section-content overflow-hidden">
             <div className="container">
               {isLoading ? (
-              <p style={{ padding: '24px 0', color: '#888', fontSize: 14 }}>Loading...</p>
-              ) : isLoggedIn && user ? (                <div className="account-shell">
+                <p style={{ padding: '24px 0', color: '#888', fontSize: 14 }}>Loading...</p>
+              ) : isLoggedIn && user ? (
+                <div className="account-shell">
                   <div className="account-layout">
                     <aside className="account-sidebar">
                       <div className="account-sidebar-inner">
@@ -148,62 +329,84 @@ export default function MyAccountPage() {
               ) : (
                 <div className="account-auth-grid">
                   {!showRegister ? (
-                  <div className="account-auth-card">
-                    <h4 className="box-titel">Login</h4>
-                    <form className="form-small form" onSubmit={handleLogin} noValidate>
-                      <div className="field">
-                        <label className="required">Username or Email</label>
-                        <input type="text" placeholder="Username or email" value={login.username} onChange={setL('username')} />
+                    <div className="account-auth-card">
+                      <h4 className="box-titel">Login</h4>
+                      <form className="form-small form" onSubmit={handleLogin} noValidate>
+                        <div className="field">
+                          <label className="required">Username or Email</label>
+                          <input type="text" placeholder="Username or email" value={login.username} onChange={setL('username')} />
+                        </div>
+                        <div className="field">
+                          <label className="required">Password</label>
+                          <input type="password" placeholder="Password" value={login.password} onChange={setL('password')} />
+                        </div>
+                        {loginErr && <p className="account-err">{loginErr}</p>}
+                        <div className="field last">
+                          <button type="submit" className="btn-view-product btn-view-product--inline" disabled={loginLoading}>
+                            {loginLoading ? 'Logging in...' : 'Login'}
+                          </button>
+                        </div>
+                      </form>
+
+                      <div className="checkout-google-wrap">
+                        <div className="checkout-auth-divider">or</div>
+                        <div ref={loginGoogleRef} className="checkout-google-button" />
+                        {googleNotice && <p className="account-err">{googleNotice}</p>}
                       </div>
-                      <div className="field">
-                        <label className="required">Password</label>
-                        <input type="password" placeholder="Password" value={login.password} onChange={setL('password')} />
-                      </div>
-                      {loginErr && <p className="account-err">{loginErr}</p>}
-                      <div className="field last">
-                        <button type="submit" className="btn-view-product btn-view-product--inline" disabled={loginLoading}>
-                          {loginLoading ? 'Logging in...' : 'Login'}
+
+                      <p style={{ marginTop: '14px', fontSize: '13px', color: '#555' }}>
+                        Don&apos;t have an account?{' '}
+                        <button
+                          type="button"
+                          onClick={() => setShowRegister(true)}
+                          style={{ background: 'none', border: 'none', padding: 0, color: 'inherit', textDecoration: 'underline', cursor: 'pointer', fontSize: 'inherit' }}
+                        >
+                          Create New Account
                         </button>
-                      </div>
-                    </form>
-                    <p style={{ marginTop: '14px', fontSize: '13px', color: '#555' }}>
-                      Don&apos;t have an account?{' '}
-                      <button onClick={() => setShowRegister(true)} style={{ background: 'none', border: 'none', padding: 0, color: 'inherit', textDecoration: 'underline', cursor: 'pointer', fontSize: 'inherit' }}>
-                        Create New Account
-                      </button>
-                    </p>
-                  </div>
+                      </p>
+                    </div>
                   ) : (
-                  <div className="account-auth-card">
-                    <h4 className="box-titel">Register</h4>
-                    <form className="form-small form" onSubmit={handleRegister} noValidate>
-                      <div className="field">
-                        <label className="required">Username</label>
-                        <input type="text" placeholder="Username" value={reg.username} onChange={setR('username')} />
+                    <div className="account-auth-card">
+                      <h4 className="box-titel">Register</h4>
+                      <form className="form-small form" onSubmit={handleRegister} noValidate>
+                        <div className="field">
+                          <label className="required">Username</label>
+                          <input type="text" placeholder="Username" value={reg.username} onChange={setR('username')} />
+                        </div>
+                        <div className="field">
+                          <label className="required">Email</label>
+                          <input type="email" placeholder="Email" value={reg.email} onChange={setR('email')} />
+                        </div>
+                        <div className="field">
+                          <label className="required">Password</label>
+                          <input type="password" placeholder="Password" value={reg.password} onChange={setR('password')} />
+                        </div>
+                        {regErr && <p className="account-err">{regErr}</p>}
+                        {regSuccess && <p className="account-success">{regSuccess}</p>}
+                        <div className="field last">
+                          <button type="submit" className="btn-view-product btn-view-product--inline" disabled={regLoading}>
+                            {regLoading ? 'Registering...' : 'Register'}
+                          </button>
+                        </div>
+                      </form>
+
+                      <div className="checkout-google-wrap">
+                        <div className="checkout-auth-divider">or</div>
+                        <div ref={registerGoogleRef} className="checkout-google-button" />
+                        {googleNotice && <p className="account-err">{googleNotice}</p>}
                       </div>
-                      <div className="field">
-                        <label className="required">Email</label>
-                        <input type="email" placeholder="Email" value={reg.email} onChange={setR('email')} />
-                      </div>
-                      <div className="field">
-                        <label className="required">Password</label>
-                        <input type="password" placeholder="Password" value={reg.password} onChange={setR('password')} />
-                      </div>
-                      {regErr && <p className="account-err">{regErr}</p>}
-                      {regSuccess && <p className="account-success">{regSuccess}</p>}
-                      <div className="field last">
-                        <button type="submit" className="btn-view-product btn-view-product--inline" disabled={regLoading}>
-                          {regLoading ? 'Registering...' : 'Register'}
+
+                      <p style={{ marginTop: '14px', fontSize: '13px', color: '#555' }}>
+                        Already have an account?{' '}
+                        <button
+                          type="button"
+                          onClick={() => setShowRegister(false)}
+                          style={{ background: 'none', border: 'none', padding: 0, color: 'inherit', textDecoration: 'underline', cursor: 'pointer', fontSize: 'inherit' }}
+                        >
+                          Back to Login
                         </button>
-                      </div>
-                    </form>
-                    <p style={{ marginTop: '14px', fontSize: '13px', color: '#555' }}>
-                      Already have an account?{' '}
-                      <button onClick={() => setShowRegister(false)} style={{ background: 'none', border: 'none', padding: 0, color: 'inherit', textDecoration: 'underline', cursor: 'pointer', fontSize: 'inherit' }}>
-                        Back to Login
-                      </button>
-                    </p>
-                  </div>
+                      </p>
+                    </div>
                   )}
                 </div>
               )}
@@ -211,6 +414,17 @@ export default function MyAccountPage() {
           </div>
         </section>
       </div>
+
+      {GOOGLE_CLIENT_ID && (
+        <Script
+          src="https://accounts.google.com/gsi/client"
+          strategy="afterInteractive"
+          onLoad={() => setGoogleScriptReady(true)}
+          onError={() => {
+            setGoogleError('Google sign-in could not be loaded right now. Please try again later.');
+          }}
+        />
+      )}
       <Footer />
     </>
   );

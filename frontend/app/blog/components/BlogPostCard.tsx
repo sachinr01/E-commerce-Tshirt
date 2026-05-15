@@ -1,7 +1,7 @@
 'use client';
+/* eslint-disable @next/next/no-img-element */
 
 import Link from 'next/link';
-import Image from 'next/image';
 import type { BlogCard } from '../types';
 
 export type BlogPostCardData = BlogCard;
@@ -19,13 +19,12 @@ export default function BlogPostCard({
     <Link href={href} className="blog-post-card" onClick={onClick}>
       <div className="blog-post-card__image-wrap">
         {post.image ? (
-          <Image
+          <img
             className="blog-post-card__image"
             src={post.image}
             alt={post.title}
-            fill
-            unoptimized
-            sizes="(max-width: 560px) 100vw, (max-width: 1100px) 50vw, 33vw"
+            loading="lazy"
+            decoding="async"
           />
         ) : null}
       </div>
