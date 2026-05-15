@@ -172,47 +172,89 @@
                                         <!-- ============ BEST SELLERS ============ -->
                                         <div class="col-xl-6 col-lg-6 mb-4">
                                             <div class="card border-0 rounded-4 shadow-sm h-100">
+
                                                 <div class="card-body">
+
                                                     <div class="d-flex justify-content-between align-items-center mb-4">
-                                                        <h4 class="card-title mb-0 fw-bold">Best Sellers</h4>
-                                                        <span class="badge bg-success">Top 5</span>
+                                                        <h4 class="card-title mb-0 fw-bold">
+                                                            Best Sellers
+                                                        </h4>
+
+                                                        <span class="badge bg-success">
+                                                            Top 5
+                                                        </span>
                                                     </div>
 
                                                     <div id="bestsellers-list">
+
                                                         <% bestSellers.forEach((item, index)=> { %>
+
                                                             <div
                                                                 class="d-flex align-items-center gap-3 py-3 border-bottom">
+
+                                                                <!-- Product Image -->
                                                                 <div class="flex-shrink-0 position-relative">
+
                                                                     <img src="<%= item.thumbnail || '/admin/public/images/placeholder.png' %>"
-                                                                        alt="<%= item.product_title %>" class="rounded"
-                                                                        width="50" height="50"
-                                                                        style="object-fit:cover;">
+                                                                        alt="<%= item.title %>" class="rounded"
+                                                                        width="55" height="55"
+                                                                        style="object-fit: cover;">
+
                                                                     <span
                                                                         class="badge bg-success position-absolute bottom-0 end-0 translate-middle-y"
                                                                         style="font-size:10px;">
                                                                         #<%= index + 1 %>
                                                                     </span>
+
                                                                 </div>
+
+                                                                <!-- Product Info -->
                                                                 <div class="flex-grow-1 overflow-hidden">
+
                                                                     <div class="fw-semibold text-dark text-truncate">
-                                                                        <%= item.product_title %>
+
+                                                                        <a href="/product/<%= item.slug %>"
+                                                                            class="text-decoration-none text-dark">
+                                                                            <%= item.title %>
+                                                                        </a>
+
                                                                     </div>
+
                                                                     <small class="text-muted d-block">
+
                                                                         <i class="ri-shopping-bag-line"></i>
+
                                                                         <%= item.totalSold %> sold
+
                                                                     </small>
+
+                                                                    <small class="text-success fw-semibold">
+
+                                                                        ₹<%= Number(item.price || 0).toFixed(2) %>
+
+                                                                    </small>
+
                                                                 </div>
+
+                                                                <!-- Right Badge -->
                                                                 <div class="text-end">
+
                                                                     <span
                                                                         class="badge bg-success bg-opacity-10 text-success fw-bold fs-6 px-3 py-2">
                                                                         <%= item.totalSold %>
                                                                     </span>
+
                                                                 </div>
+
                                                             </div>
+
                                                             <% }) %>
+
                                                     </div>
 
+                                                    <!-- Load More -->
                                                     <div class="text-end mt-3">
+
                                                         <button class="btn btn-sm btn-light-primary"
                                                             id="btn-bestsellers-more" data-offset="5"
                                                             data-endpoint="/store/admin/load-more/best-sellers"
@@ -220,8 +262,11 @@
                                                             onclick="loadMore(this)">
                                                             View More
                                                         </button>
+
                                                     </div>
+
                                                 </div>
+
                                             </div>
                                         </div>
 
@@ -244,14 +289,15 @@
                                                                 statusClass=statusMap[order.order_status]
                                                                 || 'bg-secondary' ; const
                                                                 statusLabel=order.order_status.replace('wc-', '' );
-                                                               const customerName = order.customer_name || 'N/A'; %>
+                                                                const customerName=order.customer_name || 'N/A' ; %>
                                                                 <div class="py-3 border-bottom">
                                                                     <div
                                                                         class="d-flex justify-content-between align-items-center">
-                                                                       <strong class="text-primary">
+                                                                        <strong class="text-primary">
                                                                             <a href="/store/admin/orders/<%= order.order_id %>"
-                                                                            class="fw-semibold text-decoration-none" target="_blank">
-                                                                                    #<%=order.order_id %>
+                                                                                class="fw-semibold text-decoration-none"
+                                                                                target="_blank">
+                                                                                #<%=order.order_id %>
                                                                             </a>
                                                                         </strong>
                                                                         <span
@@ -349,8 +395,7 @@
 
                                                     <div class="text-end mt-3">
                                                         <button class="btn btn-sm btn-light-primary" id="btn-users-more"
-                                                            data-offset="5"
-                                                            data-endpoint="/store/admin/load-more/users"
+                                                            data-offset="5" data-endpoint="/store/admin/load-more/users"
                                                             data-target="users-list" data-type="users"
                                                             onclick="loadMore(this)">
                                                             View More
@@ -410,58 +455,58 @@
 
             <%- include('../partials/scripts') %>
 
-                    <!-- ===================== LOAD MORE SCRIPT ===================== -->
-                    <script>
-                       
-                        async function loadMore(btn) {
-                            const offset = parseInt(btn.dataset.offset) || 5;
-                            const endpoint = btn.dataset.endpoint;
-                            const target = document.getElementById(btn.dataset.target);
-                            const type = btn.dataset.type;
-                            const limit = 5;
+                <!-- ===================== LOAD MORE SCRIPT ===================== -->
+                <script>
 
-                            btn.disabled = true;
-                            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Loading…';
+                    async function loadMore(btn) {
+                        const offset = parseInt(btn.dataset.offset) || 5;
+                        const endpoint = btn.dataset.endpoint;
+                        const target = document.getElementById(btn.dataset.target);
+                        const type = btn.dataset.type;
+                        const limit = 5;
 
-                            try {
-                                const res = await fetch(`${endpoint}?offset=${offset}&limit=${limit}`);
-                                const json = await res.json();
+                        btn.disabled = true;
+                        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Loading…';
 
-                                if (!json.success || !json.data.length) {
-                                    btn.innerHTML = 'No More Records';
-                                    btn.disabled = true;
-                                    return;
-                                }
+                        try {
+                            const res = await fetch(`${endpoint}?offset=${offset}&limit=${limit}`);
+                            const json = await res.json();
 
-                                json.data.forEach(item => {
-                                    const el = document.createElement('div');
-                                    el.innerHTML = buildRow(type, item);
-                                    // append each child node so we don't wrap in an extra div
-                                    while (el.firstChild) target.appendChild(el.firstChild);
-                                });
-
-                                btn.dataset.offset = offset + json.data.length;
-                                btn.disabled = false;
-                                btn.innerHTML = 'View More';
-
-                                if (json.data.length < limit) {
-                                    btn.innerHTML = 'No More Records';
-                                    btn.disabled = true;
-                                }
-
-                            } catch (e) {
-                                console.error(e);
-                                btn.innerHTML = 'Error – Retry';
-                                btn.disabled = false;
+                            if (!json.success || !json.data.length) {
+                                btn.innerHTML = 'No More Records';
+                                btn.disabled = true;
+                                return;
                             }
+
+                            json.data.forEach(item => {
+                                const el = document.createElement('div');
+                                el.innerHTML = buildRow(type, item);
+                                // append each child node so we don't wrap in an extra div
+                                while (el.firstChild) target.appendChild(el.firstChild);
+                            });
+
+                            btn.dataset.offset = offset + json.data.length;
+                            btn.disabled = false;
+                            btn.innerHTML = 'View More';
+
+                            if (json.data.length < limit) {
+                                btn.innerHTML = 'No More Records';
+                                btn.disabled = true;
+                            }
+
+                        } catch (e) {
+                            console.error(e);
+                            btn.innerHTML = 'Error – Retry';
+                            btn.disabled = false;
                         }
+                    }
 
-                        /** Render a row HTML string based on widget type */
-                        function buildRow(type, d) {
-                            const placeholder = '/admin/public/images/placeholder.png';
+                    /** Render a row HTML string based on widget type */
+                    function buildRow(type, d) {
+                        const placeholder = '/admin/public/images/placeholder.png';
 
-                            if (type === 'lowstock') {
-                                return `
+                        if (type === 'lowstock') {
+                            return `
                                 <div class="d-flex align-items-center gap-3 py-3 border-bottom">
                                     <div class="flex-shrink-0">
                                     <img src="${d.thumbnail || placeholder}" alt="${escHtml(d.product_title)}"
@@ -475,57 +520,106 @@
                                     <span class="badge bg-danger">${d.stock} Left</span>
                                     </div>
                                 </div>`;
-                            }
+                        }
 
-                            if (type === 'bestsellers') {
-                                return `
+                        if (type === 'bestsellers') {
+
+                            return `
+    
                                 <div class="d-flex align-items-center gap-3 py-3 border-bottom">
-                                    <div class="flex-shrink-0">
-                                    <img src="${d.thumbnail || placeholder}" alt="${escHtml(d.product_title)}"
-                                        class="rounded" width="50" height="50" style="object-fit:cover;">
+
+                                    <!-- Image -->
+                                    <div class="flex-shrink-0 position-relative">
+
+                                        <img
+                                            src="${d.thumbnail || placeholder}"
+                                            alt="${escHtml(d.title)}"
+                                            class="rounded"
+                                            width="55"
+                                            height="55"
+                                            style="object-fit:cover;"
+                                        >
+
                                     </div>
+
+                                    <!-- Product Info -->
                                     <div class="flex-grow-1 overflow-hidden">
-                                    <div class="fw-semibold text-dark text-truncate">${escHtml(d.product_title)}</div>
-                                    <small class="text-muted d-block"><i class="ri-shopping-bag-line"></i> ${d.totalSold} sold</small>
+
+                                        <div class="fw-semibold text-dark text-truncate">
+
+                                            <a
+                                                href="/product/${d.slug}"
+                                                class="text-decoration-none text-dark"
+                                            >
+                                                ${escHtml(d.title)}
+                                            </a>
+
+                                        </div>
+
+                                        <small class="text-muted d-block">
+
+                                            <i class="ri-shopping-bag-line"></i>
+
+                                            ${d.totalSold} sold
+
+                                        </small>
+
+                                        <small class="text-success fw-semibold">
+
+                                            ₹${Number(d.price || 0).toFixed(2)}
+
+                                        </small>
+
                                     </div>
+
+                                    <!-- Right Badge -->
                                     <div class="text-end">
-                                    <span class="badge bg-success bg-opacity-10 text-success fw-bold fs-6 px-3 py-2">${d.totalSold}</span>
+
+                                        <span
+                                            class="badge bg-success bg-opacity-10 text-success fw-bold fs-6 px-3 py-2"
+                                        >
+                                            ${d.totalSold}
+                                        </span>
+
                                     </div>
-                                </div>`;
-                            }
 
-                            if (type === 'orders') {
+                                </div>
+                            
+                            `;
+                        }
 
-                                const statusMap = {
-                                    'wc-completed': 'bg-success',
-                                    'wc-processing': 'bg-primary',
-                                    'wc-pending': 'bg-warning text-dark',
-                                    'wc-on-hold': 'bg-info text-dark',
-                                    'wc-cancelled': 'bg-danger',
-                                    'wc-refunded': 'bg-secondary',
-                                };
+                        if (type === 'orders') {
 
-                                const cls = statusMap[d.order_status] || 'bg-secondary';
+                            const statusMap = {
+                                'wc-completed': 'bg-success',
+                                'wc-processing': 'bg-primary',
+                                'wc-pending': 'bg-warning text-dark',
+                                'wc-on-hold': 'bg-info text-dark',
+                                'wc-cancelled': 'bg-danger',
+                                'wc-refunded': 'bg-secondary',
+                            };
 
-                                const label = (d.order_status || '')
-                                    .replace('wc-', '');
+                            const cls = statusMap[d.order_status] || 'bg-secondary';
 
-                                const name = d.customer_name || 'N/A';
+                            const label = (d.order_status || '')
+                                .replace('wc-', '');
 
-                                const date = new Date(d.order_date)
-                                    .toLocaleDateString('en-IN');
+                            const name = d.customer_name || 'N/A';
 
-                                const total = parseFloat(d.total || 0)
-                                    .toFixed(2);
+                            const date = new Date(d.order_date)
+                                .toLocaleDateString('en-IN');
 
-                                const phone = d.phone
-                                    ? `<small class="text-muted">
+                            const total = parseFloat(d.total || 0)
+                                .toFixed(2);
+
+                            const phone = d.phone
+                                ? `<small class="text-muted">
                                         <i class="ri-phone-line me-1"></i>
                                         ${escHtml(d.phone)}
                                     </small><br>`
-                                    : '';
+                                : '';
 
-                                return `
+                            return `
                                 <div class="py-3 border-bottom">
 
                                     <div class="d-flex justify-content-between align-items-center">
@@ -566,13 +660,13 @@
                                     </div>
 
                                 </div>`;
-                            }
+                        }
 
-                            if (type === 'users') {
-                                const initial = (d.display_name || d.user_email || '?').charAt(0).toUpperCase();
-                                const phone = d.phone ? `<small class="text-muted d-block"><i class="ri-phone-line me-1"></i>${escHtml(d.phone)}</small>` : '';
-                                const address = d.address ? `<small class="text-muted d-block text-truncate"><i class="ri-map-pin-line me-1"></i>${escHtml(d.address)}</small>` : '';
-                                return `
+                        if (type === 'users') {
+                            const initial = (d.display_name || d.user_email || '?').charAt(0).toUpperCase();
+                            const phone = d.phone ? `<small class="text-muted d-block"><i class="ri-phone-line me-1"></i>${escHtml(d.phone)}</small>` : '';
+                            const address = d.address ? `<small class="text-muted d-block text-truncate"><i class="ri-map-pin-line me-1"></i>${escHtml(d.address)}</small>` : '';
+                            return `
                                 <div class="d-flex align-items-center gap-3 py-3 border-bottom">
                                     <div class="flex-shrink-0 rounded-circle text-white d-flex align-items-center justify-content-center"
                                         style="background:linear-gradient(135deg,#667eea,#764ba2);min-width:40px;width:40px;height:40px;">
@@ -585,22 +679,22 @@
                                     ${address}
                                     </div>
                                 </div>`;
-                            }
-
-                            return '';
                         }
 
-                        /** Escape HTML to prevent XSS */
-                        function escHtml(str) {
-                            if (!str) return '';
-                            return String(str)
-                                .replace(/&/g, '&amp;')
-                                .replace(/</g, '&lt;')
-                                .replace(/>/g, '&gt;')
-                                .replace(/"/g, '&quot;')
-                                .replace(/'/g, '&#39;');
-                        }
-                    </script>
+                        return '';
+                    }
 
-                    
+                    /** Escape HTML to prevent XSS */
+                    function escHtml(str) {
+                        if (!str) return '';
+                        return String(str)
+                            .replace(/&/g, '&amp;')
+                            .replace(/</g, '&lt;')
+                            .replace(/>/g, '&gt;')
+                            .replace(/"/g, '&quot;')
+                            .replace(/'/g, '&#39;');
+                    }
+                </script>
+
+
                 <%- include('../partials/footer') %>

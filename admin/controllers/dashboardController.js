@@ -35,25 +35,71 @@ const showDashboard = async (req, res) => {
     // =========================
     // BEST SELLER PRODUCTS (top 5)
     // =========================
-    const [bestSellers] = await db.query(
-      `SELECT
-          p.ID,
-          p.product_title,
-          COUNT(oim.meta_value) AS totalSold,
-          (
-            SELECT m.media_path FROM tbl_media m
-            WHERE m.parent_id = p.ID AND m.media_type = 'product_image'
-            ORDER BY m.media_id ASC LIMIT 1
-          ) AS thumbnail
-        FROM tbl_order_itemmeta oim
-        INNER JOIN tbl_order_items oi ON oi.order_item_id = oim.order_item_id
-        INNER JOIN tbl_products p ON p.ID = oim.meta_value
-        WHERE oim.meta_key = '_product_id'
-        GROUP BY p.ID
-        ORDER BY totalSold DESC
-        LIMIT 5`,
-      [],
-    );
+   const [bestSellers] = await db.query(
+  `SELECT
+      p.ID,
+      p.product_title AS title,
+      p.product_url AS slug,
+
+      SUM(CAST(qty_meta.meta_value AS UNSIGNED)) AS totalSold,
+
+      (
+        SELECT m2.media_path
+        FROM tbl_productmeta pm2
+        JOIN tbl_media m2
+          ON m2.media_id = CAST(pm2.meta_value AS UNSIGNED)
+        WHERE pm2.product_id = p.ID
+          AND pm2.meta_key = '_thumbnail_id'
+        ORDER BY pm2.meta_id DESC
+        LIMIT 1
+      ) AS thumbnail,
+
+      CAST(COALESCE((
+          SELECT pm3.meta_value
+          FROM tbl_productmeta pm3
+          WHERE pm3.product_id = p.ID
+            AND pm3.meta_key = '_price'
+            AND pm3.meta_value != ''
+          ORDER BY pm3.meta_id DESC
+          LIMIT 1
+      ), '0') AS DECIMAL(10,2)) AS price,
+
+      COALESCE((
+          SELECT pm4.meta_value
+          FROM tbl_productmeta pm4
+          WHERE pm4.product_id = p.ID
+            AND pm4.meta_key = '_stock_status'
+          ORDER BY pm4.meta_id DESC
+          LIMIT 1
+      ), 'instock') AS stock_status
+
+    FROM tbl_order_itemmeta oim
+
+    INNER JOIN tbl_order_items oi
+      ON oi.order_item_id = oim.order_item_id
+
+    INNER JOIN tbl_orders o
+      ON o.order_id = oi.order_id
+
+    INNER JOIN tbl_products p
+      ON p.ID = oim.meta_value
+
+    INNER JOIN tbl_order_itemmeta qty_meta
+      ON qty_meta.order_item_id = oim.order_item_id
+     AND qty_meta.meta_key = '_qty'
+
+    WHERE oim.meta_key = '_product_id'
+      AND p.product_status = 'publish'
+      AND (p.parent_id = 0 OR p.parent_id IS NULL)
+      AND o.order_type = 'shop_order'
+
+    GROUP BY p.ID
+    ORDER BY totalSold DESC
+    LIMIT 5`,
+  [],
+);
+   
+    
 
     // =========================
     // LATEST ORDERS (top 5)
@@ -207,32 +253,88 @@ const showDashboard = async (req, res) => {
 // =========================
 const loadMoreBestSellers = async (req, res) => {
   try {
+
     const offset = parseInt(req.query.offset) || 5;
-    const limit = parseInt(req.query.limit) || 10;
+    const limit  = parseInt(req.query.limit) || 10;
 
     const [rows] = await db.query(
       `SELECT
           p.ID,
-          p.product_title,
-          COUNT(oim.meta_value) AS totalSold,
+          p.product_title AS title,
+          p.product_url AS slug,
+
+          SUM(CAST(qty_meta.meta_value AS UNSIGNED)) AS totalSold,
+
           (
-            SELECT m.media_path FROM tbl_media m
-            WHERE m.parent_id = p.ID AND m.media_type = 'product_image'
-            ORDER BY m.media_id ASC LIMIT 1
-          ) AS thumbnail
+            SELECT m2.media_path
+            FROM tbl_productmeta pm2
+            JOIN tbl_media m2
+              ON m2.media_id = CAST(pm2.meta_value AS UNSIGNED)
+            WHERE pm2.product_id = p.ID
+              AND pm2.meta_key = '_thumbnail_id'
+            ORDER BY pm2.meta_id DESC
+            LIMIT 1
+          ) AS thumbnail,
+
+          CAST(COALESCE((
+              SELECT pm3.meta_value
+              FROM tbl_productmeta pm3
+              WHERE pm3.product_id = p.ID
+                AND pm3.meta_key = '_price'
+                AND pm3.meta_value != ''
+              ORDER BY pm3.meta_id DESC
+              LIMIT 1
+          ), '0') AS DECIMAL(10,2)) AS price,
+
+          COALESCE((
+              SELECT pm4.meta_value
+              FROM tbl_productmeta pm4
+              WHERE pm4.product_id = p.ID
+                AND pm4.meta_key = '_stock_status'
+              ORDER BY pm4.meta_id DESC
+              LIMIT 1
+          ), 'instock') AS stock_status
+
         FROM tbl_order_itemmeta oim
-        INNER JOIN tbl_order_items oi ON oi.order_item_id = oim.order_item_id
-        INNER JOIN tbl_products p ON p.ID = oim.meta_value
+
+        INNER JOIN tbl_order_items oi
+          ON oi.order_item_id = oim.order_item_id
+
+        INNER JOIN tbl_orders o
+          ON o.order_id = oi.order_id
+
+        INNER JOIN tbl_products p
+          ON p.ID = oim.meta_value
+
+        INNER JOIN tbl_order_itemmeta qty_meta
+          ON qty_meta.order_item_id = oim.order_item_id
+         AND qty_meta.meta_key = '_qty'
+
         WHERE oim.meta_key = '_product_id'
+          AND p.product_status = 'publish'
+          AND (p.parent_id = 0 OR p.parent_id IS NULL)
+          AND o.order_type = 'shop_order'
+
         GROUP BY p.ID
         ORDER BY totalSold DESC
         LIMIT ? OFFSET ?`,
       [limit, offset],
     );
 
-    res.json({ success: true, data: rows });
+    res.json({
+      success: true,
+      count: rows.length,
+      data: rows,
+    });
+
   } catch (error) {
-    res.json({ success: false, message: error.message });
+
+    console.error('loadMoreBestSellers error:', error);
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 
