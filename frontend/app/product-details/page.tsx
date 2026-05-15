@@ -8,7 +8,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { getProductById, getProductBySlug, getImageUrl, type ProductDetail } from '../lib/api';
 import { formatPrice, formatPriceRange } from '../lib/price';
-import { getDiscountPercent } from '../lib/helpers/pricing';
+import { getDiscountPercent, isSaleDateActive } from '../lib/helpers/pricing';
 import { htmlToText, sanitizeHtml } from '../lib/helpers/html';
 import { useCart } from '../lib/cartContext';
 import { useWishlist } from '../lib/wishlistContext';
@@ -253,9 +253,10 @@ function ProductDetailsInner({ id, slug }: { id?: string; slug?: string }) {
   const priceMax = Number(product.price_max ?? 0);
 
   // Frontend display rule:
-  // if _sale_price exists, show it; otherwise show _regular_price
+  // if _sale_price exists AND the sale date window is active, show it; otherwise show _regular_price
+  const saleDateActive  = isSaleDateActive(product.sale_price_dates_from, product.sale_price_dates_to);
   const simpleRegular   = !product.variations.length && product.regular_price ? Number(product.regular_price) : null;
-  const simpleSalePrice = !product.variations.length && product.sale_price    ? Number(product.sale_price)    : null;
+  const simpleSalePrice = !product.variations.length && product.sale_price && saleDateActive ? Number(product.sale_price) : null;
 
   const displayRegular = bestMatch ? currentRegular : (simpleRegular ?? null);
   const displaySalePrice = bestMatch ? currentSalePrice : simpleSalePrice;

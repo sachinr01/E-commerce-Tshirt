@@ -41,3 +41,42 @@ export function getDiscountPercent(
 
   return percent;
 }
+
+/**
+ * isSaleDateActive(datesFrom, datesTo)
+ *
+ * Returns true when the current date falls within the sale window.
+ * Rules:
+ *  - If both dates are empty/null → sale is always active (no date restriction)
+ *  - If only datesFrom is set → active on or after that date
+ *  - If only datesTo is set   → active on or before that date
+ *  - If both are set          → active when today is between them (inclusive)
+ */
+export function isSaleDateActive(
+  datesFrom: string | null | undefined,
+  datesTo: string | null | undefined
+): boolean {
+  const hasFrom = !!datesFrom;
+  const hasTo   = !!datesTo;
+
+  // No date restriction — always active
+  if (!hasFrom && !hasTo) return true;
+
+  const today = new Date();
+  // Compare date-only (strip time) to avoid timezone edge cases
+  today.setHours(0, 0, 0, 0);
+
+  if (hasFrom) {
+    const from = new Date(datesFrom!);
+    from.setHours(0, 0, 0, 0);
+    if (today < from) return false;
+  }
+
+  if (hasTo) {
+    const to = new Date(datesTo!);
+    to.setHours(0, 0, 0, 0);
+    if (today > to) return false;
+  }
+
+  return true;
+}

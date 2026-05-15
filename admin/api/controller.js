@@ -194,6 +194,8 @@ async function queryProductList(extraWhere = '', orderBy = 'p.menu_order ASC', l
                 ORDER BY pm.meta_id DESC
                 LIMIT 1
             ) AS _sale_price,
+            (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_sale_price_dates_from' ORDER BY meta_id DESC LIMIT 1) AS _sale_price_dates_from,
+            (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_sale_price_dates_to'   ORDER BY meta_id DESC LIMIT 1) AS _sale_price_dates_to,
             (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_thumbnail_id' ORDER BY meta_id DESC LIMIT 1) AS thumbnail_id,
             (
                 SELECT m2.media_path
@@ -430,38 +432,90 @@ const getFeaturedProducts = async (req, res) => {
 // Query params: ?limit=N
 const getOnSaleProducts = async (req, res) => {
     try {
+        // A product is "on sale" when:
+        //  1. It has a sale_price > 0 that is less than regular_price, AND
+        //  2. Today falls within the optional sale date window
+        //     (no dates set = always active; partial dates = open-ended range)
+        const saleDateCheck = `
+            AND (
+                -- No start date set, OR today >= start date
+                COALESCE((
+                    SELECT pm_from.meta_value FROM tbl_productmeta pm_from
+                    WHERE pm_from.product_id = v.ID AND pm_from.meta_key = '_sale_price_dates_from'
+                    ORDER BY pm_from.meta_id DESC LIMIT 1
+                ), '') = ''
+                OR CURDATE() >= STR_TO_DATE((
+                    SELECT pm_from.meta_value FROM tbl_productmeta pm_from
+                    WHERE pm_from.product_id = v.ID AND pm_from.meta_key = '_sale_price_dates_from'
+                    ORDER BY pm_from.meta_id DESC LIMIT 1
+                ), '%Y-%m-%d')
+            )
+            AND (
+                -- No end date set, OR today <= end date
+                COALESCE((
+                    SELECT pm_to.meta_value FROM tbl_productmeta pm_to
+                    WHERE pm_to.product_id = v.ID AND pm_to.meta_key = '_sale_price_dates_to'
+                    ORDER BY pm_to.meta_id DESC LIMIT 1
+                ), '') = ''
+                OR CURDATE() <= STR_TO_DATE((
+                    SELECT pm_to.meta_value FROM tbl_productmeta pm_to
+                    WHERE pm_to.product_id = v.ID AND pm_to.meta_key = '_sale_price_dates_to'
+                    ORDER BY pm_to.meta_id DESC LIMIT 1
+                ), '%Y-%m-%d')
+            )`;
+
+        // Also handle simple (non-variable) products on sale
+        const simpleOnSale = `
+            OR (
+                NOT EXISTS (SELECT 1 FROM tbl_products v2 WHERE v2.parent_id = p.ID AND v2.product_type = 'product_variation')
+                AND CAST(COALESCE((
+                    SELECT pm_s.meta_value FROM tbl_productmeta pm_s
+                    WHERE pm_s.product_id = p.ID AND pm_s.meta_key = '_sale_price' AND pm_s.meta_value != ''
+                    ORDER BY pm_s.meta_id DESC LIMIT 1
+                ), '0') AS DECIMAL(10,2)) > 0
+                AND CAST(COALESCE((
+                    SELECT pm_s.meta_value FROM tbl_productmeta pm_s
+                    WHERE pm_s.product_id = p.ID AND pm_s.meta_key = '_sale_price' AND pm_s.meta_value != ''
+                    ORDER BY pm_s.meta_id DESC LIMIT 1
+                ), '0') AS DECIMAL(10,2)) < CAST(COALESCE((
+                    SELECT pm_r.meta_value FROM tbl_productmeta pm_r
+                    WHERE pm_r.product_id = p.ID AND pm_r.meta_key = '_regular_price' AND pm_r.meta_value != ''
+                    ORDER BY pm_r.meta_id DESC LIMIT 1
+                ), '0') AS DECIMAL(10,2))
+                AND (
+                    COALESCE((SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_sale_price_dates_from' ORDER BY meta_id DESC LIMIT 1), '') = ''
+                    OR CURDATE() >= STR_TO_DATE((SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_sale_price_dates_from' ORDER BY meta_id DESC LIMIT 1), '%Y-%m-%d')
+                )
+                AND (
+                    COALESCE((SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_sale_price_dates_to' ORDER BY meta_id DESC LIMIT 1), '') = ''
+                    OR CURDATE() <= STR_TO_DATE((SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_sale_price_dates_to' ORDER BY meta_id DESC LIMIT 1), '%Y-%m-%d')
+                )
+            )`;
+
         const products = await withRetry(() => queryProductList(
-            `AND EXISTS (
-                SELECT 1
-                FROM tbl_products v
-                WHERE v.parent_id = p.ID
-                  AND v.product_type = 'product_variation'
-                  AND CAST(COALESCE((
-                    SELECT pm_sale.meta_value
-                    FROM tbl_productmeta pm_sale
-                    WHERE pm_sale.product_id = v.ID
-                      AND pm_sale.meta_key = '_sale_price'
-                      AND pm_sale.meta_value != ''
-                    ORDER BY pm_sale.meta_id DESC
-                    LIMIT 1
-                  ), '0') AS DECIMAL(10,2)) > 0
-                  AND CAST(COALESCE((
-                    SELECT pm_sale.meta_value
-                    FROM tbl_productmeta pm_sale
-                    WHERE pm_sale.product_id = v.ID
-                      AND pm_sale.meta_key = '_sale_price'
-                      AND pm_sale.meta_value != ''
-                    ORDER BY pm_sale.meta_id DESC
-                    LIMIT 1
-                  ), '0') AS DECIMAL(10,2)) < CAST(COALESCE((
-                    SELECT pm_regular.meta_value
-                    FROM tbl_productmeta pm_regular
-                    WHERE pm_regular.product_id = v.ID
-                      AND pm_regular.meta_key = '_regular_price'
-                      AND pm_regular.meta_value != ''
-                    ORDER BY pm_regular.meta_id DESC
-                    LIMIT 1
-                  ), '0') AS DECIMAL(10,2))
+            `AND (
+                EXISTS (
+                    SELECT 1
+                    FROM tbl_products v
+                    WHERE v.parent_id = p.ID
+                      AND v.product_type = 'product_variation'
+                      AND CAST(COALESCE((
+                            SELECT pm_sale.meta_value FROM tbl_productmeta pm_sale
+                            WHERE pm_sale.product_id = v.ID AND pm_sale.meta_key = '_sale_price' AND pm_sale.meta_value != ''
+                            ORDER BY pm_sale.meta_id DESC LIMIT 1
+                          ), '0') AS DECIMAL(10,2)) > 0
+                      AND CAST(COALESCE((
+                            SELECT pm_sale.meta_value FROM tbl_productmeta pm_sale
+                            WHERE pm_sale.product_id = v.ID AND pm_sale.meta_key = '_sale_price' AND pm_sale.meta_value != ''
+                            ORDER BY pm_sale.meta_id DESC LIMIT 1
+                          ), '0') AS DECIMAL(10,2)) < CAST(COALESCE((
+                            SELECT pm_regular.meta_value FROM tbl_productmeta pm_regular
+                            WHERE pm_regular.product_id = v.ID AND pm_regular.meta_key = '_regular_price' AND pm_regular.meta_value != ''
+                            ORDER BY pm_regular.meta_id DESC LIMIT 1
+                          ), '0') AS DECIMAL(10,2))
+                      ${saleDateCheck}
+                )
+                ${simpleOnSale}
             )`,
             'p.menu_order ASC',
             req.query.limit || null
@@ -533,6 +587,8 @@ const getBestSellerProducts = async (req, res) => {
                     WHERE pm5.product_id = p.ID AND pm5.meta_key = '_sale_price'
                     AND pm5.meta_value != '' ORDER BY pm5.meta_id DESC LIMIT 1
                 ), NULL) AS DECIMAL(10,2)) AS _sale_price,
+                (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_sale_price_dates_from' ORDER BY meta_id DESC LIMIT 1) AS _sale_price_dates_from,
+                (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_sale_price_dates_to'   ORDER BY meta_id DESC LIMIT 1) AS _sale_price_dates_to,
                 COALESCE((
                     SELECT pm6.meta_value FROM tbl_productmeta pm6
                     WHERE pm6.product_id = p.ID AND pm6.meta_key = '_stock_status'
@@ -566,6 +622,8 @@ const getBestSellerProducts = async (req, res) => {
             price_max:      r.price_min,
             _regular_price: r._regular_price,
             _sale_price:    r._sale_price,
+            _sale_price_dates_from: r._sale_price_dates_from || null,
+            _sale_price_dates_to:   r._sale_price_dates_to   || null,
             stock_status:   r.stock_status,
         }));
 
@@ -608,6 +666,8 @@ const getProduct = async (req, res) => {
                 (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_price' ORDER BY meta_id DESC LIMIT 1) AS price,
                 (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_regular_price' ORDER BY meta_id DESC LIMIT 1) AS regular_price,
                 (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_sale_price' ORDER BY meta_id DESC LIMIT 1) AS sale_price,
+                (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_sale_price_dates_from' ORDER BY meta_id DESC LIMIT 1) AS sale_price_dates_from,
+                (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_sale_price_dates_to'   ORDER BY meta_id DESC LIMIT 1) AS sale_price_dates_to,
                 (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_product_features' ORDER BY meta_id DESC LIMIT 1) AS product_features,
                 (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_product_material' ORDER BY meta_id DESC LIMIT 1) AS product_material,
                 (SELECT meta_value FROM tbl_productmeta WHERE product_id = p.ID AND meta_key = '_product_collection' ORDER BY meta_id DESC LIMIT 1) AS product_collection,

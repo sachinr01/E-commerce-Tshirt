@@ -19,6 +19,8 @@ export interface Product {
   price_max: number | null;
   _regular_price: string | null;
   _sale_price: string | null;
+  _sale_price_dates_from: string | null;
+  _sale_price_dates_to: string | null;
   thumbnail_id: string | null;
   thumbnail_url: string | null;
   gallery_ids: string | null;
@@ -91,6 +93,8 @@ export interface ProductDetail extends Product {
   price: string | null;
   regular_price: string | null;
   sale_price: string | null;
+  sale_price_dates_from: string | null;
+  sale_price_dates_to: string | null;
   product_features: string | null;
   product_material: string | null;
   product_collection: string | null;

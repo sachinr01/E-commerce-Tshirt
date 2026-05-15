@@ -2,12 +2,12 @@ import Link from 'next/link';
 
 const panels = [
   {
-    image: '/store/images/CORPORATE_GIFTING.jpg',
+    image: '/store/images/nestcase_gifting/gifting_1.png',
     label: 'CORPORATE GIFTING',
     href: '/#',
   },
   {
-    image: '/store/images/E-CARDS.jpg',
+    image: '/store/images/nestcase_gifting/gifting_2.png',
     label: 'SHOP E-CARDS',
     href: '/#',
   },

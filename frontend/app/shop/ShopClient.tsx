@@ -7,7 +7,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { getProducts, getAllAttributeGroups, getImageUrl, type Product, type AttributeGroup, getProductCategories, getCategoryProducts, type ProductCategory } from '../lib/api';
 import { formatPrice, formatPriceRange, CURRENCY } from '../lib/price';
-import { getDiscountPercent } from '../lib/helpers/pricing';
+import { getDiscountPercent, isSaleDateActive } from '../lib/helpers/pricing';
 import { useWishlist } from '../lib/wishlistContext';
 import { usePlaceholderImage } from '../lib/siteSettingsContext';
 
@@ -55,7 +55,7 @@ function ShopProductCard({ product, idx, listMode }: { product: Product; idx: nu
   const salePrice = product._sale_price ? Number(product._sale_price) : null;
   const regularPrice = product._regular_price ? Number(product._regular_price) : null;
   const displayPrice = salePrice ?? regularPrice ?? (priceMin > 0 ? priceMin : null);
-  const isOnSale = !showRange && salePrice !== null && salePrice > 0;
+  const isOnSale = !showRange && salePrice !== null && salePrice > 0 && isSaleDateActive(product._sale_price_dates_from, product._sale_price_dates_to);
   const priceStr = showRange ? formatPriceRange(priceMin, priceMax) : (displayPrice ? formatPrice(displayPrice) : '');
   const discountPercent = showRange ? null : getDiscountPercent(salePrice, regularPrice);
 

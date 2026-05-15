@@ -3358,13 +3358,13 @@ input[type="checkbox"] {
 }
 
 .na-outer-top {
-  padding-top: 8px;
+  padding-top: 0px;
   padding-left: 45px;
   padding-right: 45px;
 }
 
 .na-outer-bs {
-  padding-top: 24px;
+  padding-top: 5px;
   padding-left: 45px;
   padding-right: 45px;
 }
@@ -3410,7 +3410,7 @@ input[type="checkbox"] {
 
 /* ===== frontend/app/components/GiftingWorld.css ===== */
 .gw-section {
-  padding: 24px 0;
+  padding: 30px 0;
   background: #fff;
 }
 
@@ -3467,7 +3467,7 @@ input[type="checkbox"] {
 
 @media (max-width: 768px) {
   .gw-section {
-    padding: 45px 0;
+    padding: 4px 0;
   }
 
   .gw-grid {
@@ -3475,10 +3475,10 @@ input[type="checkbox"] {
     padding: 0 45px;
   }
 
-  .gw-title {
+  /* .gw-title {
     font-size: 15px;
     margin-bottom: 24px;
-  }
+  } */
 }
 
 @media (max-width: 480px) {
@@ -3663,7 +3663,7 @@ input[type="checkbox"] {
 /* ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ TRENDING CATEGORIES ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ */
 .featured-collections-section {
   background: #fff;
-  padding: 30px 0 36px;
+  padding: 30px 0 30px;
 }
 .featured-collections {
   display: flex;

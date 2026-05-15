@@ -4,7 +4,7 @@ import { useRef, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { getProducts, getImageUrl, getBestSellers, type Product } from '../lib/api';
 import { formatPrice, formatPriceRange } from '../lib/price';
-import { getDiscountPercent } from '../lib/helpers/pricing';
+import { getDiscountPercent, isSaleDateActive } from '../lib/helpers/pricing';
 import { useWishlist } from '../lib/wishlistContext';
 import { usePlaceholderImage } from '../lib/siteSettingsContext';
 
@@ -27,7 +27,7 @@ function ProductCard({ p, idx }: { p: Product; idx: number }) {
   const regularPrice = p._regular_price ? Number(p._regular_price) : null;
   const displayPrice = salePrice ?? regularPrice ?? Number(p.price_min ?? 0);
   const discountPercent = showRange ? null : getDiscountPercent(salePrice, regularPrice);
-  const isOnSale = !showRange && salePrice !== null;
+  const isOnSale = !showRange && salePrice !== null && isSaleDateActive(p._sale_price_dates_from, p._sale_price_dates_to);
   const href = `/shop/product/${toSlug(p.slug || p.title)}`;
 
   return (

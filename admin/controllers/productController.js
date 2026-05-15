@@ -290,6 +290,8 @@ const showEditProduct = async (req, res) => {
     product.meta_description = mainMeta["meta_description"] || "";
     product.canonical_tag = mainMeta["canonical_tag"] || "";
     product.meta_index = mainMeta["meta_index"] || "";
+    product.sale_price_dates_from = mainMeta["_sale_price_dates_from"] || "";
+    product.sale_price_dates_to   = mainMeta["_sale_price_dates_to"]   || "";
 
     // ── Main product thumbnail ──────────────────────────────
     // Read media_path directly from tbl_media(no _wp_attached_file in mediameta)
