@@ -687,6 +687,12 @@ video {
   font-family: Lato, Helvetica, Arial, sans-serif !important;
 }
 
+/* Restore FontAwesome font on icon pseudo-elements */
+.fa::before,
+[class*="fa-"]::before {
+  font-family: FontAwesome !important;
+}
+
 /* Heading styles */
 h1,
 h2,
@@ -973,9 +979,8 @@ input[type="checkbox"] {
 .nh-login,
 .nh-account-link {
   text-decoration: none;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 600;
-  text-transform: uppercase;
   white-space: nowrap;
 }
 
@@ -1157,6 +1162,10 @@ input[type="checkbox"] {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
+}
+
+.nh-cart-link i {
+  font-size: 20px;
 }
 
 .nh-cart-label {
@@ -1543,7 +1552,6 @@ input[type="checkbox"] {
   color: #22311d;
   font-size: 15px;
   font-weight: 600;
-  text-transform: uppercase;
   letter-spacing: 0.08em;
   white-space: nowrap;
   text-decoration: none;
@@ -2356,12 +2364,33 @@ input[type="checkbox"] {
 
 /* ===== frontend/app/components/Footer.css ===== */
 .okab-footer {
-  border-top: 5px solid #ffcc00;
+  border-top: 2px solid #22311d;
 }
 
 .footer-top {
   background: #3a4841;
   padding: 40px 4.7% 0px;
+}
+
+/* Suppress any Bootstrap accordion/toggle elements injected by legacy store scripts */
+.okab-footer .panel,
+.okab-footer .panel-heading,
+.okab-footer .panel-title,
+.okab-footer .accordion-button,
+.okab-footer [data-toggle="collapse"],
+.okab-footer [data-bs-toggle="collapse"] {
+  all: unset;
+  display: contents;
+}
+
+.okab-footer .panel-heading::before,
+.okab-footer .panel-heading::after,
+.okab-footer .panel-title::before,
+.okab-footer .panel-title::after,
+.okab-footer .accordion-button::before,
+.okab-footer .accordion-button::after {
+  display: none !important;
+  content: none !important;
 }
 
 .footer-middle {
@@ -2393,7 +2422,8 @@ input[type="checkbox"] {
   /* font-weight: 800; */
   /* letter-spacing: 0.06em; */
   text-transform: uppercase;
-  margin: 0 0 14px 0;
+  margin: 0 0 10px;
+  font-size: 16px;
   color: #fff;
   /* #22311d */
 }
@@ -2414,7 +2444,7 @@ input[type="checkbox"] {
 }
 
 .footer-nav-list li a {
-  font-size: 15px !important;
+  font-size: 14px !important;
   color: #fff !important;
   /* #5f3022 */
   text-decoration: none !important;
@@ -2483,7 +2513,7 @@ input[type="checkbox"] {
 .popular_search--p {
   color: #fff !important;
   text-decoration: none;
-  font-size: 15px !important;
+  font-size: 14px !important;
   letter-spacing: 0.3px !important;
   line-height: 1.8 !important;
   font-weight: 400 !important;
@@ -2515,14 +2545,14 @@ input[type="checkbox"] {
 }
 
 .footer-payment-image {
-  padding: 0 6px;
+  padding: 0 2px;
 }
 
-.footer-payment-badge img {
-  display: block;
-  max-width: 42px;
-  max-height: 22px;
+.footer-payment-badge img { 
   object-fit: contain;
+  max-width: inherit;
+  max-height: inherit;
+  display: block;
 }
 
 .footer-legal-divider {
@@ -2703,24 +2733,32 @@ input[type="checkbox"] {
 
 .tb-tagline {
   text-align: center;
-  padding: 14px 20px 0;
+  padding: 20px 20px 10px;
+}
+
+.tb-tagline h6 {
+    font-size: 16px;
+    line-height: 20px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-style: italic;
 }
 
 .tb-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 0 5px;
+  gap: 0 15px;
   margin: 0 auto;
-  padding: 20px 45px 0;
+  padding: 10px 5% 20px;
 }
 
 .tb-item {
   display: flex;
   align-items: flex-start;
-  gap: 14px;
-  padding: 18px 10px 22px;
+  gap: 10px;
+  padding: 10px 10px 10px;
   position: relative;
-  background: #fff;
+  background: #efefef;
 }
 
 .tb-item:last-child::after {
@@ -2741,12 +2779,19 @@ input[type="checkbox"] {
 }
 
 .tb-icon i {
-  font-size: 34px;
-  line-height: 1;
+    font-size: 22px;
+    line-height: 22px;
+    color: #22311d;
 }
 
 .tb-text h4 {
-  margin: 0 0 4px;
+  margin: 0 0 0px;
+  font-size: 13px;
+  text-transform: uppercase;
+}
+
+.tb-text h6 {
+    font-size: 11px;
 }
 
 @media (max-width: 900px) {
@@ -3672,7 +3717,7 @@ input[type="checkbox"] {
   width: 100%;
   max-width: none;
   margin: 0 auto;
-  padding: 0 16px;
+  padding: 0 19px;
   background: #fff;
 }
 .featured-collection-row {
@@ -4344,8 +4389,12 @@ input[type="checkbox"] {
 }
 
 .csp-breadcrumb-title {
-  text-transform: uppercase;
   margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: #22311d;
+  text-transform: uppercase;
 }
 
 .csp-breadcrumb-sub {
@@ -9709,6 +9758,7 @@ input[type="checkbox"] {
   align-items: center;
   justify-content: center;
   color: #fff;
+  font-size: 72px;
 }
 
 .account-hello {

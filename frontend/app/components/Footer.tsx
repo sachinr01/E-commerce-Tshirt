@@ -110,13 +110,13 @@ export default function Footer() {
             <ul className="footer-nav-list" role="list">
               {categories.length > 0 ? categories.map((cat) => (
                 <li key={cat.slug}>
-                  <Link href={`/shop/${cat.slug}`} className="link-faded">{cat.name.toUpperCase()}</Link>
+                  <Link href={`/shop/${cat.slug}`} className="link-faded">{cat.name}</Link>
                 </li>
               )) : (
                 <>
-                  <li><Link href='/shop/drinkware' className="link-faded">DRINKWARE</Link></li>
-                  <li><Link href='/shop/glassware' className="link-faded">GLASSWARE</Link></li>
-                  <li><Link href='/shop/jars-and-containers' className="link-faded">JARS AND CONTAINERS</Link></li>
+                  <li><Link href='/shop/drinkware' className="link-faded">Drinkware</Link></li>
+                  <li><Link href='/shop/glassware' className="link-faded">Glassware</Link></li>
+                  <li><Link href='/shop/jars-and-containers' className="link-faded">Jars and Containers</Link></li>
                 </>
               )}
             </ul>
@@ -188,7 +188,7 @@ export default function Footer() {
 
       <div className="footer-legal">
         <div className="footer-legal-bottom">
-          <p>nestcase.in &copy; 2026</p>
+          <p>Copyright © 2026 Nestcase.in. All rights reserved.</p>
           <div className="footer-payment-row" aria-label="Accepted payment methods">
             <p>We Accept</p>
             <span className="footer-payment-badge footer-payment-image">
@@ -203,7 +203,7 @@ export default function Footer() {
             <span className="footer-payment-badge footer-payment-image">
               <Image src="/store/images/icons/paytm_icon.png" alt="paytm" width={42} height={22} />
             </span>
-            <p>and more..</p>
+            {/* <p>and more..</p> */}
           </div>
         </div>
       </div>

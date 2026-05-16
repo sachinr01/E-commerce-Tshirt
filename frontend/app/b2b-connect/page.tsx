@@ -20,10 +20,15 @@ export const metadata: Metadata = {
 const COLLECTION_IMAGE_MAP: [string, string][] = [
   ["glassware",  "/store/images/category_images/CC_GLASSWARE.png"],
   ["drinkware",  "/store/images/category_images/CC_DRINKWARE.png"],
-  ["tumbler",    "/store/images/category_images/CC_DRINKWARE.png"],
+  ["tumbler",    "/store/images/category_images/CC_TUMBLERS.png"],
   ["kitchen",    "/store/images/category_images/CC_KITCHEN_ORGANISERS.png"],
   ["organiser",  "/store/images/category_images/CC_KITCHEN_ORGANISERS.png"],
   ["jar",        "/store/images/category_images/CC_KITCHEN_ORGANISERS.png"],
+  ["bowl",       "/store/images/category_images/CC_BOWL_AND_PLATTERS.png"],
+  ["platter",    "/store/images/category_images/CC_BOWL_AND_PLATTERS.png"],
+  ["cup",        "/store/images/category_images/CC_CUP_AND_MUGS.png"],
+  ["mug",        "/store/images/category_images/CC_CUP_AND_MUGS.png"],
+  ["dinner",     "/store/images/category_images/CC_DINNER_SET.png"],
 ];
 
 const DEFAULT_COLLECTION_IMAGE = "/store/images/dummy.jpg";
