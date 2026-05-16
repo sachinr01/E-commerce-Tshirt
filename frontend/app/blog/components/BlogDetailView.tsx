@@ -38,6 +38,7 @@ export default function BlogDetailView({
   categories?: BlogCategory[];
 }) {
   const htmlContent = sanitizeHtml(blog.content || '');
+  const isStructuredArticle = htmlContent.includes('blog_article') && htmlContent.includes('blog_minimal_luxury');
   const normalizeSlug = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, '-');
   const primaryCategory = blog.categories?.find((category) => category.is_primary_category) || blog.categories?.[0];
   const postedCategoryName =
@@ -54,76 +55,84 @@ export default function BlogDetailView({
     null;
 
   return (
-    <div className="dima-main blog-detail-page">
+    <div className={`dima-main blog-detail-page${isStructuredArticle ? ' blog-detail-page--structured' : ''}`}>
       <div className="blog-detail-body">
         <div className="blog-detail-main">
-          <nav className="blog-breadcrumb">
-            <Link href="/">Home</Link>
-            <span>{'>'}</span>
-            <Link href="/blog">Blog</Link>
-            {categoryCrumb?.href ? (
-              <>
+          {isStructuredArticle ? (
+            <div className="blog-content blog-content--structured" dangerouslySetInnerHTML={{ __html: htmlContent }} />
+          ) : (
+            <>
+              <nav className="blog-breadcrumb">
+                <Link href="/">Home</Link>
                 <span>{'>'}</span>
-                <Link href={categoryCrumb.href}>{categoryCrumb.label}</Link>
-              </>
-            ) : null}
-            <span>{'>'}</span>
-            <span className="blog-breadcrumb-current">{blog.title}</span>
-          </nav>
+                <Link href="/blog">Blog</Link>
+                {categoryCrumb?.href ? (
+                  <>
+                    <span>{'>'}</span>
+                    <Link href={categoryCrumb.href}>{categoryCrumb.label}</Link>
+                  </>
+                ) : null}
+                <span>{'>'}</span>
+                <span className="blog-breadcrumb-current">{blog.title}</span>
+              </nav>
 
-          <h1 className="blog-detail-title">{blog.title}</h1>
-          <div className="blog-byline">
-            <span className="blog-byline-item">
-              <span className="blog-byline-icon"><CalendarIcon /></span>
-              <span>{blog.date}</span>
-            </span>
-            <span className="blog-byline-divider" />
-            <span className="blog-byline-item">
-              <span className="blog-byline-icon"><UserIcon /></span>
-              <span>
-                Posted by <strong>{blog.author_name || 'Admin'}</strong>
-              </span>
-            </span>
-            {postedCategoryName ? (
-              <>
+              <h1 className="blog-detail-title">{blog.title}</h1>
+              <div className="blog-byline">
+                <span className="blog-byline-item">
+                  <span className="blog-byline-icon"><CalendarIcon /></span>
+                  <span>{blog.date}</span>
+                </span>
                 <span className="blog-byline-divider" />
                 <span className="blog-byline-item">
-                  <span className="blog-byline-icon"><FolderIcon /></span>
+                  <span className="blog-byline-icon"><UserIcon /></span>
                   <span>
-                    Posted in{' '}
-                    {postedCategorySlug ? (
-                      <Link href={`/blog/${postedCategorySlug}`}>
-                        <strong>{postedCategoryName}</strong>
-                      </Link>
-                    ) : (
-                      <strong>{postedCategoryName}</strong>
-                    )}
+                    Posted by <strong>{blog.author_name || 'Admin'}</strong>
                   </span>
                 </span>
-              </>
-            ) : null}
-          </div>
+                {postedCategoryName ? (
+                  <>
+                    <span className="blog-byline-divider" />
+                    <span className="blog-byline-item">
+                      <span className="blog-byline-icon"><FolderIcon /></span>
+                      <span>
+                        Posted in{' '}
+                        {postedCategorySlug ? (
+                          <Link href={`/blog/${postedCategorySlug}`}>
+                            <strong>{postedCategoryName}</strong>
+                          </Link>
+                        ) : (
+                          <strong>{postedCategoryName}</strong>
+                        )}
+                      </span>
+                    </span>
+                  </>
+                ) : null}
+              </div>
 
-          {blog.image ? (
-            <div className="blog-hero-image">
-              <BlogHeroImage src={blog.image} alt={blog.title} />
-            </div>
-          ) : null}
+              {blog.image ? (
+                <div className="blog-hero-image">
+                  <BlogHeroImage src={blog.image} alt={blog.title} />
+                </div>
+              ) : null}
 
-          <div className="blog-content" dangerouslySetInnerHTML={{ __html: htmlContent }} />
+              <div className="blog-content" dangerouslySetInnerHTML={{ __html: htmlContent }} />
+            </>
+          )}
         </div>
 
-        <BlogSidebar
-          variant="widget"
-          featuredTitle="Latest Posts"
-          activeCategorySlug={activeCategorySlug}
-          categories={categories ?? []}
-          featuredItems={latestPosts.map((post) => ({
-            href: getBlogDetailHref(post),
-            title: post.title,
-            meta: `Posted by ${post.author_name || 'Admin'} / ${post.date}`,
-          }))}
-        />
+        {!isStructuredArticle ? (
+          <BlogSidebar
+            variant="widget"
+            featuredTitle="Latest Posts"
+            activeCategorySlug={activeCategorySlug}
+            categories={categories ?? []}
+            featuredItems={latestPosts.map((post) => ({
+              href: getBlogDetailHref(post),
+              title: post.title,
+              meta: `Posted by ${post.author_name || 'Admin'} / ${post.date}`,
+            }))}
+          />
+        ) : null}
       </div>
     </div>
   );
