@@ -10935,31 +10935,12 @@ input[type="checkbox"] {
 }
 
 .blog-detail-page .blog-breadcrumb {
-  margin-bottom: 18px;
-}
-
-.blog-detail-page .blog-hero-image {
-  position: relative;
-  aspect-ratio: 16 / 9;
-  max-height: 500px;
-  border-radius: 10px;
-  overflow: hidden;
-  background: #ece7df;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.06);
-  margin-bottom: 24px;
-}
-
-.blog-detail-page .blog-hero-image img {
-  object-fit: fill;
-}
-
-.blog-detail-page .sidebar {
-  margin-top: 0;
+  margin-bottom: 10px;
 }
 
 .blog-detail-title {
-  margin: 10px 0 8px;
-  color: #22311d;
+  margin: 10px 0px 10px;
+  font-size: 24px;
 }
 
 .blog-byline {
@@ -11020,14 +11001,13 @@ input[type="checkbox"] {
 
 .blog-content p {
   font-size: 15px;
-  color: #22311d;
-  line-height: 1.85;
-  margin: 0 0 22px;
+  color: #343434;
+  line-height: 24px;
+  margin: 0 0 20px;
 }
 
 .blog-content h1,
 .blog-content h2,
-.blog-content h3,
 .blog-content h4,
 .blog-content h5,
 .blog-content h6 {
@@ -11047,14 +11027,15 @@ input[type="checkbox"] {
   line-height: 34px;
 }
 
-.blog-content h3 {
-  font-size: 22px;
-  line-height: 30px;
+.blog-content h3,
+.blog-content h4 {
+  font-size: 20px !important;
+  line-height: 25px !important;
+  padding-top: 10px;
 }
 
-.blog-content h4 {
-  font-size: 19px;
-  line-height: 26px;
+.blog-content h4 strong {
+  font-weight: inherit;
 }
 
 .blog-content h5 {
@@ -11254,9 +11235,9 @@ input[type="checkbox"] {
 }
 
 .widgetTitle,
-.sidebarTitle {
-  margin: 0 0 16px;
-  text-transform: uppercase;
+.sidebarTitle,
+.sidebar h4 {
+  font-size: 17px;
 }
 
 .widgetContent {
@@ -11302,8 +11283,10 @@ input[type="checkbox"] {
 }
 
 .featuredPosts h6 {
-  margin: 0 0 6px;
-  text-transform: uppercase;
+  margin: 0 0 8px;
+  text-transform: inherit;
+  font-size: 13px;
+  line-height: 20px;
 }
 
 .featuredItem h6,
@@ -11315,9 +11298,7 @@ input[type="checkbox"] {
 }
 
 .featuredPosts span {
-  display: block;
-  font-size: 12px;
-  color: #343434;
+  font-size: 11px;
 }
 
 .featuredPosts a:hover h6 {
@@ -11381,11 +11362,9 @@ input[type="checkbox"] {
 }
 
 .catName {
-  display: block;
-  font-size: inherit;
-  font-weight: inherit;
-  margin: 0;
-  color: inherit;
+  font-size: 13px;
+  line-height: 20px;
+  color: #343434;
 }
 
 .catCount {
